@@ -22,7 +22,7 @@ VS Code IDE is used for development.
 .. Send gcode from files on SD card.
 .. Stream gcode from USB.
 
-# Schematic and hardware
+## Schematic and hardware
 
 The schematic reversing is mostly complete. 
 Everything that's needed to interface with MCU (pins, interfaces) is known.
@@ -48,3 +48,8 @@ You can clone the EasyEDA project of the schematic here:
 https://oshwlab.com/positron96/cnc-offline-controller-stm32
 
 
+## Links
+
+* SSD1306 datasheet (old): https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
+* On SSD1306 connection: https://vivonomicon.com/2018/04/20/diy-oled-display-boards-ssd1306-and-ssd1331/
+* 3018 CNC board (Woodpecker v3.3) schematic: http://s3.amazonaws.com/s3.image.smart/download/101-60-280/Schematic_CAMTOOL%20CNC-V3.3.pdf
