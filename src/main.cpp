@@ -1,59 +1,82 @@
 #include <U8g2lib.h>
 
-#define PIN_LCD_CS PA2 // not connected
-#define PIN_LCD_RST PB0
-#define PIN_LCD_DC PB1
-#define PIN_LCD_CLK PA0
-#define PIN_LCD_MOSI PA1
+constexpr uint32_t PIN_LCD_CS = PA2; // not connected
+constexpr uint32_t PIN_LCD_RST = PB0;
+constexpr uint32_t PIN_LCD_DC = PB1;
+constexpr uint32_t PIN_LCD_CLK = PA0;
+constexpr uint32_t PIN_LCD_MOSI = PA1;
 
 U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI u8g2(U8G2_R0, PIN_LCD_CLK, PIN_LCD_MOSI, 
     PIN_LCD_CS, PIN_LCD_DC, PIN_LCD_RST);
 
-constexpr uint32_t PIN_BT_CENTER = PB12;
-constexpr uint32_t PIN_BT_UP = PB13;
-constexpr uint32_t PIN_BT_DOWN = PB14;
-constexpr uint32_t PIN_BT_L = PB11;
-constexpr uint32_t PIN_BT_R = PB10;
+
+constexpr int N_BUTT = 8;
+constexpr uint32_t PIN_BT_ZDOWN = PB8;
+constexpr uint32_t PIN_BT_ZUP   = PB9;
+constexpr uint32_t PIN_BT_R     = PB10;
+constexpr uint32_t PIN_BT_L     = PB11;
+constexpr uint32_t PIN_BT_CENTER= PB12;
+constexpr uint32_t PIN_BT_UP    = PB13;
+constexpr uint32_t PIN_BT_DOWN  = PB14;
+constexpr uint32_t PIN_BT_STEP  = PB15;
+
+constexpr uint32_t buttPins[N_BUTT] = {
+    PIN_BT_ZDOWN, PIN_BT_ZUP, PIN_BT_R, PIN_BT_L, 
+    PIN_BT_CENTER, PIN_BT_UP, PIN_BT_DOWN, PIN_BT_STEP
+};
+//bool buttStates[N_BUTT];
+uint16_t buttStates = 0;
+
+
+constexpr uint32_t PIN_DET  =  PC13; ///< 0V=no USB on CNC, 1=CNC connected to USB.
 
 void setup() {
-    //SystemClock_Config();
     SerialUSB.begin(115200);
+    Serial.begin(115200);
 
     u8g2.begin();
     //u8g2.setBusClock(600000);
-    u8g2.setFont(u8g2_font_6x10_tf);
+    u8g2.setFont(u8g2_font_8x13_tr);
     u8g2.setFontPosTop();
     u8g2.setFontMode(1);
     u8g2.setDrawColor(1);
 
-    pinMode(PIN_BT_CENTER, INPUT_PULLUP);
-    pinMode(PIN_BT_UP, INPUT_PULLUP);
-    pinMode(PIN_BT_DOWN, INPUT_PULLUP);
-    pinMode(PIN_BT_L, INPUT_PULLUP);
-    pinMode(PIN_BT_R, INPUT_PULLUP);
+    for(auto pin: buttPins) {
+        pinMode(pin, INPUT_PULLUP);
+    }
+    
+    pinMode(PIN_DET, INPUT);
+
 }
 
-constexpr int sp=5;
-int x=64, y=32;
-int dx=sp,dy=sp;
-bool animate=true;
+constexpr int LCD_ROW1_HEIGHT = 16;
 
-constexpr int r=5;
-constexpr int ROW1 = 16;
-
+char resp[100];
+size_t respPos=0;
 
 void loop() {
 
     static uint32_t nextRead;
 
     if( int32_t(millis() - nextRead) > 0) {
-        if(digitalRead(PIN_BT_CENTER)==0) animate = !animate;
-        if(digitalRead(PIN_BT_DOWN)==0) y++;
-        if(digitalRead(PIN_BT_UP)==0) y--;    
-        if(digitalRead(PIN_BT_R)==0) x++;
-        if(digitalRead(PIN_BT_L)==0) x--; 
-        nextRead = millis() + 100;
+        uint16_t states = 0;
+        for(int i=0; i<N_BUTT; i++) {
+            bitWrite(states, i, (digitalRead(buttPins[i])==0 ? 1:0) );
+        }
+        uint16_t changed = buttStates ^ states;
+        for(int i=0; i<N_BUTT; i++) {
+            if(bitRead(changed, i) && bitRead(states,i)) {
+                switch(buttPins[i]) {
+                    case PIN_BT_CENTER: Serial.print("?"); break;
+                    case PIN_BT_STEP: Serial.print("$H\n"); break;
+                }
+            }
+        }
+        buttStates = states;
+        /*if(changed!=0)*/ nextRead = millis() + 10;
     }
+
+    
 
     static uint32_t lastRedraw, lastFps;
     static int frames, lastFrames;
@@ -62,40 +85,46 @@ void loop() {
 
         u8g2.clearBuffer();
         u8g2.setDrawColor(1);
-        u8g2.drawFilledEllipse(x, y, r,r);
-        //u8g2.setDrawColor(0);
-        //u8g2.drawFilledEllipse(30, 30, 15,15);
+
         char str[100];
-        snprintf(str, 100, "%d/%d", x,y);
-        u8g2.setDrawColor(1);
-        u8g2.drawStr(10, 0, str);
+        snprintf(str, 100, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
+        u8g2.drawStr(5, 0, str);
 
-        snprintf(str, 100, "FPS:%d", lastFrames);
-        u8g2.drawStr(60, 0, str);
+        //snprintf(str, 100, ");
+        snprintf(str, 100, "BT:%d", buttStates);
+        u8g2.drawStr(64, 0, str);
 
-        frames++;
-        if(millis()-lastFps>1000) {
-            lastFrames = frames;
-            frames=0;
-            lastFps = millis();
-        }
+        u8g2.drawStr(5, LCD_ROW1_HEIGHT+13, resp);
 
         u8g2.sendBuffer();
     }
 
-    //SerialUSB.println(str);
-
-    //i = (i+1)%128;
-    static uint32_t lastRecalc;
-    if(animate && millis()-lastRecalc>25) {
-        x += dx;
-        y += dy;
-        if(x>=128-r) dx = -sp;
-        if(y>=64-r) dy = -sp;
-        if(x<=r) dx=sp;
-        if(y<=ROW1+r) dy=sp;
-        lastRecalc = millis();
+    
+    if(Serial.available() ) {
+        while(Serial.available()) {
+            int t = Serial.read();
+            if(t>=0) { 
+                SerialUSB.write(t);
+                
+                if(t=='\n') {
+                    resp[respPos] = '\0';
+                    respPos=0;
+                } else if(t=='\r') {
+                } else {
+                    resp[respPos] = t;
+                    respPos++;
+                }
+            }
+        }
     }
+
+    if(SerialUSB.available()) {
+        while(SerialUSB.available()) {
+            Serial.write(SerialUSB.read());
+        }
+    }
+
+    //SerialUSB.println(str);
 
     //delay(1);
 }
