@@ -1,4 +1,6 @@
-# Open-source firmware for an stm32-based "cnc3018 offline controller"
+:imagesdir: docs
+
+# Open-source firmware for an STM32-based "cnc3018 offline controller"
 
 This popular chineese (most probably) controller is frequently sold with 3018-type CNC machines.
 The machines themselves run GRBL on ATmega328 MCUs, while the controller uses STM32F103C8T6 MCU.
@@ -17,10 +19,13 @@ VS Code IDE is used for development.
 .. Send gcode from files on SD card.
 .. Stream gcode from USB.
 
-# Schematic ans hardware
+# Schematic and hardware
 
 The schematic reversing is mostly complete. 
-Everything that's needed to interface from MCU (pins, interfaces) is known.
+Everything that's needed to interface with MCU (pins, interfaces) is known.
+
+image::MCU_SD_UART.svg[display,600]
+image::Display_USB.svg[display,600]
 
 You can clone the EasyEDA project of the schematic here:
 https://oshwlab.com/positron96/cnc-offline-controller-stm32
