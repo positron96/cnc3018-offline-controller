@@ -1,0 +1,27 @@
+# Open-source firmware for an stm32-based "cnc3018 offline controller"
+
+This popular chineese (most probably) controller is frequently sold with 3018-type CNC machines.
+The machines themselves run GRBL on ATmega328 MCUs, while the controller uses STM32F103C8T6 MCU.
+The stock firmware is somewhat lacking in features (no DROs, no spindle speed, for example).
+
+While the goal of this project is to make an alternative to control a CNC machine, it can be also useful for those who want to turn this controller into something else (a small gaming console, a controller for other equipment). 
+
+The firmware is written for Arduino framework and PlatformIO build system. 
+VS Code IDE is used for development.
+
+## Goals of the project:
+
+. Reverse-engineer the schematic of the board (to the required extent)
+. Make custom firmware with these features:
+.. Move axes via buttons, display coordinates on screen, etc.
+.. Send gcode from files on SD card.
+.. Stream gcode from USB.
+
+# Schematic ans hardware
+
+The schematic reversing is mostly complete. 
+Everything that's needed to interface from MCU (pins, interfaces) is known.
+
+You can clone the EasyEDA project of the schematic here:
+https://oshwlab.com/positron96/cnc-offline-controller-stm32
+
