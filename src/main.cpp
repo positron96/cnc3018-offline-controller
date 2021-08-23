@@ -53,14 +53,15 @@ void setup() {
 
 constexpr int LCD_ROW1_HEIGHT = 16;
 
-char disp[100];
+char disp[3][100];
+uint8_t ndisp=0;
 
 
 void onButton(uint32_t pin, bool down) {
     if(!down) return;
     switch(pin) {
-        case PIN_BT_CENTER: SerialCNC.print("?"); break;
-        case PIN_BT_STEP: SerialCNC.print("$H\n"); break;
+        case PIN_BT_CENTER: SerialCNC.print("?\n"); break;
+        case PIN_BT_STEP: SerialCNC.print(/*"$H\n"*/"$$\n"); break;
     }
 }
 
@@ -77,12 +78,13 @@ void receiveResponses() {
             case '\r': break;
             default: if(respLen<MAX_LINE) resp[respLen++] = ch;
         }
-        if(ch=='\n' || ch=='\r') {
+        if(ch=='\n') {
             resp[respLen]=0;
             //for(const auto &r: receivedLineHandlers) if(r) r(resp, respLen);
             SerialUSB.println(resp);
             //tryParseResponse(resp, respLen);
-            strncpy(disp, resp, 100);
+            if(ndisp==3) { strncpy(disp[0], disp[1], 100); strncpy(disp[1], disp[2], 100); ndisp--;}
+            strncpy(disp[ndisp++], resp, 100);
             respLen = 0;
         }
     }
@@ -124,10 +126,11 @@ void loop() {
         u8g2.drawStr(5, 0, str);
 
         //snprintf(str, 100, ");
-        snprintf(str, 100, "BT:%d", buttStates);
+        snprintf(str, 100, "bt:%d", buttStates);
         u8g2.drawStr(64, 0, str);
 
-        u8g2.drawStr(5, LCD_ROW1_HEIGHT+13, disp);
+        for(int i=0; i<ndisp; i++)
+            u8g2.drawStr(5, LCD_ROW1_HEIGHT+13*i, disp[i]);
 
         u8g2.sendBuffer();
     }
