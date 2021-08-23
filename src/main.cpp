@@ -15,10 +15,8 @@ constexpr uint32_t PIN_BT_DOWN = PB14;
 constexpr uint32_t PIN_BT_L = PB11;
 constexpr uint32_t PIN_BT_R = PB10;
 
-HardwareSerial Serial1(PA10, PA9);
 
 void setup() {
-    //SystemClock_Config();
     Serial1.begin(115200);
     SerialUSB.begin(115200);
 
