@@ -30,9 +30,11 @@ uint16_t buttStates = 0;
 
 constexpr uint32_t PIN_DET  =  PC13; ///< 0V=no USB on CNC, 1=CNC connected to USB.
 
+HardwareSerial &SerialCNC = Serial1;
+
 void setup() {
     SerialUSB.begin(115200);
-    Serial.begin(115200);
+    SerialCNC.begin(115200);
 
     u8g2.begin();
     //u8g2.setBusClock(600000);
@@ -51,8 +53,42 @@ void setup() {
 
 constexpr int LCD_ROW1_HEIGHT = 16;
 
-char resp[100];
-size_t respPos=0;
+char disp[100];
+
+
+void onButton(uint32_t pin, bool down) {
+    if(!down) return;
+    switch(pin) {
+        case PIN_BT_CENTER: SerialCNC.print("?"); break;
+        case PIN_BT_STEP: SerialCNC.print("$H\n"); break;
+    }
+}
+
+void receiveResponses() {
+
+    static const size_t MAX_LINE = 200; // M115 is far longer than 100
+    static char resp[MAX_LINE+1];
+    static size_t respLen;
+
+    while (SerialCNC.available()) {
+        char ch = (char)SerialCNC.read();
+        switch(ch) {
+            case '\n':
+            case '\r': break;
+            default: if(respLen<MAX_LINE) resp[respLen++] = ch;
+        }
+        if(ch=='\n' || ch=='\r') {
+            resp[respLen]=0;
+            //for(const auto &r: receivedLineHandlers) if(r) r(resp, respLen);
+            SerialUSB.println(resp);
+            //tryParseResponse(resp, respLen);
+            strncpy(disp, resp, 100);
+            respLen = 0;
+        }
+    }
+    
+}
+
 
 void loop() {
 
@@ -65,11 +101,8 @@ void loop() {
         }
         uint16_t changed = buttStates ^ states;
         for(int i=0; i<N_BUTT; i++) {
-            if(bitRead(changed, i) && bitRead(states,i)) {
-                switch(buttPins[i]) {
-                    case PIN_BT_CENTER: Serial.print("?"); break;
-                    case PIN_BT_STEP: Serial.print("$H\n"); break;
-                }
+            if(bitRead(changed, i) ) {
+                onButton(buttPins[i], bitRead(states, i));
             }
         }
         buttStates = states;
@@ -94,37 +127,18 @@ void loop() {
         snprintf(str, 100, "BT:%d", buttStates);
         u8g2.drawStr(64, 0, str);
 
-        u8g2.drawStr(5, LCD_ROW1_HEIGHT+13, resp);
+        u8g2.drawStr(5, LCD_ROW1_HEIGHT+13, disp);
 
         u8g2.sendBuffer();
     }
 
     
-    if(Serial.available() ) {
-        while(Serial.available()) {
-            int t = Serial.read();
-            if(t>=0) { 
-                SerialUSB.write(t);
-                
-                if(t=='\n') {
-                    resp[respPos] = '\0';
-                    respPos=0;
-                } else if(t=='\r') {
-                } else {
-                    resp[respPos] = t;
-                    respPos++;
-                }
-            }
-        }
-    }
+    receiveResponses();
 
     if(SerialUSB.available()) {
         while(SerialUSB.available()) {
-            Serial.write(SerialUSB.read());
+            SerialCNC.write(SerialUSB.read());
         }
     }
 
-    //SerialUSB.println(str);
-
-    //delay(1);
 }
