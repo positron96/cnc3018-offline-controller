@@ -15,8 +15,11 @@ constexpr uint32_t PIN_BT_DOWN = PB14;
 constexpr uint32_t PIN_BT_L = PB11;
 constexpr uint32_t PIN_BT_R = PB10;
 
+HardwareSerial Serial1(PA10, PA9);
+
 void setup() {
     //SystemClock_Config();
+    Serial1.begin(115200);
     SerialUSB.begin(115200);
 
     u8g2.begin();
@@ -48,11 +51,12 @@ void loop() {
 
     if( int32_t(millis() - nextRead) > 0) {
         if(digitalRead(PIN_BT_CENTER)==0) animate = !animate;
-        if(digitalRead(PIN_BT_DOWN)==0) y++;
-        if(digitalRead(PIN_BT_UP)==0) y--;    
-        if(digitalRead(PIN_BT_R)==0) x++;
-        if(digitalRead(PIN_BT_L)==0) x--; 
+        if(digitalRead(PIN_BT_DOWN)==0) y+=sp;
+        if(digitalRead(PIN_BT_UP)==0) y-=sp;    
+        if(digitalRead(PIN_BT_R)==0) x+=sp;
+        if(digitalRead(PIN_BT_L)==0) x-=sp; 
         nextRead = millis() + 100;
+
     }
 
     static uint32_t lastRedraw, lastFps;
@@ -78,6 +82,8 @@ void loop() {
             lastFrames = frames;
             frames=0;
             lastFps = millis();
+
+            Serial1.println(str);
         }
 
         u8g2.sendBuffer();
