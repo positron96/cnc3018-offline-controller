@@ -49,7 +49,7 @@
             sentCounter->push( cmd, *len );
             printerSerial->write(cmd, *len);  
             printerSerial->print('\n');
-            GD_DEBUGF("<  (f%3d,%3d) '%s' (%d)\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, *len );
+            GD_DEBUGF("<  (f%3d,%3d) '%s'(len %d)\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, *len );
             *len = 0;
         } else {
             //if(loadedNewCmd) GD_DEBUGF("<  Not sent, free lines: %d, free space: %d\n", sentQueue.getFreeLines() , sentQueue.getFreeBytes()  );
@@ -63,20 +63,26 @@
             //responseDetail = "ok";
             connected = true;
             panic = false;
+            notify_observers(DeviceStatusEvent{0}); 
         } else 
-        if (startsWith(resp, "error") || startsWith(resp, "ALARM:") ) {
+        if (startsWith(resp, "error") ) {
             sentQueue.pop();
-            panic = true;
             GD_DEBUGF("ERR '%s'\n", resp ); 
             notify_observers(DeviceStatusEvent{1}); 
             lastResponse = resp;
         } else
-        if ( startsWith(resp, "<") ) {
+        if ( startsWith(resp, "ALARM:") ) {
+            panic = true;
+            GD_DEBUGF("ALARM '%s'\n", resp ); 
+            lastResponse = resp;
+        } else if ( startsWith(resp, "<") ) {
             parseGrblStatus(resp+1);
+            panic = false;
         } else 
         if(startsWith(resp, "[MSG:")) {
             GD_DEBUGF("Msg '%s'\n", resp ); 
             lastResponse = resp;
+            panic = false; // this is the first message after reset
         }        
         
         GD_DEBUGF(" > (f%3d,%3d) '%s' \n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(),resp );

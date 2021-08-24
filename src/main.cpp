@@ -54,6 +54,7 @@ void setup() {
     pinMode(PIN_DET, INPUT);
 
     dev.begin();
+    dev.enableStatusUpdates();
 
 }
 
@@ -63,12 +64,14 @@ constexpr int LCD_ROW1_HEIGHT = 16;
 void onButton(uint32_t pin, bool down) {
     if(!down) return;
     switch(pin) {
-        case PIN_BT_CENTER: SerialCNC.print("?\n"); break;
+        case PIN_BT_CENTER: dev.schedulePriorityCommand("?"); break;
         case PIN_BT_STEP: dev.scheduleCommand("$X"); break;
         case PIN_BT_L: dev.jog(0, -1, 500); break;
         case PIN_BT_R: dev.jog(0, 1, 500); break;
         case PIN_BT_UP: dev.jog(1, -1, 500); break;
         case PIN_BT_DOWN: dev.jog(1, 1, 500); break;
+        case PIN_BT_ZUP: dev.jog(2, 1, 500); break;
+        case PIN_BT_ZDOWN: dev.jog(2, -1, 500); break;
     }
 }
 
@@ -111,9 +114,9 @@ void loop() {
 
         u8g2.drawGlyph(120, 0, !dev.isConnected() ? '-' : dev.isInPanic() ? '!' : '+');
 
-        snprintf(str, 100, "X:%3d", (int)dev.getX() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT, str);
-        snprintf(str, 100, "Y:%3d", (int)dev.getY() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT+13, str);
-        snprintf(str, 100, "Z:%3d", (int)dev.getZ() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT+26, str);        
+        snprintf(str, 100, "X%6.2f", dev.getX() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT, str);
+        snprintf(str, 100, "Y%6.2f", dev.getY() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT+13, str);
+        snprintf(str, 100, "Z%6.2f", dev.getZ() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT+26, str);        
 
         u8g2.sendBuffer();
     }

@@ -83,7 +83,7 @@ public:
         receiveResponses();
         checkTimeout();
 
-        if(nextStatusRequestTime!=0 && millis() > nextStatusRequestTime) {
+        if(nextStatusRequestTime!=0 && int32_t(millis() - nextStatusRequestTime)>0 ) {
             requestStatusUpdate();
             nextStatusRequestTime = millis() + STATUS_REQUEST_INTERVAL;
         }
