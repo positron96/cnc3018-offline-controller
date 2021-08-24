@@ -61,7 +61,11 @@ void onButton(uint32_t pin, bool down) {
     if(!down) return;
     switch(pin) {
         case PIN_BT_CENTER: SerialCNC.print("?\n"); break;
-        case PIN_BT_STEP: SerialCNC.print(/*"$H\n"*/"$$\n"); break;
+        case PIN_BT_STEP: SerialCNC.print("$X\n"); break;
+        case PIN_BT_L: SerialCNC.print("$J=G91F1000X-1\n"); break;
+        case PIN_BT_R: SerialCNC.print("$J=G91F1000X1\n"); break;
+        case PIN_BT_UP: SerialCNC.print("$J=G91F1000Y1\n"); break;
+        case PIN_BT_DOWN: SerialCNC.print("$J=G91F1000Y-1\n"); break;
     }
 }
 
