@@ -33,13 +33,15 @@ The board features:
   64K Flash, 20K RAM
 * 128x64 OLED display with SSD1306 IC. 
   2-color, 16 rows yellow, rest cyan.
+  Connected via 4-wire software SPI.
 * Mini USB (no external crystal, so not datasheet-compliant).
 * Full size SD card socket. SPI interface is wired out.
 * 8-pin IDC connector for CNC machine. 
-  Has UART and USB detection pin 
+  Has 5V, GND, UART and USB detection pin 
   (when CNC is connected to PC via its own USB-UART, the controller indicates that and does not communicate over UART).
 * 8 buttons. 
-  Short MCU pin to ground, internal pullup required.
+  Buttons short MCU pin to ground, internal pullup required.
+* An unpopulated SWD socket
 
 image::MCU_SD_UART.svg[display,1000]
 image::Display_USB.svg[display,1000]
