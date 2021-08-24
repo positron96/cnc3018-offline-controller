@@ -2,5 +2,5 @@
 
 #include <Arduino.h>
 
-#define LOGF(...)   SerialUSB.printf(__VA_ARGS__)
-#define LOGLN(...)  SerialUSB.println(__VA_ARGS__)
+#define LOGF(...)   do{SerialUSB.printf(__VA_ARGS__);}while(0)
+#define LOGLN(...)  do{SerialUSB.println(__VA_ARGS__);}while(0)

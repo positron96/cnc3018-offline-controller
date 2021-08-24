@@ -1,5 +1,7 @@
 #include <U8g2lib.h>
 
+#include "devices/GCodeDevice.h"
+
 constexpr uint32_t PIN_LCD_CS = PA2; // not connected
 constexpr uint32_t PIN_LCD_RST = PB0;
 constexpr uint32_t PIN_LCD_DC = PB1;
@@ -32,6 +34,8 @@ constexpr uint32_t PIN_DET  =  PC13; ///< 0V=no USB on CNC, 1=CNC connected to U
 
 HardwareSerial &SerialCNC = Serial1;
 
+GrblDevice dev{&SerialCNC};
+
 void setup() {
     SerialUSB.begin(115200);
     SerialCNC.begin(115200);
@@ -49,52 +53,24 @@ void setup() {
     
     pinMode(PIN_DET, INPUT);
 
+    dev.begin();
+
 }
 
 constexpr int LCD_ROW1_HEIGHT = 16;
-
-char disp[3][100];
-uint8_t ndisp=0;
 
 
 void onButton(uint32_t pin, bool down) {
     if(!down) return;
     switch(pin) {
         case PIN_BT_CENTER: SerialCNC.print("?\n"); break;
-        case PIN_BT_STEP: SerialCNC.print("$X\n"); break;
-        case PIN_BT_L: SerialCNC.print("$J=G91F1000X-1\n"); break;
-        case PIN_BT_R: SerialCNC.print("$J=G91F1000X1\n"); break;
-        case PIN_BT_UP: SerialCNC.print("$J=G91F1000Y1\n"); break;
-        case PIN_BT_DOWN: SerialCNC.print("$J=G91F1000Y-1\n"); break;
+        case PIN_BT_STEP: dev.scheduleCommand("$X"); break;
+        case PIN_BT_L: dev.jog(0, -1, 500); break;
+        case PIN_BT_R: dev.jog(0, 1, 500); break;
+        case PIN_BT_UP: dev.jog(1, -1, 500); break;
+        case PIN_BT_DOWN: dev.jog(1, 1, 500); break;
     }
 }
-
-void receiveResponses() {
-
-    static const size_t MAX_LINE = 200; // M115 is far longer than 100
-    static char resp[MAX_LINE+1];
-    static size_t respLen;
-
-    while (SerialCNC.available()) {
-        char ch = (char)SerialCNC.read();
-        switch(ch) {
-            case '\n':
-            case '\r': break;
-            default: if(respLen<MAX_LINE) resp[respLen++] = ch;
-        }
-        if(ch=='\n') {
-            resp[respLen]=0;
-            //for(const auto &r: receivedLineHandlers) if(r) r(resp, respLen);
-            SerialUSB.println(resp);
-            //tryParseResponse(resp, respLen);
-            if(ndisp==3) { strncpy(disp[0], disp[1], 100); strncpy(disp[1], disp[2], 100); ndisp--;}
-            strncpy(disp[ndisp++], resp, 100);
-            respLen = 0;
-        }
-    }
-    
-}
-
 
 void loop() {
 
@@ -133,19 +109,22 @@ void loop() {
         snprintf(str, 100, "bt:%d", buttStates);
         u8g2.drawStr(64, 0, str);
 
-        for(int i=0; i<ndisp; i++)
-            u8g2.drawStr(5, LCD_ROW1_HEIGHT+13*i, disp[i]);
+        u8g2.drawGlyph(120, 0, !dev.isConnected() ? '-' : dev.isInPanic() ? '!' : '+');
+
+        snprintf(str, 100, "X:%3d", (int)dev.getX() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT, str);
+        snprintf(str, 100, "Y:%3d", (int)dev.getY() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT+13, str);
+        snprintf(str, 100, "Z:%3d", (int)dev.getZ() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT+26, str);        
 
         u8g2.sendBuffer();
     }
 
-    
-    receiveResponses();
 
     if(SerialUSB.available()) {
         while(SerialUSB.available()) {
             SerialCNC.write(SerialUSB.read());
         }
     }
+
+    dev.loop();
 
 }
