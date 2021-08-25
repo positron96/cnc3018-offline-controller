@@ -42,7 +42,6 @@ void setup() {
 
     u8g2.begin();
     //u8g2.setBusClock(600000);
-    u8g2.setFont(u8g2_font_8x13_tr);
     u8g2.setFontPosTop();
     u8g2.setFontMode(1);
     u8g2.setDrawColor(1);
@@ -68,8 +67,8 @@ void onButton(uint32_t pin, bool down) {
         case PIN_BT_STEP: dev.scheduleCommand("$X"); break;
         case PIN_BT_L: dev.jog(0, -1, 500); break;
         case PIN_BT_R: dev.jog(0, 1, 500); break;
-        case PIN_BT_UP: dev.jog(1, -1, 500); break;
-        case PIN_BT_DOWN: dev.jog(1, 1, 500); break;
+        case PIN_BT_UP: dev.jog(1, 1, 500); break;
+        case PIN_BT_DOWN: dev.jog(1, -1, 500); break;
         case PIN_BT_ZUP: dev.jog(2, 1, 500); break;
         case PIN_BT_ZDOWN: dev.jog(2, -1, 500); break;
     }
@@ -98,25 +97,32 @@ void loop() {
 
     static uint32_t lastRedraw, lastFps;
     static int frames, lastFrames;
-    if(millis()-lastRedraw > 100) {
+    if(millis()-lastRedraw > 200) {
         lastRedraw = millis();
 
         u8g2.clearBuffer();
         u8g2.setDrawColor(1);
 
+        const int sx=1;
+
+        u8g2.setFont(u8g2_font_nokiafc22_tr);
+
         char str[100];
-        snprintf(str, 100, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
-        u8g2.drawStr(5, 0, str);
+        //snprintf(str, 100, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
+        u8g2.drawStr(sx, -1, dev.getStatus().c_str() );
 
         //snprintf(str, 100, ");
-        snprintf(str, 100, "bt:%d", buttStates);
-        u8g2.drawStr(64, 0, str);
+        snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
+        u8g2.drawStr(sx, 7, str);
 
-        u8g2.drawGlyph(120, 0, !dev.isConnected() ? '-' : dev.isInPanic() ? '!' : '+');
+        u8g2.drawGlyph(115, 0, !dev.isConnected() ? '-' : dev.isInPanic() ? '!' : '+');
 
-        snprintf(str, 100, "X%6.2f", dev.getX() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT, str);
-        snprintf(str, 100, "Y%6.2f", dev.getY() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT+13, str);
-        snprintf(str, 100, "Z%6.2f", dev.getZ() );   u8g2.drawStr(1, LCD_ROW1_HEIGHT+26, str);        
+        //u8g2.setFont(u8g2_font_fub14_tr);
+        u8g2.setFont(u8g2_font_helvB14_tr);
+        
+        snprintf(str, 100, "X%6.2f", dev.getX() );   u8g2.drawStr(sx, LCD_ROW1_HEIGHT, str);
+        snprintf(str, 100, "Y%6.2f", dev.getY() );   u8g2.drawStr(sx, LCD_ROW1_HEIGHT+16, str);
+        snprintf(str, 100, "Z%6.2f", dev.getZ() );   u8g2.drawStr(sx, LCD_ROW1_HEIGHT+32, str);        
 
         u8g2.sendBuffer();
     }
