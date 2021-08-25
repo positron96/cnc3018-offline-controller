@@ -43,16 +43,16 @@
         }
 
         char* cmd  = curUnsentPriorityCmdLen!=0 ? &curUnsentPriorityCmd[0] :  &curUnsentCmd[0]; 
-        size_t * len = curUnsentPriorityCmdLen!=0 ? &curUnsentPriorityCmdLen : &curUnsentCmdLen ;
+        size_t &len = curUnsentPriorityCmdLen!=0 ? curUnsentPriorityCmdLen : curUnsentCmdLen ;
 
-        if( sentCounter->canPush(*len) ) {
-            sentCounter->push( cmd, *len );
-            printerSerial->write(cmd, *len);  
+        if( sentCounter->canPush(len) ) {
+            sentCounter->push( cmd, len );
+            printerSerial->write(cmd, len);  
             printerSerial->print('\n');
-            GD_DEBUGF("<  (f%3d,%3d) '%s'(len %d)\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, *len );
-            *len = 0;
+            GD_DEBUGF("<  (f%3d,%3d) '%s'(len %d)\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, len );
+            len = 0;
         } else {
-            //if(loadedNewCmd) GD_DEBUGF("<  Not sent, free lines: %d, free space: %d\n", sentQueue.getFreeLines() , sentQueue.getFreeBytes()  );
+            GD_DEBUGF("<  (f%3d,%3d) NO BUF: '%s'(len %d)\n", sentQueue.getFreeLines() , sentQueue.getFreeBytes(), cmd, len  );
         }
 
     }
@@ -85,7 +85,7 @@
             panic = false; // this is the first message after reset
         }        
         
-        GD_DEBUGF(" > (f%3d,%3d) '%s' \n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(),resp );
+        GD_DEBUGF(" > (f%3d,%3d) '%s'(len %d) \n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(),resp, len );
     }
 
     void mystrcpy(char* dst, const char* start, const char* end) {
