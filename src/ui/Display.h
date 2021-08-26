@@ -9,8 +9,6 @@
 
 
 #include "../devices/GCodeDevice.h"
-#include "../InetServer.h"
-#include "../Job.h"
 
 
 struct MenuItem {
@@ -27,34 +25,37 @@ struct MenuItem {
     }
 };
 
-enum class Button {
-    ENC_UP, ENC_DOWN, BT1, BT2, BT3
-};
-
 class Screen;
 
-class Display : public JobObserver, public DeviceObserver, public WebServerObserver {
+class Display : public DeviceObserver {
 public:
     static U8G2 &u8g2;
-    static bool buttonPressed[3];
-    static int encVal;
-    static int potVal[2];
-    static const int STATUS_BAR_HEIGHT = 9;
+    //static bool buttonPressed[3];
+    enum {
+        BT_ZDOWN = 0,
+        BT_ZUP,
+        BT_R,
+        BT_L,
+        BT_CENTER,
+        BT_UP,
+        BT_DOWN,
+        BT_STEP,
+        N_BUTTONS
+    } _butt;
+    //static constexpr int N_BUTTONS = 8;
+    static uint16_t buttStates;
+    static const int STATUS_BAR_HEIGHT = 16;
 
-    Display() { 
+
+
+    Display(): dirty{true} { 
         assert(inst==nullptr);
         inst=this; 
     }
 
     void setDirty(bool fdirty=true) { dirty=fdirty; }
 
-    void notification(JobStatusEvent e) override {
-        setDirty();
-    }
     void notification(const DeviceStatusEvent &e) override {
-        setDirty();
-    }
-    void notification(const WebServerStatusEvent &e) override {
         setDirty();
     }
 
@@ -81,9 +82,7 @@ private:
 
     void processInput();
 
-    void processEnc();
     void processButtons();
-    void processPot();   
 
     void drawStatusBar();
     void drawMenu() ;

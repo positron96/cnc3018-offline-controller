@@ -7,14 +7,13 @@
 #include <etl/vector.h>
 
 #include "../devices/GCodeDevice.h"
-#include "../InetServer.h"
-#include "../Job.h"
 
 #include "Display.h"
 
-#define S_DEBUGF(...)  { Serial.printf(__VA_ARGS__); }
-#define S_DEBUGFI(...)  { log_printf(__VA_ARGS__); }
-#define S_DEBUGS(s)  { Serial.println(s); }
+#include "../debug.h"
+
+#define S_DEBUGF   LOGF
+#define S_DEBUGS   LOGLN
 
 
 
@@ -37,9 +36,7 @@ protected:
 
     virtual void drawContents() = 0;
 
-    virtual void onButtonPressed(Button bt, int8_t arg) {};
-
-    virtual void onPotValueChanged(int pot, int val) {};
+    virtual void onButton(int bt, int8_t arg) {};
 
     //virtual void onMenuItemSelected(MenuItem & item) {};
 

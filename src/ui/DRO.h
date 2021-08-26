@@ -1,12 +1,10 @@
 #pragma once
 
-#include <ArduinoJson.h> 
 #include <etl/map.h>
 
 #include "Screen.h"
 
 #include "../devices/GCodeDevice.h"
-#include "../Job.h"
 
 
 /*
@@ -50,41 +48,7 @@ public:
     void enableRefresh(bool r) { nextRefresh = r?millis() : 0;  }
     bool isRefreshEnabled() { return nextRefresh!=0; }
 
-/*
-    void config(JsonObjectConst cfg) {
-        for (JsonPairConst kv : cfg) {
-            etl::map<String, String, 10> devMenu{};
-            S_DEBUGF("Device menu %s\n", kv.key().c_str() );
-            for (JsonPairConst cmd : kv.value().as<JsonObject>() ) {
-                devMenu[ String(cmd.key().c_str()) ] = cmd.value().as<String>();
-                S_DEBUGF(" %s=%s\n", cmd.key().c_str(), cmd.value().as<char*>()); 
-                allMenuItems[ String( kv.key().c_str() )] = devMenu;
-                if( devMenu.available()==0) break;
-            }
-            if( allMenuItems.available()==0) break;
-        }
-
-    }
-
-    void setDevice(GCodeDevice *dev) {
-        S_DEBUGF("setDevice %s\n", dev->getType() );
-        String t = dev->getType();
-        if( allMenuItems.find(t) == allMenuItems.end() ) {
-            S_DEBUGF("Could not find type %s\n", t.c_str() );
-            return;
-        }
-        devMenu = &allMenuItems[t];
-        for(auto r: *devMenu) {
-            S_DEBUGF("Adding menu %s\n", r.first.c_str() );
-            menuItems.push_back(r.first);
-            if(menuItems.available()==0) break;
-        }
-    } */
-
 private:
-    //etl::imap<String,String> * devMenu;
-
-    //etl::map<String, etl::map<String,String, 10>, 3> allMenuItems;
 
 protected:
 
@@ -103,7 +67,7 @@ protected:
             case 1 : return 'Y';
             case 2 : return 'Z';
         }
-        log_printf("Unknown axis\n");
+        S_DEBUGF("Unknown axis\n");
         return 0;
     }
 
@@ -114,24 +78,22 @@ protected:
             case 1: return 1;
             case 2: return 10;
         }
-        log_printf("Unknown multiplier\n");
+        S_DEBUGF("Unknown multiplier\n");
         return 1;
     }
 
-    void drawAxis(char axis, float v, int y) {
-        const int LEN=20;
-        char str[LEN];
+    void drawAxis(char axis, float v, int x, int y) {
+        static const int LEN=13;
+        static char str[LEN];
         
         snprintf(str, LEN, "%c% 8.3f", axis, v );
-        Display::u8g2.drawStr(1, y, str );
+        Display::u8g2.drawStr(x, y, str );
         //u8g2.drawGlyph();
     }
 
-    void drawContents() override;
+    void drawContents() = 0;
 
-    void onPotValueChanged(int pot, int v) override;
-
-    void onButtonPressed(Button bt, int8_t arg) override;
+    void onButton(int bt, int8_t arg) override;
 
 
 };
