@@ -51,8 +51,9 @@ void setup() {
     Display::getDisplay()->begin();
 
     Display::getDisplay()->setScreen(&dro); 
+    //dro.enableRefresh(false);
     dro.begin();
-
+    
     for(auto pin: buttPins) {
         pinMode(pin, INPUT_PULLUP);
     }
@@ -60,7 +61,8 @@ void setup() {
     pinMode(PIN_DET, INPUT);
 
     dev.begin();
-    dev.enableStatusUpdates();   
+    //dev.enableStatusUpdates(); 
+    
     dev.add_observer(*Display::getDisplay());
 
 }

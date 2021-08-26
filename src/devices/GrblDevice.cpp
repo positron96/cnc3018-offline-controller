@@ -45,6 +45,7 @@
         char* cmd  = curUnsentPriorityCmdLen!=0 ? &curUnsentPriorityCmd[0] :  &curUnsentCmd[0]; 
         size_t &len = curUnsentPriorityCmdLen!=0 ? curUnsentPriorityCmdLen : curUnsentCmdLen ;
 
+        cmd[len]=0;
         if( sentCounter->canPush(len) ) {
             sentCounter->push( cmd, len );
             printerSerial->write(cmd, len);  

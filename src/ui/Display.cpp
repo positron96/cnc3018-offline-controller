@@ -112,7 +112,7 @@ uint16_t Display::buttStates;
 
         GCodeDevice *dev = GCodeDevice::getDevice();
 
-        u8g2.setFont(u8g2_font_5x8_tr);
+        //u8g2.setFont(u8g2_font_5x8_tr);
         u8g2.setDrawColor(1);
 
         u8g2.setFont(u8g2_font_nokiafc22_tr);
@@ -146,7 +146,7 @@ uint16_t Display::buttStates;
 
 
         // line
-        u8g2.drawHLine(0, STATUS_BAR_HEIGHT-1, u8g2.getWidth() );
+        //u8g2.drawHLine(0, STATUS_BAR_HEIGHT-1, u8g2.getWidth() );
     }
 
 

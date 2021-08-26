@@ -22,6 +22,7 @@ using JogDist = int;
 
 class DRO: public Screen {
 public:
+    static constexpr uint16_t REFRESH_INTL = 500;
 
     DRO(): nextRefresh(1) {}
     
@@ -36,7 +37,7 @@ public:
     void loop() override {
         Screen::loop();
         if(nextRefresh!=0 && millis()>nextRefresh) {
-            nextRefresh = millis() + 500;
+            nextRefresh = millis() + REFRESH_INTL;
             GCodeDevice *dev = GCodeDevice::getDevice();
             if (dev!=nullptr) {
                 dev->requestStatusUpdate();
@@ -45,7 +46,7 @@ public:
         }
     }
 
-    void enableRefresh(bool r) { nextRefresh = r?millis() : 0;  }
+    void enableRefresh(bool r) { nextRefresh = r ? millis() : 0;  }
     bool isRefreshEnabled() { return nextRefresh!=0; }
 
 private:
@@ -56,7 +57,6 @@ protected:
     JogDist cDist;
     uint32_t nextRefresh;
     uint32_t lastJogTime;
-
     
     static char axisChar(const JogAxis &a) {
         switch(a) {
@@ -93,7 +93,7 @@ protected:
 
     void drawContents() = 0;
 
-    void onButton(int bt, int8_t arg) override;
+    void onButton(int bt, int8_t arg) = 0;
 
 
 };
