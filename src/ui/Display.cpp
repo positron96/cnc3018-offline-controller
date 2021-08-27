@@ -110,23 +110,31 @@ uint16_t Display::buttStates;
 
     void Display::drawStatusBar() {
 
-        GCodeDevice *dev = GCodeDevice::getDevice();
+        GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
 
         //u8g2.setFont(u8g2_font_5x8_tr);
         u8g2.setDrawColor(1);
 
         u8g2.setFont(u8g2_font_nokiafc22_tr);
 
-        char str[25];
+        const int LEN=25;
+
+        char str[LEN];
         //snprintf(str, 25, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
         if(dev==nullptr || !dev->isConnected()) {
-            snprintf(str, 25, "no conn");
+            snprintf(str, LEN, "no conn");
         } else {
-            if(dev->isInPanic()) snprintf(str, 25, "ALERT"); else {
-                snprintf(str, 25, "+");
+            if(dev->isInPanic()) {
+                snprintf(str, LEN, "ALERT"); 
+            } else if(dev->isLocked() ) {
+                snprintf(str, LEN, "LOCK");
+            } else {
+                snprintf(str, LEN, "conn");
             }
         }
         u8g2.drawStr(2, -1, str );
+
+        snprintf(str, LEN, dev->getStatus().c_str() );   u8g2.drawStr(2, 7, str);  
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);

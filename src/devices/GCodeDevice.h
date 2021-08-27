@@ -7,7 +7,6 @@
 
 #include "debug.h"
 
-
 //#define ADD_LINECOMMENTS
 
 #define GD_DEBUGF  LOGF
@@ -31,10 +30,9 @@ public:
     static GCodeDevice *getDevice();
     //static void setDevice(GCodeDevice *dev);
 
-    GCodeDevice(Stream * s, size_t priorityBufSize=0, size_t bufSize=0): printerSerial(s), connected(false)  {
-        buf0Len = bufSize;
-        buf1Len = priorityBufSize;
-
+    GCodeDevice(Stream * s): 
+        printerSerial(s), connected(false)
+    {
         assert(inst==nullptr);
         inst = this;
     }
@@ -46,22 +44,20 @@ public:
         connected=true; 
     };
 
-    virtual bool scheduleCommand(String cmd) {
-        return scheduleCommand(cmd.c_str(), cmd.length() );
-    };
-    virtual bool scheduleCommand(const char* cmd, size_t len) {
+
+    virtual bool scheduleCommand(const char* cmd, size_t len=0) {
         if(panic) return false;
+        if(len==0) len = strlen(cmd);
         if(len==0) return false;
         if(curUnsentCmdLen!=0) return false;
         memcpy(curUnsentCmd, cmd, len);
         curUnsentCmdLen = len;
         return true;
     };
-    virtual bool schedulePriorityCommand(String cmd) { 
-        return schedulePriorityCommand(cmd.c_str(), cmd.length() );
-    };
-    virtual bool schedulePriorityCommand( const char* cmd, size_t len) {
+
+    virtual bool schedulePriorityCommand( const char* cmd, size_t len=0) {
         //if(panic) return false;
+        if(len==0) len = strlen(cmd);
         if(len==0) return false;
         if(curUnsentPriorityCmdLen!=0) return false;
         memcpy(curUnsentPriorityCmd, cmd, len);
@@ -106,8 +102,6 @@ public:
         else nextStatusRequestTime = 0;
     }
 
-    String getType() { return typeStr; }
-
     String getDescrption() { return desc; }
 
     size_t getQueueLength() {  
@@ -128,8 +122,6 @@ protected:
     uint32_t serialRxTimeout;
     bool connected;
     String desc;
-    String typeStr;
-    size_t buf0Len, buf1Len;
     bool canTimeout;
 
     static const size_t MAX_GCODE_LINE = 96;
@@ -194,12 +186,15 @@ private:
 class GrblDevice : public GCodeDevice {
 public:
 
-    GrblDevice(Stream * s): GCodeDevice(s, 20, 100) { 
-        typeStr = "grbl";
+    GrblDevice(Stream * s, int lockedPin): 
+        GCodeDevice(s), txLocked(false), pinLocked(lockedPin)
+    { 
         sentCounter = &sentQueue; 
         canTimeout = false;
+        pinMode(lockedPin, INPUT);
+        
     };
-    GrblDevice() : GCodeDevice() {typeStr = "grbl"; sentCounter = &sentQueue; }
+    GrblDevice() : GCodeDevice(), pinLocked(0) { sentCounter = &sentQueue; }
 
     virtual ~GrblDevice() {}
 
@@ -209,8 +204,9 @@ public:
 
     virtual void begin() {
         GCodeDevice::begin();
+        readLockedStatus();
         schedulePriorityCommand("$I");
-        schedulePriorityCommand("?");
+        requestStatusUpdate();
     }
 
     virtual void reset() {
@@ -220,8 +216,25 @@ public:
         schedulePriorityCommand(&c, 1);
     }
 
-    virtual void requestStatusUpdate() override {        
-        schedulePriorityCommand("?");
+    virtual void loop() override {
+        readLockedStatus();
+        GCodeDevice::loop();
+    }
+
+    virtual void requestStatusUpdate() override {   
+        char c = '?';
+        schedulePriorityCommand(&c, 1);  
+    }
+
+    virtual bool schedulePriorityCommand( const char* cmd, size_t len=0) override {
+        if(txLocked) return false;
+        if(len==0) len = strlen(cmd);
+        if(isCmdRealtime(cmd, len) ) {
+            printerSerial->write(cmd, len);  
+            GD_DEBUGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0] );
+            return true;
+        }
+        return GCodeDevice::schedulePriorityCommand(cmd, len);
     }
 
     /// WPos = MPos - WCO
@@ -233,6 +246,8 @@ public:
     String & getStatus() { return status; }
     String & getLastResponse() { return lastResponse; }
 
+    bool isLocked() { return txLocked; }
+
 protected:
     void trySendCommand() override;
 
@@ -241,10 +256,14 @@ protected:
 private:
     
     SimpleCounter<15,128> sentQueue;
+
+    const int pinLocked; ///< pin for reading woodpecker locked status
     
     String lastResponse;
 
     String status;
+
+    bool txLocked; ///< woodpecker board has a pin that indicates if it's connected via USB. If it is, UART is occupied by USB_UART.
 
     //WPos = MPos - WCO
     float ofsX,ofsY,ofsZ;
@@ -252,7 +271,13 @@ private:
 
     void parseGrblStatus(char* v);
 
-    bool isCmdRealtime(char* data, size_t len);
+    bool isCmdRealtime(const char* data, size_t len);
+
+    void readLockedStatus() {
+        bool t = digitalRead(pinLocked) == HIGH;
+        if(t!=txLocked) notify_observers(DeviceStatusEvent{10});
+        txLocked = t;
+    }
 
 };
 

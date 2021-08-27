@@ -12,7 +12,7 @@
         
     }
 
-    bool GrblDevice::isCmdRealtime(char* data, size_t len) {
+    bool GrblDevice::isCmdRealtime(const char* data, size_t len) {
         if (len != 1) return false;
         char c = data[0];
         switch(c) {
@@ -35,12 +35,14 @@
 
     void GrblDevice::trySendCommand() {
 
-        if(isCmdRealtime(curUnsentPriorityCmd, curUnsentPriorityCmdLen) ) {
-            printerSerial->write(curUnsentPriorityCmd, curUnsentPriorityCmdLen);  
-            GD_DEBUGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), curUnsentPriorityCmd[0] );
-            curUnsentPriorityCmdLen = 0;
-            return;
-        }
+        if(txLocked) return;
+
+        // if(isCmdRealtime(curUnsentPriorityCmd, curUnsentPriorityCmdLen) ) {
+        //     printerSerial->write(curUnsentPriorityCmd, curUnsentPriorityCmdLen);  
+        //     GD_DEBUGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), curUnsentPriorityCmd[0] );
+        //     curUnsentPriorityCmdLen = 0;
+        //     return;
+        // }
 
         char* cmd  = curUnsentPriorityCmdLen!=0 ? &curUnsentPriorityCmd[0] :  &curUnsentCmd[0]; 
         size_t &len = curUnsentPriorityCmdLen!=0 ? curUnsentPriorityCmdLen : curUnsentCmdLen ;

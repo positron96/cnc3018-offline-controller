@@ -43,7 +43,7 @@
         u8g2.setDrawColor(1);
 
         u8g2.setFont(u8g2_font_nokiafc22_tr);
-        snprintf(str, LEN, dev->getStatus().c_str() );   u8g2.drawStr(2, 7, str);  
+        
         u8g2.drawGlyph(64, 7, cMode==Mode::AXES ? 'M' : 'S');  
 
         u8g2.setFont(u8g2_font_7x13B_tr );
@@ -61,7 +61,7 @@
 
         snprintf(str, LEN, "S%d", dev->getSpindleVal() );   u8g2.drawStr(70, sy, str);
         snprintf(str, LEN, "F%d", dev->getFeed() );   u8g2.drawStr(70, sy+13, str);  
-                
+
     };
 
     

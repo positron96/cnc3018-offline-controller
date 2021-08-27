@@ -34,7 +34,7 @@ constexpr uint32_t PIN_DET  =  PC13; ///< 0V=no USB on CNC, 1=CNC connected to U
 
 HardwareSerial &SerialCNC = Serial1;
 
-GrblDevice dev{&SerialCNC};
+GrblDevice dev{&SerialCNC, PIN_DET};
 
 Display display;
 GrblDRO dro;
@@ -58,8 +58,6 @@ void setup() {
         pinMode(pin, INPUT_PULLUP);
     }
     
-    pinMode(PIN_DET, INPUT);
-
     dev.begin();
     //dev.enableStatusUpdates(); 
     
