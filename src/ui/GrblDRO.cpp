@@ -60,16 +60,15 @@
         snprintf(str, LEN, "Z%8.3f", dev->getZ() );   u8g2.drawStr(sx, sy+26, str);
 
         snprintf(str, LEN, "S%d", dev->getSpindleVal() );   u8g2.drawStr(70, sy, str);
-        snprintf(str, LEN, "F%d", dev->getFeed() );   u8g2.drawStr(70, sy+13, str);  
+        snprintf(str, LEN, "F%d", JOG_FEEDS[cFeed] );   u8g2.drawStr(70, sy+13, str);  
+        snprintf(str, LEN, JOG_DISTS[cDist]<1?"d %.1f":"d %.0f", JOG_DISTS[cDist] );   u8g2.drawStr(70, sy+26, str);  
 
     };
 
     
     void GrblDRO::onButton(int bt, int8_t arg) {
-        GCodeDevice *dev = GCodeDevice::getDevice();
-        if(dev==nullptr) {
-            return;
-        }
+        GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
+        if(dev==nullptr) return;
         if(!arg) return;
         if(bt==Display::BT_CENTER) {
             //dev->schedulePriorityCommand("?"); 
@@ -78,23 +77,39 @@
             dev->scheduleCommand("$X"); 
         } else {
             if(cMode == Mode::AXES) {
+
+                float d = JOG_DISTS[cDist];
+                int f = JOG_FEEDS[cFeed];
+                //if( lastJogTime!=0) { f = d / (millis()-lastJogTime) * 1000*60; };
+                //if(f<500) f=500;
+                //S_DEBUGF("jog af %d, dt=%d ms, delta=%d\n", (int)f, millis()-lastJog, arg);
+                //lastJogTime = millis();
+
                 switch(bt) {              
-                    case Display::BT_L: dev->jog(0, -1, 500); break;
-                    case Display::BT_R: dev->jog(0, 1, 500); break;
-                    case Display::BT_UP: dev->jog(1, 1, 500); break;
-                    case Display::BT_DOWN: dev->jog(1, -1, 500); break;
-                    case Display::BT_ZUP: dev->jog(2, 1, 500); break;
-                    case Display::BT_ZDOWN: dev->jog(2, -1, 500); break;
+                    case Display::BT_L: dev->jog(0, -d, f); break;
+                    case Display::BT_R: dev->jog(0, d, f); break;
+                    case Display::BT_UP: dev->jog(1, d, f); break;
+                    case Display::BT_DOWN: dev->jog(1, -d, f); break;
+                    case Display::BT_ZUP: dev->jog(2, d, f); break;
+                    case Display::BT_ZDOWN: dev->jog(2, -d, f); break;
                     default: break;
                 }
             } else {
                 switch(bt) {
-                    case Display::BT_UP: dev->scheduleCommand("F1000"); break;
-                    case Display::BT_DOWN: dev->scheduleCommand("F0"); break;
+                    case Display::BT_UP: 
+                        if(cDist<N_JOG_DISTS-1) cDist++;
+                        break;
+                    case Display::BT_DOWN: 
+                        if(cDist>0) cDist--;
+                        break;
                     case Display::BT_R: dev->scheduleCommand("M3 S255"); break;
                     case Display::BT_L: dev->scheduleCommand("M5"); break;
                     case Display::BT_ZDOWN:
-                    case Display::BT_ZUP: dev->schedulePriorityCommand("?");  break;
+                        if(cFeed>0)cFeed--;
+                        break;
+                    case Display::BT_ZUP: //dev->schedulePriorityCommand("?");  break;
+                        if(cFeed<N_JOG_FEEDS-1) cFeed++;
+                        break;
                 }
             }
         }

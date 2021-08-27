@@ -134,7 +134,8 @@ uint16_t Display::buttStates;
         }
         u8g2.drawStr(2, -1, str );
 
-        snprintf(str, LEN, dev->getStatus().c_str() );   u8g2.drawStr(2, 7, str);  
+        snprintf(str, LEN, dev->getStatus().c_str() ); 
+        u8g2.drawStr(2, 7, str);  
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);

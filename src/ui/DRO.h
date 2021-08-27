@@ -24,7 +24,7 @@ class DRO: public Screen {
 public:
     static constexpr uint16_t REFRESH_INTL = 500;
 
-    DRO(): nextRefresh(1) {}
+    DRO(): nextRefresh{1}, cDist{0}, cFeed{0} {}
     
     void begin() override {
         /*
@@ -52,9 +52,12 @@ public:
 private:
 
 protected:
-
-    JogAxis cAxis;
+    constexpr static float JOG_DISTS[] = {0.1, 1, 5, 10, 50};
+    constexpr static size_t N_JOG_DISTS = sizeof(JOG_DISTS);
     JogDist cDist;
+    constexpr static int JOG_FEEDS[] = {50,100,500,1000,2000};
+    constexpr static size_t N_JOG_FEEDS = sizeof(JOG_FEEDS);
+    size_t cFeed;
     uint32_t nextRefresh;
     uint32_t lastJogTime;
     
@@ -71,16 +74,6 @@ protected:
         return 0;
     }
 
-
-    static float distVal(const JogDist &a) {
-        switch(a) {
-            case 0: return 0.1;
-            case 1: return 1;
-            case 2: return 10;
-        }
-        S_DEBUGF("Unknown multiplier\n");
-        return 1;
-    }
 
     void drawAxis(char axis, float v, int x, int y) {
         static const int LEN=13;
