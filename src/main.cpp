@@ -48,9 +48,9 @@ void setup() {
     _u8g2.setFontMode(1);
     _u8g2.setDrawColor(1);
 
-    Display::getDisplay()->begin();
+    display.begin();
 
-    Display::getDisplay()->setScreen(&dro); 
+    display.setScreen(&dro); 
     //dro.enableRefresh(false);
     dro.begin();
     
@@ -71,9 +71,10 @@ void loop() {
 
     if( int32_t(millis() - nextRead) > 0) {
         for(int i=0; i<N_BUTT; i++) {
-            bitWrite(Display::getDisplay()->buttStates, i, (digitalRead(buttPins[i])==0 ? 1:0) );
+            bitWrite(display.buttStates, i, (digitalRead(buttPins[i])==0 ? 1:0) );
         }
-        /*if(changed!=0)*/ nextRead = millis() + 10;
+        display.processInput();
+        nextRead = millis() + 10;
     }    
 
     // static uint32_t lastRedraw, lastFps;

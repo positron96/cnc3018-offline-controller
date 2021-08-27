@@ -26,7 +26,6 @@ uint16_t Display::buttStates;
 
 
     void Display::loop() {
-        processInput();
         if(cScreen!=nullptr) cScreen->loop();
         draw();
     }
@@ -49,17 +48,22 @@ uint16_t Display::buttStates;
 
 
     void Display::processButtons() {
-        static uint32_t nextRead;
-        static decltype(buttStates) prevStates = 0;
         
         decltype(buttStates) changed = buttStates ^ prevStates;
         if(!changed) return;
 
         if (cScreen == nullptr) return;
         for(int i=0; i<N_BUTTONS; i++) {
+            bool down = bitRead(buttStates, i);
             if(bitRead(changed, i) ) {
-                cScreen->onButton(i, bitRead(buttStates, i));
-                dirty = true;
+                cScreen->onButton(i, down ? ButtonEvent::DOWN : ButtonEvent::UP);
+                holdCounter[i] = 0;
+            } else if(down) {
+                holdCounter[i]++;
+                if(holdCounter[i] == HOLD_COUNT) {
+                    cScreen->onButton(i, ButtonEvent::HOLD);
+                    holdCounter[i] = 0;
+                }
             }
         }
         prevStates = buttStates;

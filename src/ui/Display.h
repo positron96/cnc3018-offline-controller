@@ -44,7 +44,12 @@ public:
     } _butt;
     //static constexpr int N_BUTTONS = 8;
     static uint16_t buttStates;
-    static const int STATUS_BAR_HEIGHT = 16;
+    static constexpr int STATUS_BAR_HEIGHT = 16;
+
+    static constexpr int HOLD_COUNT = 50; // 500 ms
+    enum class ButtonEvent {
+        DOWN, UP, HOLD
+    };
 
 
 
@@ -69,6 +74,7 @@ public:
 
     static Display *getDisplay();
 
+    void processInput();
 
 private:
 
@@ -80,7 +86,9 @@ private:
 
     int selMenuItem=0;
 
-    void processInput();
+    uint32_t nextRead;
+    decltype(buttStates) prevStates;
+    int16_t holdCounter[N_BUTTONS];
 
     void processButtons();
 

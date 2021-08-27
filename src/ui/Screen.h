@@ -36,7 +36,7 @@ protected:
 
     virtual void drawContents() = 0;
 
-    virtual void onButton(int bt, int8_t arg) {};
+    virtual void onButton(int bt, Display::ButtonEvent arg) {};
 
     //virtual void onMenuItemSelected(MenuItem & item) {};
 

@@ -66,52 +66,100 @@
     };
 
     
-    void GrblDRO::onButton(int bt, int8_t arg) {
+    void GrblDRO::onButton(int bt, Display::ButtonEvent evt) {
+        
         GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
         if(dev==nullptr) return;
-        if(!arg) return;
+
+        S_DEBUGF("GrblDRO::onButton(%d,%d)\n", bt, (int)evt);
+        
         if(bt==Display::BT_CENTER) {
-            //dev->schedulePriorityCommand("?"); 
-            if(cMode==Mode::AXES) cMode = Mode::SPINDLE; else cMode = Mode::AXES;
-        } else if (bt==Display::BT_STEP) {
-            dev->scheduleCommand("$X"); 
-        } else {
-            if(cMode == Mode::AXES) {
-
-                float d = JOG_DISTS[cDist];
-                int f = JOG_FEEDS[cFeed];
-                //if( lastJogTime!=0) { f = d / (millis()-lastJogTime) * 1000*60; };
-                //if(f<500) f=500;
-                //S_DEBUGF("jog af %d, dt=%d ms, delta=%d\n", (int)f, millis()-lastJog, arg);
-                //lastJogTime = millis();
-
-                switch(bt) {              
-                    case Display::BT_L: dev->jog(0, -d, f); break;
-                    case Display::BT_R: dev->jog(0, d, f); break;
-                    case Display::BT_UP: dev->jog(1, d, f); break;
-                    case Display::BT_DOWN: dev->jog(1, -d, f); break;
-                    case Display::BT_ZUP: dev->jog(2, d, f); break;
-                    case Display::BT_ZDOWN: dev->jog(2, -d, f); break;
-                    default: break;
+            switch(evt) {
+                case Evt::DOWN: {
+                    cMode = cMode==Mode::AXES ? Mode::SPINDLE : Mode::AXES;
+                    buttonWasPressedWithShift = false;
+                } 
+                break;
+                case Evt::UP: {
+                    if(buttonWasPressedWithShift) { cMode = cMode==Mode::AXES ? Mode::SPINDLE : Mode::AXES; }
                 }
-            } else {
-                switch(bt) {
-                    case Display::BT_UP: 
-                        if(cDist<N_JOG_DISTS-1) cDist++;
-                        break;
-                    case Display::BT_DOWN: 
-                        if(cDist>0) cDist--;
-                        break;
-                    case Display::BT_R: dev->scheduleCommand("M3 S255"); break;
-                    case Display::BT_L: dev->scheduleCommand("M5"); break;
-                    case Display::BT_ZDOWN:
-                        if(cFeed>0)cFeed--;
-                        break;
-                    case Display::BT_ZUP: //dev->schedulePriorityCommand("?");  break;
-                        if(cFeed<N_JOG_FEEDS-1) cFeed++;
-                        break;
-                }
+                break;
             }
+            setDirty();
+            return;
+        } 
+        
+        if(evt==Evt::DOWN) buttonWasPressedWithShift = true;
+
+        if (bt==Display::BT_STEP && evt==Evt::DOWN) {
+            dev->scheduleCommand("$X"); 
+            return;
+        } 
+
+        if(cMode == Mode::AXES) {
+            onButtonAxes(bt, evt);
+        } else {
+            onButtonShift(bt, evt);
         }
         
     };
+
+    void GrblDRO::onButtonAxes(int bt, Evt evt) {
+        if(evt==Evt::DOWN || evt==Evt::HOLD) {
+            GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
+
+            int axis=-1;
+            float d = JOG_DISTS[cDist];
+            int f = JOG_FEEDS[cFeed];
+
+            switch(bt) {              
+                case Display::BT_L:     axis=0; d = -d; break;
+                case Display::BT_R:     axis=0; break;
+                case Display::BT_UP:    axis=1; break;
+                case Display::BT_DOWN:  axis=1; d = -d; break;
+                case Display::BT_ZUP:   axis=2; break;
+                case Display::BT_ZDOWN: axis=2; d = -d; break;
+                default: break;
+            }
+            if(axis!=-1) {
+                dev->jog(axis, d, f);
+                setDirty();
+            }
+        }
+    }
+
+    void GrblDRO::onButtonShift(int bt, Evt evt) {
+        GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
+
+        if(! (evt==Evt::DOWN || evt==Evt::HOLD) ) return;
+
+        switch(bt) {
+            case Display::BT_UP: 
+                if(cDist<N_JOG_DISTS-1) cDist++;
+                break;
+            case Display::BT_DOWN: 
+                if(cDist>0) cDist--;
+                break;
+            case Display::BT_L: 
+            case Display::BT_R:  {
+                if(bt==Display::BT_L && cSpindleVal<N_SPINDLE_VALS-1) cSpindleVal++;
+                if(bt==Display::BT_R && cSpindleVal>0) cSpindleVal--;
+                int v = SPINDLE_VALS[cSpindleVal];
+                if(v!=0) {
+                    char t[15];
+                    snprintf(t, 15, "M3 S%d", v);
+                    dev->scheduleCommand(t);
+                } else {
+                    dev->scheduleCommand("M5"); 
+                }
+                break;
+            }
+            case Display::BT_ZDOWN:
+                if(cFeed>0)cFeed--;
+                break;
+            case Display::BT_ZUP: //dev->schedulePriorityCommand("?");  break;
+                if(cFeed<N_JOG_FEEDS-1) cFeed++;
+                break;
+        }
+        
+    }

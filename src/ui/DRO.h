@@ -58,6 +58,9 @@ protected:
     constexpr static int JOG_FEEDS[] = {50,100,500,1000,2000};
     constexpr static size_t N_JOG_FEEDS = sizeof(JOG_FEEDS);
     size_t cFeed;
+    constexpr static int SPINDLE_VALS[] = {0,1,50,100,255};
+    constexpr static size_t N_SPINDLE_VALS = sizeof(JOG_FEEDS);
+    size_t cSpindleVal;
     uint32_t nextRefresh;
     uint32_t lastJogTime;
     
@@ -86,7 +89,7 @@ protected:
 
     void drawContents() = 0;
 
-    void onButton(int bt, int8_t arg) = 0;
+    void onButton(int bt, Display::ButtonEvent arg) = 0;
 
 
 };
