@@ -40,28 +40,36 @@
 
         U8G2 &u8g2 = Display::u8g2;
 
-        u8g2.setDrawColor(1);
-
-        u8g2.setFont(u8g2_font_nokiafc22_tr);
         
-        u8g2.drawGlyph(64, 7, cMode==Mode::AXES ? 'M' : 'S');  
+
+        //u8g2.setFont(u8g2_font_nokiafc22_tr);
+        //u8g2.drawGlyph(64, 7, cMode==Mode::AXES ? 'M' : 'S');  
 
         u8g2.setFont(u8g2_font_7x13B_tr );
 
         int sx = 2;
-        int sy = Display::STATUS_BAR_HEIGHT+5;
+        int sy = Display::STATUS_BAR_HEIGHT+1, sx2=72;
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);
         //u8g2.drawGlyph(115, 0, !dev.isConnected() ? '-' : dev.isInPanic() ? '!' : '+' );
 
+        u8g2.setDrawColor(1);
+        u8g2.drawFrame((cMode==Mode::AXES ? sx : sx2)-2,  sy-1, cMode==Mode::AXES?70:50, 13*3+1);
+
+        //u8g2.setDrawColor(1);
+
         snprintf(str, LEN, "X%8.3f", dev->getX() );   u8g2.drawStr(sx, sy, str);
         snprintf(str, LEN, "Y%8.3f", dev->getY() );   u8g2.drawStr(sx, sy+13, str);
         snprintf(str, LEN, "Z%8.3f", dev->getZ() );   u8g2.drawStr(sx, sy+26, str);
 
-        snprintf(str, LEN, "S%d", dev->getSpindleVal() );   u8g2.drawStr(70, sy, str);
-        snprintf(str, LEN, "F%d", JOG_FEEDS[cFeed] );   u8g2.drawStr(70, sy+13, str);  
-        snprintf(str, LEN, JOG_DISTS[cDist]<1?"d %.1f":"d %.0f", JOG_DISTS[cDist] );   u8g2.drawStr(70, sy+26, str);  
+        sx2 += 5;
+        snprintf(str, LEN, "S %d", dev->getSpindleVal() );   
+        u8g2.drawStr(sx2, sy, str);
+        snprintf(str, LEN, "F %d", JOG_FEEDS[cFeed] );   
+        u8g2.drawStr(sx2, sy+13, str);  
+        snprintf(str, LEN, JOG_DISTS[cDist]<1?"D %.1f":"d %.0f", JOG_DISTS[cDist] );   
+        u8g2.drawStr(sx2, sy+26, str);  
 
     };
 

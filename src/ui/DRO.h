@@ -53,10 +53,10 @@ private:
 
 protected:
     constexpr static float JOG_DISTS[] = {0.1, 1, 5, 10, 50};
-    constexpr static size_t N_JOG_DISTS = sizeof(JOG_DISTS);
+    constexpr static size_t N_JOG_DISTS = sizeof(JOG_DISTS)/sizeof(JOG_DISTS[0]);
     JogDist cDist;
     constexpr static int JOG_FEEDS[] = {50,100,500,1000,2000};
-    constexpr static size_t N_JOG_FEEDS = sizeof(JOG_FEEDS);
+    constexpr static size_t N_JOG_FEEDS = sizeof(JOG_FEEDS)/sizeof(JOG_FEEDS[0]);
     size_t cFeed;
     constexpr static int SPINDLE_VALS[] = {0,1,50,100,255};
     constexpr static size_t N_SPINDLE_VALS = sizeof(JOG_FEEDS);
