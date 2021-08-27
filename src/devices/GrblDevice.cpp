@@ -1,6 +1,18 @@
 #include "GCodeDevice.h"
 
 
+    void GrblDevice::sendProbe(Stream &serial) {
+        serial.print("\n$I\n");
+    }
+
+    bool GrblDevice::checkProbeResponse(const String v) {
+        if(v.indexOf("[VER:")!=-1 ) {
+            GD_DEBUGS("Detected GRBL device");
+            return true;
+        }
+    }
+
+
     bool GrblDevice::jog(uint8_t axis, float dist, int feed) {
         constexpr static char AXIS[] = {'X', 'Y', 'Z'};
         char msg[81]; snprintf(msg, 81, "$J=G91 F%d %c%.3f", feed, AXIS[axis], dist);

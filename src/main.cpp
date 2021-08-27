@@ -77,7 +77,7 @@ void loop() {
         nextRead = millis() + 10;
     }    
 
-    Display::getDisplay()->loop();
+    display.loop();
 
 
     if(SerialUSB.available()) {

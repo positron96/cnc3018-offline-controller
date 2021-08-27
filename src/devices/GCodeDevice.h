@@ -248,6 +248,9 @@ public:
 
     bool isLocked() { return txLocked; }
 
+    void sendProbe(Stream &serial);
+    bool checkProbeResponse(const String s);
+
 protected:
     void trySendCommand() override;
 
@@ -284,30 +287,23 @@ private:
 
 
 
-// String readStringUntil(Stream &PrinterSerial, char terminator, size_t timeout);
-// String readString(Stream &PrinterSerial, size_t timeout, size_t timeout2=100);
+String readStringUntil(Stream &PrinterSerial, char terminator, size_t timeout);
+String readString(Stream &PrinterSerial, size_t timeout, size_t timeout2=100);
 
-// class DeviceDetector {
-// public:
+class DeviceDetector {
+public:
 
-//     constexpr static int N_TYPES = 2;
+    constexpr static int N_TYPES = 1;
+    constexpr static int N_SERIAL_BAUDS = 3;
+    static constexpr uint32_t serialBauds[] = { 115200, 250000, 57600 };
 
-//     constexpr static int N_SERIAL_BAUDS = 3;
+    static GCodeDevice* detectPrinter(HardwareSerial &PrinterSerial);
 
-//     static const uint32_t serialBauds[];   // Marlin valid bauds (removed very low bauds; roughly ordered by popularity to speed things up)
+    static GCodeDevice* detectPrinterAttempt(HardwareSerial &PrinterSerial, uint32_t speed, uint8_t type);
 
-//     static GCodeDevice* detectPrinter(HardwareSerial &PrinterSerial);
+    static uint32_t serialBaud;    
 
-//     static GCodeDevice* detectPrinterAttempt(HardwareSerial &PrinterSerial, uint32_t speed, uint8_t type);
-
-//     static uint32_t serialBaud;    
-
-// private:
-//     static void sendProbe(uint8_t i, Stream &serial);
-
-//     static GCodeDevice* checkProbe(uint8_t i, String v, Stream &serial) ;
-
-// };
+};
 
 
 bool startsWith(const char *str, const char *pre);
