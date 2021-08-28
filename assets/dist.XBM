@@ -1,0 +1,4 @@
+#define dist_width 7
+#define dist_height 5
+static char dist_bits[] = {
+  0x41, 0x55, 0x7F, 0x55, 0x41, };

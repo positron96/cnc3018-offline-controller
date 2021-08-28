@@ -48,7 +48,7 @@ public:
 
     static constexpr int HOLD_COUNT = 50; // 500 ms
     enum class ButtonEvent {
-        DOWN, UP, HOLD
+        UP, DOWN, HOLD
     };
 
 

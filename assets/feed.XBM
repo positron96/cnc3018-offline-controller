@@ -1,0 +1,4 @@
+#define feed_width 6
+#define feed_height 5
+static char feed_bits[] = {
+  0x0D, 0x1B, 0x37, 0x1B, 0x0D, };

@@ -30,6 +30,14 @@
         // } );
     };
 
+#include "../assets/arrows_lr.XBM"
+#include "../assets/arrows_ud.XBM"
+#include "../assets/arrows_zud.XBM"
+
+#include "../assets/dist.XBM"
+#include "../assets/feed.XBM"
+#include "../assets/spindle.XBM"
+
 
     void GrblDRO::drawContents() {
         const int LEN = 20;
@@ -54,19 +62,37 @@
         //u8g2.drawGlyph(115, 0, !dev.isConnected() ? '-' : dev.isInPanic() ? '!' : '+' );
 
         u8g2.setDrawColor(1);
-        u8g2.drawFrame((cMode==Mode::AXES ? sx : sx2)-2,  sy-3, cMode==Mode::AXES?70:50, lh*3+4);
+        if(cMode==Mode::AXES) {
+            u8g2.drawFrame(sx-2,  sy-3, 70, lh*3+4);
+        } else {
+            int t=43;
+            u8g2.drawFrame(sx2-2,  sy-3, 54, lh*3+4);
+            u8g2.drawBox(sx2+t, sy-3, 9, lh*3+4);
+            u8g2.setBitmapMode(1);
+            u8g2.setDrawColor(2);
+            t+=1;
+            u8g2.drawXBM(sx2+t, sy, arrows_zud_width,arrows_zud_height, (uint8_t*)arrows_zud_bits);
+            u8g2.drawXBM(sx2+t, sy+lh, arrows_ud_width,arrows_ud_height, (uint8_t*)arrows_ud_bits);
+            u8g2.drawXBM(sx2+t, sy+lh*2+3, arrows_lr_width,arrows_lr_height, (uint8_t*)arrows_lr_bits);
+            
+        }
+        
 
-        sx+=2;
-        snprintf(str, LEN, "X%8.3f", dev->getX() );   u8g2.drawStr(sx, sy, str);
-        snprintf(str, LEN, "Y%8.3f", dev->getY() );   u8g2.drawStr(sx, sy+lh, str);
-        snprintf(str, LEN, "Z%8.3f", dev->getZ() );   u8g2.drawStr(sx, sy+lh*2, str);
+        sx+=6;
+        snprintf(str, LEN, "X%7.2f", dev->getX() );   u8g2.drawStr(sx, sy, str);
+        snprintf(str, LEN, "Y%7.2f", dev->getY() );   u8g2.drawStr(sx, sy+lh, str);
+        snprintf(str, LEN, "Z%7.2f", dev->getZ() );   u8g2.drawStr(sx, sy+lh*2, str);
 
-        sx2 += 5;
-        snprintf(str, LEN, "S %d", dev->getSpindleVal() );   
+        sx2 +=2;
+        u8g2.drawXBM(sx2+1, sy,      spindle_width, spindle_height, (uint8_t*)spindle_bits);
+        u8g2.drawXBM(sx2, sy+lh+3, feed_width, feed_height, (uint8_t*)feed_bits);
+        u8g2.drawXBM(sx2, sy+lh*2+3, dist_width, dist_height, (uint8_t*)dist_bits);
+        sx2 += 10;
+        snprintf(str, LEN, "%d", dev->getSpindleVal() );   
         u8g2.drawStr(sx2, sy, str);
-        snprintf(str, LEN, "F %d", JOG_FEEDS[cFeed] );   
-        u8g2.drawStr(sx2, sy+lh, str);  
-        snprintf(str, LEN, JOG_DISTS[cDist]<1?"D %.1f":"d %.0f", JOG_DISTS[cDist] );   
+        snprintf(str, LEN, "%d", JOG_FEEDS[cFeed] );   
+        u8g2.drawStr(sx2, sy+lh, str); 
+        snprintf(str, LEN, JOG_DISTS[cDist]<1?"%.1f":"%.0f", JOG_DISTS[cDist] );   
         u8g2.drawStr(sx2, sy+lh*2, str);  
 
     };
@@ -97,7 +123,7 @@
         
         if(evt==Evt::DOWN) buttonWasPressedWithShift = true;
 
-        if (bt==Display::BT_STEP && evt==Evt::DOWN) {
+        if (bt==Display::BT_STEP && evt==Evt::HOLD) {
             dev->scheduleCommand("$X"); 
             return;
         } 
@@ -140,16 +166,24 @@
         if(! (evt==Evt::DOWN || evt==Evt::HOLD) ) return;
 
         switch(bt) {
-            case Display::BT_UP: 
-                if(cDist<N_JOG_DISTS-1) cDist++;
-                break;
-            case Display::BT_DOWN: 
-                if(cDist>0) cDist--;
+            case Display::BT_R: 
+                if(evt==Evt::HOLD) cDist=N_JOG_DISTS-1;
+                else if(cDist<N_JOG_DISTS-1) cDist++;
                 break;
             case Display::BT_L: 
-            case Display::BT_R:  {
-                if(bt==Display::BT_R && cSpindleVal<N_SPINDLE_VALS-1) cSpindleVal++;
-                if(bt==Display::BT_L && cSpindleVal>0) cSpindleVal--;
+                if(evt==Evt::HOLD) cDist=0;
+                else if(cDist>0) cDist--;
+                break;
+            case Display::BT_ZDOWN: 
+            case Display::BT_ZUP:  {
+                if(bt==Display::BT_ZUP) {
+                    if(evt==Evt::HOLD) cSpindleVal=N_SPINDLE_VALS-1;
+                    else if(cSpindleVal<N_SPINDLE_VALS-1) cSpindleVal++;
+                }
+                if(bt==Display::BT_ZDOWN) {
+                    if(evt==Evt::HOLD) cSpindleVal=0;
+                    else if(cSpindleVal>0) cSpindleVal--;
+                }
                 int v = SPINDLE_VALS[cSpindleVal];
                 if(v!=0) {
                     char t[15];
@@ -160,12 +194,15 @@
                 }
                 break;
             }
-            case Display::BT_ZDOWN:
-                if(cFeed>0)cFeed--;
+            case Display::BT_DOWN:
+                if(evt==Evt::HOLD) cFeed=0;
+                else if(cFeed>0)cFeed--;
                 break;
-            case Display::BT_ZUP: //dev->schedulePriorityCommand("?");  break;
-                if(cFeed<N_JOG_FEEDS-1) cFeed++;
+            case Display::BT_UP: //dev->schedulePriorityCommand("?");  break;
+                if(evt==Evt::HOLD) cFeed=N_JOG_FEEDS-1;
+                else if(cFeed<N_JOG_FEEDS-1) cFeed++;
                 break;
         }
+        setDirty();
         
     }

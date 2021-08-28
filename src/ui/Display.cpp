@@ -50,7 +50,6 @@ uint16_t Display::buttStates;
     void Display::processButtons() {
         
         decltype(buttStates) changed = buttStates ^ prevStates;
-        if(!changed) return;
 
         if (cScreen == nullptr) return;
         for(int i=0; i<N_BUTTONS; i++) {

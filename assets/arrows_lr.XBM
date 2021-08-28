@@ -1,0 +1,4 @@
+#define arrows_lr_width 7
+#define arrows_lr_height 7
+static char arrows_lr_bits[] = {
+  0x14, 0x36, 0x7F, 0x77, 0x7F, 0x36, 0x14, };
