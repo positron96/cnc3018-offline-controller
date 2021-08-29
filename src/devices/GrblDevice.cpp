@@ -1,4 +1,4 @@
-#include "GCodeDevice.h"
+#include "GrblDevice.h"
 
 
     void GrblDevice::sendProbe(Stream &serial) {

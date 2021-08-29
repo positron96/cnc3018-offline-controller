@@ -1,17 +1,16 @@
 #include "GCodeDevice.h"
 
+#include "GrblDevice.h"
+
 
 #define XOFF  0x13
 #define XON   0x11
-
-#define MAX(a,b)  ( (a)>(b) ? (a) : (b) )
-static char deviceBuffer[sizeof(GrblDevice)];
 
 const uint32_t DeviceDetector::serialBauds[] = { 115200, 250000, 57600 }; 
 
 uint32_t DeviceDetector::serialBaud = 0;
 
-GCodeDevice* DeviceDetector::detectPrinterAttempt(HardwareSerial &printerSerial, uint32_t speed, uint8_t type) {
+int DeviceDetector::detectPrinterAttempt(HardwareSerial &printerSerial, uint32_t speed, uint8_t type) {
     serialBaud = speed;
     for(uint8_t retry=0; retry<2; retry++) {
         GD_DEBUGF("attempt %d, speed %d, type %d\n", retry, speed, type);
@@ -24,24 +23,49 @@ GCodeDevice* DeviceDetector::detectPrinterAttempt(HardwareSerial &printerSerial,
         String v = readString(printerSerial, 1000);
         GD_DEBUGF("Got response '%s'\n", v.c_str() );
         if(v) {
-            bool ret = GrblDevice::checkProbe(v);
+            bool ret = GrblDevice::checkProbeResponse(v);
             if(ret) return type;
         }
     }
-    return nullptr;
+    return -1;
 }
 
+int DeviceDetector::nextDetectPrinterAttempt(HardwareSerial &printerSerial) {
+    static uint8_t cSpeed;
+    static uint8_t cType;
+ 
+    uint32_t speed = serialBauds[cSpeed];
+    int t = detectPrinterAttempt(printerSerial, speed, cType);
+    if(t!=-1) return t;
 
-GCodeDevice* DeviceDetector::detectPrinter(HardwareSerial &printerSerial) {
+    cSpeed++;
+    if(cSpeed==N_SERIAL_BAUDS) {
+        cSpeed = 0;
+        cType++;
+        if(cType==N_TYPES) {
+            cType=0;
+        }
+    }
+        
+}
+
+int DeviceDetector::detectPrinter(HardwareSerial &printerSerial) {
     while(true) {
         for(uint32_t speed: serialBauds) {
             for(int type=0; type<DeviceDetector::N_TYPES; type++) {
-                GCodeDevice *dev = detectPrinterAttempt(printerSerial, speed, type);
-                if(dev!=nullptr) return dev;
+                int t = detectPrinterAttempt(printerSerial, speed, type);
+                if(t!=-1) return t;
             }
         }
-    }    
+    }     
+}
+
+void DeviceDetector::loop() {
     
+}
+
+int DeviceDetector::getDetectResult() {
+    return cResult;
 }
 
 String readStringUntil(Stream &serial, char terminator, size_t timeout) {

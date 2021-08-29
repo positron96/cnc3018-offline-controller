@@ -1,6 +1,7 @@
 #include <U8g2lib.h>
 
 #include "devices/GCodeDevice.h"
+#include "devices/GrblDevice.h"
 
 #include "ui/DRO.h"
 #include "ui/GrblDRO.h"

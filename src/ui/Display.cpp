@@ -4,6 +4,8 @@
 
 #include "Screen.h"
 
+#include "../devices/GrblDevice.h"
+
 // #define D_DEBUGF(...)  { Serial.printf(__VA_ARGS__); }
 // #define D_DEBUGFI(...)  { log_printf(__VA_ARGS__); }
 // #define D_DEBUGS(s)  { Serial.println(s); }

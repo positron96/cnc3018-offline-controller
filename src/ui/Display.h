@@ -8,9 +8,6 @@
 #include <functional>
 
 
-#include "../devices/GCodeDevice.h"
-
-
 struct MenuItem {
     int16_t id;
     uint16_t glyph;
