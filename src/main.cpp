@@ -77,47 +77,6 @@ void loop() {
         nextRead = millis() + 10;
     }    
 
-    // static uint32_t lastRedraw, lastFps;
-    // static int frames, lastFrames;
-    // if(millis()-lastRedraw > 200) {
-    //     lastRedraw = millis();
-
-    //     u8g2.clearBuffer();
-    //     u8g2.setDrawColor(1);
-
-    //     int sx = 2;
-    //     int sy = 0;
-
-    //     u8g2.setFont(u8g2_font_nokiafc22_tr);
-
-    //     char str[100];
-    //     //snprintf(str, 100, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
-    //     if(!dev.isConnected()) {
-    //         snprintf(str, 100, "no conn");
-    //     } else {
-    //         if(dev.isInPanic()) snprintf(str, 100, "ALERT"); else {
-    //             snprintf(str, 100, dev.getStatus().c_str() );
-    //         }
-    //     }
-    //     u8g2.drawStr(sx, -1, str );
-
-    //     //snprintf(str, 100, ");
-    //     snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
-    //     u8g2.drawStr(sx, 7, str);
-
-    //     //u8g2.drawGlyph(115, 0, !dev.isConnected() ? '-' : dev.isInPanic() ? '!' : '+' );
-
-    //     u8g2.setFont(u8g2_font_7x13B_tr );
-    //     sy = LCD_ROW1_HEIGHT+2;
-    //     snprintf(str, 100, "X%8.3f", dev.getX() );   u8g2.drawStr(sx, sy, str);
-    //     snprintf(str, 100, "Y%8.3f", dev.getY() );   u8g2.drawStr(sx, sy+13, str);
-    //     snprintf(str, 100, "Z%8.3f", dev.getZ() );   u8g2.drawStr(sx, sy+26, str);
-
-    //     snprintf(str, 100, "S%d", dev.getSpindleVal() );   u8g2.drawStr(70, sy, str);
-
-    //     u8g2.sendBuffer();
-    // }
-
     Display::getDisplay()->loop();
 
 
