@@ -1,3 +1,5 @@
+#pragma once
+
 #include "DRO.h"
 
 class GrblDRO : public DRO {

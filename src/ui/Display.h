@@ -2,6 +2,8 @@
 
 #include <Arduino.h>
 
+#include "../devices/GCodeDevice.h"
+
 #include <U8g2lib.h>
 
 #include <etl/vector.h>

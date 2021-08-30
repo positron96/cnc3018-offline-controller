@@ -11,7 +11,6 @@ public:
     { 
         sentCounter = &sentQueue; 
         canTimeout = false;
-        pinMode(lockedPin, INPUT);
         
     };
     GrblDevice() : GCodeDevice(), pinLocked(0) { sentCounter = &sentQueue; }
@@ -24,6 +23,7 @@ public:
 
     void begin() override {
         GCodeDevice::begin();
+        pinMode(pinLocked, INPUT);
         readLockedStatus();
         schedulePriorityCommand("$I");
         requestStatusUpdate();

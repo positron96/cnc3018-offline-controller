@@ -6,67 +6,67 @@
 #define XOFF  0x13
 #define XON   0x11
 
-const uint32_t DeviceDetector::serialBauds[] = { 115200, 250000, 57600 }; 
+// const uint32_t DeviceDetector::serialBauds[] = { 115200, 250000, 57600 }; 
 
-uint32_t DeviceDetector::serialBaud = 0;
+// uint32_t DeviceDetector::serialBaud = 0;
 
-int DeviceDetector::detectPrinterAttempt(HardwareSerial &printerSerial, uint32_t speed, uint8_t type) {
-    serialBaud = speed;
-    for(uint8_t retry=0; retry<2; retry++) {
-        GD_DEBUGF("attempt %d, speed %d, type %d\n", retry, speed, type);
+// int DeviceDetector::detectPrinterAttempt(HardwareSerial &printerSerial, uint32_t speed, uint8_t type) {
+//     serialBaud = speed;
+//     for(uint8_t retry=0; retry<2; retry++) {
+//         GD_DEBUGF("attempt %d, speed %d, type %d\n", retry, speed, type);
         
-        printerSerial.end();
-        printerSerial.begin(speed);
-        while(printerSerial.available()) printerSerial.read();
-        GrblDevice::sendProbe(printerSerial);
-        //String v = readStringUntil(printerSerial, '\n', 1000); v.trim();
-        String v = readString(printerSerial, 1000);
-        GD_DEBUGF("Got response '%s'\n", v.c_str() );
-        if(v) {
-            bool ret = GrblDevice::checkProbeResponse(v);
-            if(ret) return type;
-        }
-    }
-    return -1;
-}
+//         printerSerial.end();
+//         printerSerial.begin(speed);
+//         while(printerSerial.available()) printerSerial.read();
+//         GrblDevice::sendProbe(printerSerial);
+//         //String v = readStringUntil(printerSerial, '\n', 1000); v.trim();
+//         String v = readString(printerSerial, 1000);
+//         GD_DEBUGF("Got response '%s'\n", v.c_str() );
+//         if(v) {
+//             bool ret = GrblDevice::checkProbeResponse(v);
+//             if(ret) return type;
+//         }
+//     }
+//     return -1;
+// }
 
-int DeviceDetector::nextDetectPrinterAttempt(HardwareSerial &printerSerial) {
-    static uint8_t cSpeed;
-    static uint8_t cType;
+// int DeviceDetector::nextDetectPrinterAttempt(HardwareSerial &printerSerial) {
+//     static uint8_t cSpeed;
+//     static uint8_t cType;
  
-    uint32_t speed = serialBauds[cSpeed];
-    int t = detectPrinterAttempt(printerSerial, speed, cType);
-    if(t!=-1) return t;
+//     uint32_t speed = serialBauds[cSpeed];
+//     int t = detectPrinterAttempt(printerSerial, speed, cType);
+//     if(t!=-1) return t;
 
-    cSpeed++;
-    if(cSpeed==N_SERIAL_BAUDS) {
-        cSpeed = 0;
-        cType++;
-        if(cType==N_TYPES) {
-            cType=0;
-        }
-    }
+//     cSpeed++;
+//     if(cSpeed==N_SERIAL_BAUDS) {
+//         cSpeed = 0;
+//         cType++;
+//         if(cType==N_TYPES) {
+//             cType=0;
+//         }
+//     }
         
-}
+// }
 
-int DeviceDetector::detectPrinter(HardwareSerial &printerSerial) {
-    while(true) {
-        for(uint32_t speed: serialBauds) {
-            for(int type=0; type<DeviceDetector::N_TYPES; type++) {
-                int t = detectPrinterAttempt(printerSerial, speed, type);
-                if(t!=-1) return t;
-            }
-        }
-    }     
-}
+// int DeviceDetector::detectPrinter(HardwareSerial &printerSerial) {
+//     while(true) {
+//         for(uint32_t speed: serialBauds) {
+//             for(int type=0; type<DeviceDetector::N_TYPES; type++) {
+//                 int t = detectPrinterAttempt(printerSerial, speed, type);
+//                 if(t!=-1) return t;
+//             }
+//         }
+//     }     
+// }
 
-void DeviceDetector::loop() {
+// void DeviceDetector::loop() {
     
-}
+// }
 
-int DeviceDetector::getDetectResult() {
-    return cResult;
-}
+// int DeviceDetector::getDetectResult() {
+//     return cResult;
+// }
 
 String readStringUntil(Stream &serial, char terminator, size_t timeout) {
     String ret;

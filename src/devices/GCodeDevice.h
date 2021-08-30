@@ -181,35 +181,6 @@ private:
 };
 
 
-
 String readStringUntil(Stream &PrinterSerial, char terminator, size_t timeout);
 String readString(Stream &PrinterSerial, size_t timeout, size_t timeout2=100);
-
-class DeviceDetector {
-public:
-
-    constexpr static int N_TYPES = 1;
-    constexpr static int N_SERIAL_BAUDS = 3;
-    static constexpr uint32_t serialBauds[] = { 115200, 250000, 57600 };
-
-    //static int detectPrinter(HardwareSerial &printerSerial);
-
-    //static int detectPrinterAttempt(HardwareSerial &printerSerial, uint32_t speed, uint8_t type);
-
-    static int nextDetectPrinterAttempt(HardwareSerial &printerSerial);
-
-    static void loop();
-    static int getDetectResult();
-
-    static uint32_t serialBaud; 
-
-private:
-
-    static uint8_t cSpeed;
-    static uint8_t cType;
-    static int cResult = -1;
-
-};
-
-
 bool startsWith(const char *str, const char *pre);

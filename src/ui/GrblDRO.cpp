@@ -1,4 +1,5 @@
 #include "GrblDRO.h"
+#include "../devices/GrblDevice.h"
 
 //#include "FileChooser.h"
 

@@ -2,6 +2,7 @@
 
 #include "devices/GCodeDevice.h"
 #include "devices/GrblDevice.h"
+#include "devices/DeviceDetector.h"
 
 #include "ui/DRO.h"
 #include "ui/GrblDRO.h"
@@ -37,6 +38,14 @@ HardwareSerial &SerialCNC = Serial1;
 
 GrblDevice dev{&SerialCNC, PIN_DET};
 
+DeviceDescription grblDesc{
+    GrblDevice::sendProbe, 
+    GrblDevice::checkProbeResponse, 
+    [](const int type, Stream &s, size_t baud){ /*dev=GrblDevice(&s,PIN_DET);*/}  
+};
+
+using Detector = DeviceDetector<Serial1, grblDesc >;
+
 Display display;
 GrblDRO dro;
 
@@ -58,6 +67,7 @@ void setup() {
     for(auto pin: buttPins) {
         pinMode(pin, INPUT_PULLUP);
     }
+    Detector::begin();
     
     dev.begin();
     //dev.enableStatusUpdates(); 
