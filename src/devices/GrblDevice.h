@@ -6,14 +6,13 @@
 class GrblDevice : public GCodeDevice {
 public:
 
-    GrblDevice(Stream * s, int lockedPin): 
-        GCodeDevice(s), txLocked(false), pinLocked(lockedPin)
+    GrblDevice(WatchedSerial * s): 
+        GCodeDevice(s)
     { 
         sentCounter = &sentQueue; 
         canTimeout = false;
-        
     };
-    GrblDevice() : GCodeDevice(), pinLocked(0) { sentCounter = &sentQueue; }
+    GrblDevice() : GCodeDevice() { sentCounter = &sentQueue; }
 
     virtual ~GrblDevice() {}
 
@@ -23,8 +22,6 @@ public:
 
     void begin() override {
         GCodeDevice::begin();
-        pinMode(pinLocked, INPUT);
-        readLockedStatus();
         schedulePriorityCommand("$I");
         requestStatusUpdate();
     }
@@ -50,7 +47,7 @@ public:
         if(txLocked) return false;
         if(len==0) len = strlen(cmd);
         if(isCmdRealtime(cmd, len) ) {
-            printerSerial->write(cmd, len);  
+            printerSerial->write((const uint8_t*)cmd, len);  
             GD_DEBUGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0] );
             return true;
         }
@@ -66,8 +63,6 @@ public:
     String & getStatus() { return status; }
     String & getLastResponse() { return lastResponse; }
 
-    bool isLocked() { return txLocked; }
-
     static void sendProbe(Stream &serial);
     static bool checkProbeResponse(const String s);
 
@@ -79,14 +74,10 @@ protected:
 private:
     
     SimpleCounter<15,128> sentQueue;
-
-    const int pinLocked; ///< pin for reading woodpecker locked status
     
     String lastResponse;
 
     String status;
-
-    bool txLocked; ///< woodpecker board has a pin that indicates if it's connected via USB. If it is, UART is occupied by USB_UART.
 
     //WPos = MPos - WCO
     float ofsX,ofsY,ofsZ;
@@ -95,11 +86,5 @@ private:
     void parseGrblStatus(char* v);
 
     bool isCmdRealtime(const char* data, size_t len);
-
-    void readLockedStatus() {
-        bool t = digitalRead(pinLocked) == HIGH;
-        if(t!=txLocked) notify_observers(DeviceStatusEvent{10});
-        txLocked = t;
-    }
 
 };

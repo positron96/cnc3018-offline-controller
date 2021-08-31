@@ -10,6 +10,7 @@
             GD_DEBUGS("Detected GRBL device");
             return true;
         }
+        return false;
     }
 
 
@@ -62,7 +63,7 @@
         cmd[len]=0;
         if( sentCounter->canPush(len) ) {
             sentCounter->push( cmd, len );
-            printerSerial->write(cmd, len);  
+            printerSerial->write( (const uint8_t*)cmd, len);  
             printerSerial->print('\n');
             GD_DEBUGF("<  (f%3d,%3d) '%s'(len %d)\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, len );
             len = 0;

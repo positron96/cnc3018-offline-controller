@@ -15,8 +15,8 @@ enum class JogDist {
     _01, _1, _10
 };
 */
-using JogAxis = int;
-using JogDist = int;
+using JogAxis = unsigned int;
+using JogDist = unsigned int;
 
 
 
@@ -52,6 +52,7 @@ public:
 private:
 
 protected:
+    uint32_t nextRefresh;
     constexpr static float JOG_DISTS[] = {0.1, 1, 5, 10, 50};
     constexpr static size_t N_JOG_DISTS = sizeof(JOG_DISTS)/sizeof(JOG_DISTS[0]);
     JogDist cDist;
@@ -61,7 +62,7 @@ protected:
     constexpr static int SPINDLE_VALS[] = {0,1,50,100,255};
     constexpr static size_t N_SPINDLE_VALS = sizeof(SPINDLE_VALS)/sizeof(SPINDLE_VALS[0]);
     size_t cSpindleVal;
-    uint32_t nextRefresh;
+    
     uint32_t lastJogTime;
     
     static char axisChar(const JogAxis &a) {

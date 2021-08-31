@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "*.xbm": "cpp"
+        "*.xbm": "cpp",
+        "arduino.h": "c",
+        "pins_arduino.h": "c"
     }
 }

@@ -1,5 +1,6 @@
 #include <U8g2lib.h>
 
+#include "WatchedSerial.h"
 #include "devices/GCodeDevice.h"
 #include "devices/GrblDevice.h"
 #include "devices/DeviceDetector.h"
@@ -34,24 +35,28 @@ constexpr uint32_t buttPins[N_BUTT] = {
 
 constexpr uint32_t PIN_DET  =  PC13; ///< 0V=no USB on CNC, 1=CNC connected to USB.
 
-HardwareSerial &SerialCNC = Serial1;
+WatchedSerial SerialCNC{Serial1, PIN_DET};
 
-GrblDevice dev{&SerialCNC, PIN_DET};
-
-DeviceDescription grblDesc{
-    GrblDevice::sendProbe, 
-    GrblDevice::checkProbeResponse, 
-    [](const int type, Stream &s, size_t baud){ /*dev=GrblDevice(&s,PIN_DET);*/}  
-};
-
-using Detector = DeviceDetector<Serial1, grblDesc >;
+//GrblDevice dev{&SerialCNC, PIN_DET};
+uint8_t devbuf[sizeof(GrblDevice)];
+GrblDevice *dev;
 
 Display display;
 GrblDRO dro;
 
+GrblDevice* createGrbl(WatchedSerial *s) {
+    if(dev!=nullptr) return dev;
+    dev = new(devbuf) GrblDevice(s);
+    dev->begin();
+    dev->add_observer(*Display::getDisplay());
+    return dev;
+}
+
+using Detector = GrblDetector<WatchedSerial, SerialCNC, createGrbl >;
+
 void setup() {
     SerialUSB.begin(115200);
-    SerialCNC.begin(115200);
+    //SerialCNC.begin(115200);
 
     _u8g2.begin();
     _u8g2.setFontPosTop();
@@ -67,13 +72,9 @@ void setup() {
     for(auto pin: buttPins) {
         pinMode(pin, INPUT_PULLUP);
     }
+
     Detector::begin();
     
-    dev.begin();
-    //dev.enableStatusUpdates(); 
-    
-    dev.add_observer(*Display::getDisplay());
-
 }
 
 void loop() {
@@ -97,6 +98,7 @@ void loop() {
         }
     }
 
-    dev.loop();
+    if(dev!=nullptr) dev->loop();
+    else Detector::loop();
 
 }

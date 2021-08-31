@@ -88,7 +88,7 @@
         u8g2.drawXBM(sx2, sy+lh+3, feed_width, feed_height, (uint8_t*)feed_bits);
         u8g2.drawXBM(sx2, sy+lh*2+3, dist_width, dist_height, (uint8_t*)dist_bits);
         sx2 += 10;
-        snprintf(str, LEN, "%d", dev->getSpindleVal() );   
+        snprintf(str, LEN, "%ld", dev->getSpindleVal() );   
         u8g2.drawStr(sx2, sy, str);
         snprintf(str, LEN, "%d", JOG_FEEDS[cFeed] );   
         u8g2.drawStr(sx2, sy+lh, str); 
@@ -116,6 +116,7 @@
                     if(buttonWasPressedWithShift) { cMode = cMode==Mode::AXES ? Mode::SPINDLE : Mode::AXES; }
                 }
                 break;
+                default: break;
             }
             setDirty();
             return;

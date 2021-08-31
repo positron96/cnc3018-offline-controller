@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <etl/observer.h>
-//#include <etl/queue.h>
+#include "WatchedSerial.h"
 #include "CommandQueue.h"
 
 #include "debug.h"
@@ -30,7 +30,7 @@ public:
     static GCodeDevice *getDevice();
     //static void setDevice(GCodeDevice *dev);
 
-    GCodeDevice(Stream * s): 
+    GCodeDevice(WatchedSerial * s): 
         printerSerial(s), connected(false)
     {
         assert(inst==nullptr);
@@ -41,6 +41,7 @@ public:
 
     virtual void begin() { 
         while(printerSerial->available()>0) printerSerial->read(); 
+        readLockedStatus();
     };
 
 
@@ -74,6 +75,7 @@ public:
     virtual bool canJog() { return true; }
 
     virtual void loop() {
+        readLockedStatus();
         sendCommands();
         receiveResponses();
         checkTimeout();
@@ -115,8 +117,10 @@ public:
 
     void addReceivedLineHandler( ReceivedLineHandler h) { receivedLineHandlers.push_back(h); }
 
+    bool isLocked() { return printerSerial->isLocked(); }
+
 protected:
-    Stream * printerSerial;
+    WatchedSerial * printerSerial;
 
     uint32_t serialRxTimeout;
     bool connected;
@@ -133,6 +137,8 @@ protected:
 
     bool xoff;
     bool xoffEnabled = false;
+
+    bool txLocked = false;
 
     Counter * sentCounter;
 
@@ -171,6 +177,12 @@ protected:
     virtual void trySendCommand() = 0;
 
     virtual void tryParseResponse( char* cmd, size_t len ) = 0;
+
+    void readLockedStatus() {
+        bool t = printerSerial->isLocked(true);
+        if(t!=txLocked) notify_observers(DeviceStatusEvent{10});
+        txLocked = t;
+    }
 
 private:
     static GCodeDevice *inst;
