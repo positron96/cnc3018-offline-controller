@@ -43,7 +43,7 @@ public:
         }
     }
 
-    static int getDetectResult();
+    static int getDetectResult() { return cResult;}
 
     static uint32_t serialBaud; 
 

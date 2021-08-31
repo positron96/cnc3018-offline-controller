@@ -128,16 +128,17 @@ uint16_t Display::buttStates;
         //snprintf(str, 25, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
         if(dev==nullptr || !dev->isConnected()) {
             snprintf(str, LEN, "no conn");
+        } else if(dev->isLocked() ) {
+            snprintf(str, LEN, "LOCKED");
         } else {
-            if(dev->isInPanic()) {
-                snprintf(str, LEN, "ALERT"); 
-            } else if(dev->isLocked() ) {
-                snprintf(str, LEN, "LOCK");
-            } else {
-                snprintf(str, LEN, "conn");
-            }
+            snprintf(str, LEN, "conn");
         }
+        
         u8g2.drawStr(2, -1, str );
+        // if(dev->isInPanic()) {
+        //     snprintf(str, LEN, "ALERT"); 
+
+        if(dev==nullptr) return;
 
         snprintf(str, LEN, dev->getStatus().c_str() ); 
         u8g2.drawStr(2, 7, str);  

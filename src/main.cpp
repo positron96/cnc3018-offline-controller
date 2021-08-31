@@ -7,6 +7,7 @@
 
 #include "ui/DRO.h"
 #include "ui/GrblDRO.h"
+#include "ui/DetectorUI.h"
 
 constexpr uint32_t PIN_LCD_CS = PA2; // not connected
 constexpr uint32_t PIN_LCD_RST = PB0;
@@ -49,10 +50,14 @@ GrblDevice* createGrbl(WatchedSerial *s) {
     dev = new(devbuf) GrblDevice(s);
     dev->begin();
     dev->add_observer(*Display::getDisplay());
+    dro.begin();
+    display.setScreen(&dro);
     return dev;
 }
 
 using Detector = GrblDetector<WatchedSerial, SerialCNC, createGrbl >;
+
+DetectorScreen<Detector> detUI;
 
 void setup() {
     SerialUSB.begin(115200);
@@ -65,9 +70,9 @@ void setup() {
 
     display.begin();
 
-    display.setScreen(&dro); 
+    display.setScreen(&detUI); 
     //dro.enableRefresh(false);
-    dro.begin();
+    
     
     for(auto pin: buttPins) {
         pinMode(pin, INPUT_PULLUP);
