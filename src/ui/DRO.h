@@ -5,6 +5,7 @@
 #include "Screen.h"
 
 #include "../devices/GCodeDevice.h"
+#include <printfloat.h>
 
 
 /*
@@ -83,7 +84,8 @@ protected:
         static const int LEN=13;
         static char str[LEN];
         
-        snprintf(str, LEN, "%c% 8.3f", axis, v );
+        str[0] = axis;
+        snprintfloat(str+1, LEN-1, v, 3, 7);
         Display::u8g2.drawStr(x, y, str );
         //u8g2.drawGlyph();
     }

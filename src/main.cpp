@@ -9,6 +9,9 @@
 #include "ui/GrblDRO.h"
 #include "ui/DetectorUI.h"
 
+#include <SD.h>
+
+
 constexpr uint32_t PIN_LCD_CS = PA2; // not connected
 constexpr uint32_t PIN_LCD_RST = PB0;
 constexpr uint32_t PIN_LCD_DC = PB1;
@@ -79,6 +82,14 @@ void setup() {
     }
 
     Detector::begin();
+
+    File cDir = SD.open("/");
+    File file;
+    while ( file = cDir.openNextFile() ) {
+        LOGF("file %s\n", file.name() );
+        file.close();
+    }
+    cDir.close();
     
 }
 

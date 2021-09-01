@@ -79,9 +79,9 @@
         
 
         sx+=6;
-        snprintf(str, LEN, "X%7.2f", dev->getX() );   u8g2.drawStr(sx, sy, str);
-        snprintf(str, LEN, "Y%7.2f", dev->getY() );   u8g2.drawStr(sx, sy+lh, str);
-        snprintf(str, LEN, "Z%7.2f", dev->getZ() );   u8g2.drawStr(sx, sy+lh*2, str);
+        drawAxis('X', dev->getX(), sx, sy);
+        drawAxis('Y', dev->getY(), sx, sy+lh);
+        drawAxis('Z', dev->getZ(), sx, sy+lh*2);
 
         sx2 +=3;
         u8g2.drawXBM(sx2+1, sy,      spindle_width, spindle_height, (uint8_t*)spindle_bits);
@@ -92,7 +92,10 @@
         u8g2.drawStr(sx2, sy, str);
         snprintf(str, LEN, "%d", JOG_FEEDS[cFeed] );   
         u8g2.drawStr(sx2, sy+lh, str); 
-        snprintf(str, LEN, JOG_DISTS[cDist]<1?"%.1f":"%.0f", JOG_DISTS[cDist] );   
+
+        const float &jd = JOG_DISTS[cDist];
+        if(jd<1) snprintf(str, LEN, "0.%01u", uint(jd*10) );   
+        else snprintf(str, LEN, "%d", (int)jd );   
         u8g2.drawStr(sx2, sy+lh*2, str);  
 
     };

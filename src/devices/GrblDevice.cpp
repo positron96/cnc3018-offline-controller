@@ -1,4 +1,5 @@
 #include "GrblDevice.h"
+#include "printfloat.h"
 
 
     void GrblDevice::sendProbe(Stream &serial) {
@@ -16,7 +17,9 @@
 
     bool GrblDevice::jog(uint8_t axis, float dist, int feed) {
         constexpr static char AXIS[] = {'X', 'Y', 'Z'};
-        char msg[81]; snprintf(msg, 81, "$J=G91 F%d %c%.3f", feed, AXIS[axis], dist);
+        char msg[81]; 
+        int l = snprintf(msg, 81, "$J=G91 F%d %c", feed, AXIS[axis]);
+        snprintfloat(msg+l, 81-l, dist, 3 );
         return scheduleCommand(msg, strlen(msg) );
     }
         
@@ -133,9 +136,9 @@
         if(pch==nullptr) return;
         
         char *st, *fi;
-        st=pch+5;fi = strchr(st, ',');   mystrcpy(buf, st, fi);  x = atof(buf);
-        st=fi+1; fi = strchr(st, ',');   mystrcpy(buf, st, fi);  y = atof(buf);
-        st=fi+1;                                                 z = atof(st);
+        st=pch+5;fi = strchr(st, ',');   mystrcpy(buf, st, fi);  x = _atod(buf);
+        st=fi+1; fi = strchr(st, ',');   mystrcpy(buf, st, fi);  y = _atod(buf);
+        st=fi+1;                                                 z = _atod(st);
         mpos = startsWith(pch, "MPos");
         //GD_DEBUGF("Parsed Pos: %f %f %f\n", x,y,z);
 
@@ -152,9 +155,9 @@
                 }
             } else 
             if(startsWith(pch, "WCO:")) {
-                st=pch+4;fi = strchr(st, ',');   mystrcpy(buf, st, fi);  ofsX = atof(buf);
-                st=fi+1; fi = strchr(st, ',');   mystrcpy(buf, st, fi);  ofsY = atof(buf);
-                st=fi+1;                                                 ofsZ = atof(st);
+                st=pch+4;fi = strchr(st, ',');   mystrcpy(buf, st, fi);  ofsX = _atod(buf);
+                st=fi+1; fi = strchr(st, ',');   mystrcpy(buf, st, fi);  ofsY = _atod(buf);
+                st=fi+1;                                                 ofsZ = _atod(st);
                 //GD_DEBUGF("Parsed WCO: %f %f %f\n", ofsX, ofsY, ofsZ);
             }
 
