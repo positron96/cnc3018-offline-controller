@@ -47,7 +47,7 @@ public:
         }
     }
 
-    void enableRefresh(bool r) { nextRefresh = r ? millis() : 0;  }
+    void enableRefresh(bool r=true) { nextRefresh = r ? millis() : 0;  }
     bool isRefreshEnabled() { return nextRefresh!=0; }
 
 private:

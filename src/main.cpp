@@ -54,6 +54,7 @@ GrblDevice* createGrbl(WatchedSerial *s) {
     dev->begin();
     dev->add_observer(*Display::getDisplay());
     dro.begin();
+    dro.enableRefresh();
     display.setScreen(&dro);
     return dev;
 }
@@ -107,14 +108,13 @@ void loop() {
 
     display.loop();
 
+    if(dev!=nullptr) dev->loop();
+    else Detector::loop();
 
     if(SerialUSB.available()) {
         while(SerialUSB.available()) {
             SerialCNC.write(SerialUSB.read());
         }
     }
-
-    if(dev!=nullptr) dev->loop();
-    else Detector::loop();
 
 }

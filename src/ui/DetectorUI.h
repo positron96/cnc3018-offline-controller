@@ -34,7 +34,7 @@ protected:
         const int LEN = 20;
         char str[LEN];
 
-        int sx = 20;
+        int sx = 4;
         int sy = Display::STATUS_BAR_HEIGHT+5;
         constexpr int lh = 11;
         u8g2.setFont(u8g2_font_7x13B_tr );
