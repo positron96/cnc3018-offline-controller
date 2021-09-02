@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 //#include <ctype.h>
 
 
@@ -16,14 +17,78 @@ static unsigned int pow10(uint8_t p) {
     return r;
 }
 
-size_t snprintfloat(char* dst, size_t sz, float f, uint8_t fraq, uint8_t len, bool padzero) {
-    int ip = f;
-    unsigned int fp = round(abs(f)*pow10(fraq));
-    char fmt[10];
-    int t = len-1-fraq;
-    if(t<=1) t=1;
-    snprintf(fmt, 10, padzero ? "%%0%dd.%%0%dd" : "%%%dd.%%0%dd", t, fraq);
-    return snprintf(dst, sz, fmt, ip, fp);
+
+size_t snprintfloat(char* dst, size_t sz, float f, uint8_t flen, uint8_t len) {
+    // char intPart_reversed[10];
+    // int i, charCount = 0;
+    // double fp_int, fp_frac;
+
+    // fp_frac = modf(f,&fp_int); //Separate integer/fractional parts
+
+    // fp_int = abs(fp_int);
+    // fp_frac = abs(fp_frac);
+    // while (fp_int > 0) { //Convert integer part, if any
+    //     intPart_reversed[charCount++] = '0' + (int)fmod(fp_int,10);
+    //     fp_int = floor(fp_int/10);
+    // }
+
+    // if(f<0) { dst[0]='-'; dst++; }
+    // for (i=0; i<charCount; i++) 
+    //     dst[i] = intPart_reversed[charCount-i-1];
+
+    // dst[charCount++] = '.'; 
+
+    // while (fp_frac > 0)  {
+    //     fp_frac*=10;
+    //     fp_frac = modf(fp_frac,&fp_int);
+    //     dst[charCount++] = '0' + (int)fp_int;
+    // }
+
+    // conversion[charCount] = 0; //String terminator
+
+    // float ipf;
+    // float fpf = modf(f, &ipf);
+    // unsigned ipi = abs(int(ipf));
+    // unsigned fpi = round(abs(fpf)*pow10(flen));
+    // int ilen = len-1-flen;
+    // if(ilen<=1) ilen=1;
+    // char fmt[10];
+    // snprintf(fmt, 10, /*padzero ? "%%0%dd.%%0%dd" : */ (ipi==0 && f<0) ? " %%%dd.%%0%dd" : "%%%dd.%%0%dd", ilen, flen);
+    // ilen = snprintf(dst, sz, fmt, ipi, fpi);
+    // if(ipi==0 && f<0) {
+    //     // replace last space with '-'
+    //     size_t p=0;
+    //     while(dst[p]==' ') p++;
+    //     dst[p-1] = '-';
+    // }
+    // return ilen;
+
+}
+
+size_t snprintfloat(char* dst, size_t sz, float f, uint8_t flen, uint8_t len) {
+    f = f*pow10(flen);
+    
+    char fmt[5];
+    snprintf(fmt, 5, "%%0%dd" , flen+1 );
+    char tmp[12];
+    snprintf(tmp, 12, fmt , uint32_t(abs(round(f))) );
+    size_t ln = strlen(tmp);
+    cout<<"tmp:"<<tmp<<", ln:"<<ln<<endl;
+    size_t dotpos = ln>len-1 ? ln-flen : len-flen-2;
+    size_t pdst=0, psrc=0;
+    if(len>ln)while(pdst<len-ln) dst[pdst++]=' ';
+    //if(f<0) { dst[pdst++]='-'; dotpos++; }
+    while(pdst<sz && psrc<ln) {
+        if(pdst==dotpos) { 
+            dst[pdst]='.';
+        } else {
+            dst[pdst] = tmp[psrc];
+            psrc++;
+        }
+        pdst++; 
+    }
+    dst[pdst]=0;
+    return pdst;
 }
 
 
