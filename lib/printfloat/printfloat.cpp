@@ -33,10 +33,10 @@ int snprintfloat(char *dst, size_t sz, float f, uint8_t flen, uint8_t len) {
     //snprintf(tmp, 12, fmt , uint32_t(abs(round(f))) );
     snprintf(tmp, 12, "%0*d", flen+1 , uint32_t(abs(round(f))) );
     size_t ln = strlen(tmp), iln=ln-flen;
-    int topad = len-ln-1;
-    //printf("  ln=%d, iln=%d, topad=%d\n", ln,iln,topad);
+    int topad = len-ln-1; if(topad<0)topad=0;
+    //printf("  ln=%d, iln=%d, topad=%d, '%s'\n", ln,iln,topad, tmp);
     ln += topad+1;
-    if(f<0) topad--;
+    if(f<0) {topad--; ln++; }
 
     if(topad>0) for(size_t i=0; i<topad; i++) ADDCH(dst, sz, ' ');
     if(f<0) ADDCH(dst, sz, '-');
