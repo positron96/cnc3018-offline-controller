@@ -17,9 +17,10 @@
 
     bool GrblDevice::jog(uint8_t axis, float dist, int feed) {
         constexpr static char AXIS[] = {'X', 'Y', 'Z'};
-        char msg[81]; 
-        int l = snprintf(msg, 81, "$J=G91 F%d %c", feed, AXIS[axis]);
-        snprintfloat(msg+l, 81-l, dist, 3 );
+        constexpr size_t LN=25;
+        char msg[LN]; 
+        int l = snprintf(msg, LN, "$J=G91 F%d %c", feed, AXIS[axis]);
+        snprintfloat(msg+l, LN-l, dist, 3 );
         return scheduleCommand(msg, strlen(msg) );
     }
         
