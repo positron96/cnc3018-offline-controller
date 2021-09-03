@@ -51,6 +51,7 @@ GrblDRO dro;
 GrblDevice* createGrbl(WatchedSerial *s) {
     if(dev!=nullptr) return dev;
     dev = new(devbuf) GrblDevice(s);
+    delay(1000);
     dev->begin();
     dev->add_observer(*Display::getDisplay());
     dro.begin();
