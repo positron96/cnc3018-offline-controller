@@ -68,12 +68,12 @@
         } else {
             int t=43;
             u8g2.drawFrame(sx2-2,  sy-3, 54, lh*3+6);
-            u8g2.drawBox(sx2+t, sy-3, 9, lh*3+4);
+            u8g2.drawBox(sx2+t, sy-2, 9, lh*3+4);
             u8g2.setBitmapMode(1);
             u8g2.setDrawColor(2);
             t+=1;
             u8g2.drawXBM(sx2+t, sy, arrows_zud_width,arrows_zud_height, (uint8_t*)arrows_zud_bits);
-            u8g2.drawXBM(sx2+t, sy+lh, arrows_ud_width,arrows_ud_height, (uint8_t*)arrows_ud_bits);
+            u8g2.drawXBM(sx2+t, sy+lh+1, arrows_ud_width,arrows_ud_height, (uint8_t*)arrows_ud_bits);
             u8g2.drawXBM(sx2+t, sy+lh*2+3, arrows_lr_width,arrows_lr_height, (uint8_t*)arrows_lr_bits);
         }
         
@@ -84,7 +84,7 @@
         drawAxis('Z', dev->getZ(), sx, sy+lh*2);
 
         sx2 +=3;
-        u8g2.drawXBM(sx2+1, sy,      spindle_width, spindle_height, (uint8_t*)spindle_bits);
+        u8g2.drawXBM(sx2+1, sy,    spindle_width, spindle_height, (uint8_t*)spindle_bits);
         u8g2.drawXBM(sx2, sy+lh+3, feed_width, feed_height, (uint8_t*)feed_bits);
         u8g2.drawXBM(sx2, sy+lh*2+3, dist_width, dist_height, (uint8_t*)dist_bits);
         sx2 += 10;

@@ -25,7 +25,7 @@ class DRO: public Screen {
 public:
     static constexpr uint16_t REFRESH_INTL = 500;
 
-    DRO(): nextRefresh{1}, cDist{0}, cFeed{0} {}
+    DRO(): nextRefresh{1}, cDist{1}, cFeed{0} {}
     
     void begin() override {
         /*
@@ -85,7 +85,7 @@ protected:
         static char str[LEN];
         
         str[0] = axis;
-        snprintfloat(str+1, LEN-1, v, 3, 7);
+        snprintfloat(str+1, LEN-1, v, 2, 7);
         Display::u8g2.drawStr(x, y, str );
         //u8g2.drawGlyph();
     }
