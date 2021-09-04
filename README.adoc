@@ -40,7 +40,7 @@ Everything that's needed to interface with MCU (pins, interfaces) is known.
 The board features:
 
 * STM32F103C8T6 MCU. 
-  64K Flash, 20K RAM. Unlike most C8s that actually have 128kB of flash, this one really has 64k. 
+  64K Flash, 20K RAM. As usual, 128k is usable. 
 * 128x64 OLED display with SSD1306 IC. 
   2-color, 16 rows yellow, rest cyan.
   Connected via 4-wire software SPI.
