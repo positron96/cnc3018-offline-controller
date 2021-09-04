@@ -22,6 +22,16 @@ VS Code IDE is used for development.
 .. Send gcode from files on SD card.
 .. Stream gcode from USB.
 
+### TODOs
+
+. Implement menu
+.. File chooser
+.. Change work offsets (set zero to current pos)
+.. Homing, unlocking
+.. Grbl reset
+.. Job pause/resume
+. Display coordinates in WCS
+
 ## Schematic and hardware
 
 The schematic reversing is mostly complete. 

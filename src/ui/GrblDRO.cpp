@@ -84,7 +84,7 @@
             u8g2.drawXBM(sx2+t, sy+lh*2+3, arrows_lr_width,arrows_lr_height, (uint8_t*)arrows_lr_bits);
         }        
 
-        sx+=6;
+        sx+=5;
         drawAxis('X', dev->getX(), sx, sy);
         drawAxis('Y', dev->getY(), sx, sy+lh);
         drawAxis('Z', dev->getZ(), sx, sy+lh*2);
