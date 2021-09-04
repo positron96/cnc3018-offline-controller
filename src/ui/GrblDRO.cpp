@@ -51,11 +51,17 @@
         //u8g2.setFont(u8g2_font_nokiafc22_tr);
         //u8g2.drawGlyph(64, 7, cMode==Mode::AXES ? 'M' : 'S');  
 
-        u8g2.setFont(u8g2_font_7x13B_tr );
-
         int sx = 2;
         int sy = Display::STATUS_BAR_HEIGHT+3, sx2=72;
         constexpr int lh = 11;
+
+        u8g2.setFont(u8g2_font_nokiafc22_tr );
+        const String &st = dev->getLastResponse();
+        if(st) {
+            u8g2.drawStr(sx, 7, st.c_str() );
+        }
+
+        u8g2.setFont(u8g2_font_7x13B_tr );
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);
@@ -74,8 +80,7 @@
             u8g2.drawXBM(sx2+t, sy, arrows_zud_width,arrows_zud_height, (uint8_t*)arrows_zud_bits);
             u8g2.drawXBM(sx2+t, sy+lh+1, arrows_ud_width,arrows_ud_height, (uint8_t*)arrows_ud_bits);
             u8g2.drawXBM(sx2+t, sy+lh*2+3, arrows_lr_width,arrows_lr_height, (uint8_t*)arrows_lr_bits);
-        }
-        
+        }        
 
         sx+=6;
         drawAxis('X', dev->getX(), sx, sy);
