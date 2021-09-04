@@ -115,7 +115,11 @@ void GCodeDevice::setDevice(GCodeDevice *dev) {
 
 void GCodeDevice::sendCommands() {
 
-    if(panic) return;
+    if(panic) {  
+        // drain queue
+        curUnsentCmdLen = 0;
+        return; 
+    }
     //bool loadedNewCmd=false;
 
     if(xoffEnabled && xoff) return;
