@@ -53,6 +53,7 @@ public:
 private:
 
 protected:
+
     uint32_t nextRefresh;
     constexpr static float JOG_DISTS[] = {0.1, 1, 5, 10, 50};
     constexpr static size_t N_JOG_DISTS = sizeof(JOG_DISTS)/sizeof(JOG_DISTS[0]);
@@ -92,7 +93,7 @@ protected:
 
     void drawContents() = 0;
 
-    void onButton(int bt, Display::ButtonEvent arg) = 0;
+    void onButton(int bt, Evt arg) = 0;
 
 
 };

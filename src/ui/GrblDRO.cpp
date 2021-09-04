@@ -1,5 +1,4 @@
 #include "GrblDRO.h"
-#include "../devices/GrblDevice.h"
 
 //#include "FileChooser.h"
 
@@ -94,7 +93,7 @@
         u8g2.drawStr(sx2, sy+lh, str); 
 
         const float &jd = JOG_DISTS[cDist];
-        if(jd<1) snprintf(str, LEN, "0.%01u", uint(jd*10) );   
+        if(jd<1) snprintf(str, LEN, "0.%01u", unsigned(jd*10) );   
         else snprintf(str, LEN, "%d", (int)jd );   
         u8g2.drawStr(sx2, sy+lh*2, str);  
 
@@ -133,16 +132,15 @@
         } 
 
         if(cMode == Mode::AXES) {
-            onButtonAxes(bt, evt);
+            onButtonAxes(bt, evt, dev);
         } else {
-            onButtonShift(bt, evt);
+            onButtonShift(bt, evt, dev);
         }
         
     };
 
-    void GrblDRO::onButtonAxes(int bt, Evt evt) {
+    void GrblDRO::onButtonAxes(int bt, Evt evt, GrblDevice *dev) {
         if(evt==Evt::DOWN || evt==Evt::HOLD) {
-            GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
 
             int axis=-1;
             float d = JOG_DISTS[cDist];
@@ -164,8 +162,7 @@
         }
     }
 
-    void GrblDRO::onButtonShift(int bt, Evt evt) {
-        GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
+    void GrblDRO::onButtonShift(int bt, Evt evt, GrblDevice *dev) {
 
         if(! (evt==Evt::DOWN || evt==Evt::HOLD) ) return;
 

@@ -8,6 +8,9 @@
 #include "ui/DRO.h"
 #include "ui/GrblDRO.h"
 #include "ui/DetectorUI.h"
+#include "ui/FileChooser.h"
+
+#include "Job.h"
 
 #include <SD.h>
 
@@ -47,6 +50,7 @@ GrblDevice *dev;
 
 Display display;
 GrblDRO dro;
+FileChooser fileChooser;
 
 GrblDevice* createGrbl(WatchedSerial *s) {
     if(dev!=nullptr) return dev;
@@ -54,15 +58,18 @@ GrblDevice* createGrbl(WatchedSerial *s) {
     delay(1000);
     dev->begin();
     dev->add_observer(*Display::getDisplay());
-    dro.begin();
-    dro.enableRefresh();
-    display.setScreen(&dro);
+    
+    // dro.begin();
+    // dro.enableRefresh();
+    // display.setScreen(&dro);
     return dev;
 }
 
 using Detector = GrblDetector<WatchedSerial, SerialCNC, createGrbl >;
 
 DetectorScreen<Detector> detUI;
+
+Job *job;
 
 void setup() {
     SerialUSB.begin(115200);
@@ -75,8 +82,25 @@ void setup() {
 
     display.begin();
 
-    display.setScreen(&detUI); 
-    //dro.enableRefresh(false);
+    //display.setScreen(&detUI); 
+    display.setScreen(&fileChooser);
+    
+    fileChooser.setCallback( [&](bool res, String path){
+        if(res) {
+            LOGF("Starting job %s\n", path.c_str() );
+            job->setFile(path);            
+            job->start();
+        } else {
+            // cancel
+        }
+        Display::getDisplay()->setScreen(&dro);
+    } );
+    fileChooser.begin();
+
+
+
+    job = Job::getJob();
+    job->add_observer( display );
     
     
     for(auto pin: buttPins) {
@@ -109,6 +133,8 @@ void loop() {
 
     display.loop();
 
+    job->loop();
+
     if(dev!=nullptr) dev->loop();
     else Detector::loop();
 
@@ -119,3 +145,4 @@ void loop() {
     }
 
 }
+

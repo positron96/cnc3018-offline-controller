@@ -119,46 +119,43 @@ uint16_t Display::buttStates;
 
         u8g2.setFont(u8g2_font_nokiafc22_tr);
 
-        const int LEN=25;
-
+        constexpr int LEN=25;
         char str[LEN];
+
+        int x=2, y=-1;
+
         //snprintf(str, 25, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
         if(dev==nullptr || !dev->isConnected()) {
-            snprintf(str, LEN, "no conn");
+            snprintf(str, LEN, "No conn");
         } else if(dev->isLocked() ) {
             snprintf(str, LEN, "LOCKED");
         } else {
-            snprintf(str, LEN, "conn");
+            snprintf(str, LEN, "Conn");
         }
         
-        u8g2.drawStr(2, -1, str );
+        u8g2.drawStr(x, y, str );
         // if(dev->isInPanic()) {
         //     snprintf(str, LEN, "ALERT"); 
 
         if(dev==nullptr) return;
 
         snprintf(str, LEN, dev->getStatus().c_str() ); 
-        u8g2.drawStr(2, 7, str);  
+        u8g2.drawStr(35, y, str);  
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);
 
-        // job status
-        // Job *job = Job::getJob();
-        // char str[20];
-        // if(job->isValid() ) {
-        //     float p = job->getCompletion()*100;
-        //     if(p<10) snprintf(str, 20, " %.1f%%", p );
-        //     else snprintf(str, 20, " %d%%", (int)p );
-        //     if(job->isPaused() ) str[0] = '|';
-        // } else strncpy(str, " ---%", 20);
-        // int w = u8g2.getStrWidth(str);
-        // u8g2.drawStr(u8g2.getWidth()-w, 0, str);
-        //S_DEBUGF("drawing '%s' len %d\n", str, strlen(str) );
-
-
-        // line
-        //u8g2.drawHLine(0, STATUS_BAR_HEIGHT-1, u8g2.getWidth() );
+        //job status
+        Job *job = Job::getJob();
+        if(job->isValid() ) {
+            float p = job->getCompletion()*100;
+            /*if(p<10) snprintf(str, 20, " %.1f%%", p );
+            else */snprintf(str, LEN, " %d%%", (int)p );
+            if(job->isPaused() ) str[0] = '|';
+            int w = u8g2.getStrWidth(str);
+            u8g2.drawStr(u8g2.getWidth()-w-4, y, str);
+        }// else strncpy(str, " ---%", LEN);
+        
     }
 
 
