@@ -5,6 +5,7 @@
 #include "Screen.h"
 
 #include "../devices/GCodeDevice.h"
+#include <printfloat.h>
 
 
 /*
@@ -15,8 +16,8 @@ enum class JogDist {
     _01, _1, _10
 };
 */
-using JogAxis = int;
-using JogDist = int;
+using JogAxis = unsigned int;
+using JogDist = unsigned int;
 
 
 
@@ -24,7 +25,7 @@ class DRO: public Screen {
 public:
     static constexpr uint16_t REFRESH_INTL = 500;
 
-    DRO(): nextRefresh{1}, cDist{0}, cFeed{0} {}
+    DRO(): nextRefresh{1}, cDist{1}, cFeed{0} {}
     
     void begin() override {
         /*
@@ -46,12 +47,14 @@ public:
         }
     }
 
-    void enableRefresh(bool r) { nextRefresh = r ? millis() : 0;  }
+    void enableRefresh(bool r=true) { nextRefresh = r ? millis() : 0;  }
     bool isRefreshEnabled() { return nextRefresh!=0; }
 
 private:
 
 protected:
+
+    uint32_t nextRefresh;
     constexpr static float JOG_DISTS[] = {0.1, 1, 5, 10, 50};
     constexpr static size_t N_JOG_DISTS = sizeof(JOG_DISTS)/sizeof(JOG_DISTS[0]);
     JogDist cDist;
@@ -61,7 +64,7 @@ protected:
     constexpr static int SPINDLE_VALS[] = {0,1,50,100,255};
     constexpr static size_t N_SPINDLE_VALS = sizeof(SPINDLE_VALS)/sizeof(SPINDLE_VALS[0]);
     size_t cSpindleVal;
-    uint32_t nextRefresh;
+    
     uint32_t lastJogTime;
     
     static char axisChar(const JogAxis &a) {
@@ -82,14 +85,15 @@ protected:
         static const int LEN=13;
         static char str[LEN];
         
-        snprintf(str, LEN, "%c% 8.3f", axis, v );
+        str[0] = axis;
+        snprintfloat(str+1, LEN-1, v, 2, 7);
         Display::u8g2.drawStr(x, y, str );
         //u8g2.drawGlyph();
     }
 
     void drawContents() = 0;
 
-    void onButton(int bt, Display::ButtonEvent arg) = 0;
+    void onButton(int bt, Evt arg) = 0;
 
 
 };

@@ -2,13 +2,13 @@
 
 #include <Arduino.h>
 
+#include "../devices/GCodeDevice.h"
+#include "../Job.h"
+
 #include <U8g2lib.h>
 
 #include <etl/vector.h>
 #include <functional>
-
-
-#include "../devices/GCodeDevice.h"
 
 
 struct MenuItem {
@@ -27,7 +27,7 @@ struct MenuItem {
 
 class Screen;
 
-class Display : public DeviceObserver {
+class Display : public JobObserver, public DeviceObserver {
 public:
     static U8G2 &u8g2;
     //static bool buttonPressed[3];
@@ -63,6 +63,10 @@ public:
     void notification(const DeviceStatusEvent &e) override {
         setDirty();
     }
+    void notification(JobStatusEvent e) override {
+        setDirty();
+    }
+
 
     void begin() { dirty=true; }
 

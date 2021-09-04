@@ -1,9 +1,19 @@
 #include <U8g2lib.h>
 
+#include "WatchedSerial.h"
 #include "devices/GCodeDevice.h"
+#include "devices/GrblDevice.h"
+#include "devices/DeviceDetector.h"
 
 #include "ui/DRO.h"
 #include "ui/GrblDRO.h"
+#include "ui/DetectorUI.h"
+#include "ui/FileChooser.h"
+
+#include "Job.h"
+
+#include <SD.h>
+
 
 constexpr uint32_t PIN_LCD_CS = PA2; // not connected
 constexpr uint32_t PIN_LCD_RST = PB0;
@@ -32,16 +42,39 @@ constexpr uint32_t buttPins[N_BUTT] = {
 
 constexpr uint32_t PIN_DET  =  PC13; ///< 0V=no USB on CNC, 1=CNC connected to USB.
 
-HardwareSerial &SerialCNC = Serial1;
+WatchedSerial SerialCNC{Serial1, PIN_DET};
 
-GrblDevice dev{&SerialCNC, PIN_DET};
+//GrblDevice dev{&SerialCNC, PIN_DET};
+uint8_t devbuf[sizeof(GrblDevice)];
+GrblDevice *dev;
+
+Job *job;
 
 Display display;
 GrblDRO dro;
+FileChooser fileChooser;
+
+GrblDevice* createGrbl(WatchedSerial *s) {
+    if(dev!=nullptr) return dev;
+    dev = new(devbuf) GrblDevice(s);
+    delay(1000);
+    dev->begin();
+    dev->add_observer(*Display::getDisplay());
+    dev->add_observer(*job);
+    
+    // dro.begin();
+    // dro.enableRefresh();
+    // display.setScreen(&dro);
+    return dev;
+}
+
+using Detector = GrblDetector<WatchedSerial, SerialCNC, createGrbl >;
+
+DetectorScreen<Detector> detUI;
 
 void setup() {
     SerialUSB.begin(115200);
-    SerialCNC.begin(115200);
+    //SerialCNC.begin(115200);
 
     _u8g2.begin();
     _u8g2.setFontPosTop();
@@ -50,19 +83,41 @@ void setup() {
 
     display.begin();
 
-    display.setScreen(&dro); 
-    //dro.enableRefresh(false);
-    dro.begin();
+    //display.setScreen(&detUI); 
+    display.setScreen(&fileChooser);
+    
+    fileChooser.setCallback( [&](bool res, String path){
+        if(res) {
+            LOGF("Starting job %s\n", path.c_str() );
+            job->setFile(path);            
+            job->start();
+        } else {
+            // cancel
+        }
+        Display::getDisplay()->setScreen(&dro);
+    } );
+    fileChooser.begin();
+
+
+
+    job = Job::getJob();
+    job->add_observer( display );
+    
     
     for(auto pin: buttPins) {
         pinMode(pin, INPUT_PULLUP);
     }
-    
-    dev.begin();
-    //dev.enableStatusUpdates(); 
-    
-    dev.add_observer(*Display::getDisplay());
 
+    Detector::begin();
+
+    File cDir = SD.open("/");
+    File file;
+    while ( file = cDir.openNextFile() ) {
+        LOGF("file %s\n", file.name() );
+        file.close();
+    }
+    cDir.close();
+    
 }
 
 void loop() {
@@ -77,8 +132,12 @@ void loop() {
         nextRead = millis() + 10;
     }    
 
-    Display::getDisplay()->loop();
+    display.loop();
 
+    job->loop();
+
+    if(dev!=nullptr) dev->loop();
+    else Detector::loop();
 
     if(SerialUSB.available()) {
         while(SerialUSB.available()) {
@@ -86,6 +145,5 @@ void loop() {
         }
     }
 
-    dev.loop();
-
 }
+

@@ -1,4 +1,7 @@
+#pragma once
+
 #include "DRO.h"
+#include "../devices/GrblDevice.h"
 
 class GrblDRO : public DRO {
 
@@ -7,8 +10,6 @@ public:
     void begin() override ;
 
 protected:
-
-    using Evt = Display::ButtonEvent;
     
     void drawContents() override;
 
@@ -22,7 +23,7 @@ private:
     Mode cMode;
     bool buttonWasPressedWithShift;
 
-    void onButtonAxes(int bt, Evt evt);
-    void onButtonShift(int bt, Evt evt);
+    void onButtonAxes(int bt, Evt evt, GrblDevice *);
+    void onButtonShift(int bt, Evt evt, GrblDevice *);
     
 };

@@ -1,9 +1,26 @@
-#include "GCodeDevice.h"
+#include "GrblDevice.h"
+#include "printfloat.h"
+
+
+    void GrblDevice::sendProbe(Stream &serial) {
+        serial.print("\n$I\n");
+    }
+
+    bool GrblDevice::checkProbeResponse(const String v) {
+        if(v.indexOf("[VER:")!=-1 ) {
+            GD_DEBUGS("Detected GRBL device");
+            return true;
+        }
+        return false;
+    }
 
 
     bool GrblDevice::jog(uint8_t axis, float dist, int feed) {
         constexpr static char AXIS[] = {'X', 'Y', 'Z'};
-        char msg[81]; snprintf(msg, 81, "$J=G91 F%d %c%.3f", feed, AXIS[axis], dist);
+        constexpr size_t LN=25;
+        char msg[LN]; 
+        int l = snprintf(msg, LN, "$J=G91 F%d %c", feed, AXIS[axis]);
+        snprintfloat(msg+l, LN-l, dist, 3 );
         return scheduleCommand(msg, strlen(msg) );
     }
         
@@ -25,17 +42,14 @@
             case 0x9E: // toggle spindle
             case 0xA0: // toggle flood coolant
             case 0xA1: // toggle mist coolant      
+            case 0x90 ... 0x9D: // feed override, rapid override, spindle override
                 return true;
             default:
-                // feed override, rapid override, spindle override
-                if( c>=0x90 && c<=0x9D) return true;
                 return false;
         }
     }
 
     void GrblDevice::trySendCommand() {
-
-        if(txLocked) return;
 
         // if(isCmdRealtime(curUnsentPriorityCmd, curUnsentPriorityCmdLen) ) {
         //     printerSerial->write(curUnsentPriorityCmd, curUnsentPriorityCmdLen);  
@@ -50,12 +64,12 @@
         cmd[len]=0;
         if( sentCounter->canPush(len) ) {
             sentCounter->push( cmd, len );
-            printerSerial->write(cmd, len);  
-            printerSerial->print('\n');
+            printerSerial->write( (const uint8_t*)cmd, len);  
+            printerSerial->write('\n');
             GD_DEBUGF("<  (f%3d,%3d) '%s'(len %d)\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, len );
             len = 0;
         } else {
-            GD_DEBUGF("<  (f%3d,%3d) NO BUF: '%s'(len %d)\n", sentQueue.getFreeLines() , sentQueue.getFreeBytes(), cmd, len  );
+            GD_DEBUGF("<  (f%3d,%3d) NO SPACE: '%s'(len %d)\n", sentQueue.getFreeLines() , sentQueue.getFreeBytes(), cmd, len  );
         }
 
     }
@@ -63,10 +77,13 @@
     void GrblDevice::tryParseResponse( char* resp, size_t len ) {
         if (startsWith(resp, "ok")) {
             sentQueue.pop();
-            //responseDetail = "ok";
             connected = true;
             panic = false;
             notify_observers(DeviceStatusEvent{0}); 
+        } else 
+        if ( startsWith(resp, "<") ) {
+            parseGrblStatus(resp+1);
+            panic = false;
         } else 
         if (startsWith(resp, "error") ) {
             sentQueue.pop();
@@ -78,14 +95,16 @@
             panic = true;
             GD_DEBUGF("ALARM '%s'\n", resp ); 
             lastResponse = resp;
-        } else if ( startsWith(resp, "<") ) {
-            parseGrblStatus(resp+1);
-            panic = false;
+            // no mor status updates will come in, so update status.
+            status = "Alarm";
+            notify_observers(DeviceStatusEvent{2}); 
         } else 
         if(startsWith(resp, "[MSG:")) {
             GD_DEBUGF("Msg '%s'\n", resp ); 
-            lastResponse = resp;
-            panic = false; // this is the first message after reset
+            resp[len-1]=0; // strip last ']'
+            lastResponse = resp+5;
+            // this is the first message after reset
+            notify_observers(DeviceStatusEvent{3}); 
         }        
         
         GD_DEBUGF(" > (f%3d,%3d) '%s'(len %d) \n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(),resp, len );
@@ -113,6 +132,7 @@
         char* pch = strtok(v, "|");
         if(pch==nullptr) return;
         status = pch; 
+        if( strcmp(pch, "Alarm")==0 ) panic=true;
         //GD_DEBUGF("Parsed Status: %s\n", status.c_str() );
 
         // MPos:0.000,0.000,0.000
@@ -120,9 +140,9 @@
         if(pch==nullptr) return;
         
         char *st, *fi;
-        st=pch+5;fi = strchr(st, ',');   mystrcpy(buf, st, fi);  x = atof(buf);
-        st=fi+1; fi = strchr(st, ',');   mystrcpy(buf, st, fi);  y = atof(buf);
-        st=fi+1;                                                 z = atof(st);
+        st=pch+5;fi = strchr(st, ',');   mystrcpy(buf, st, fi);  x = _atod(buf);
+        st=fi+1; fi = strchr(st, ',');   mystrcpy(buf, st, fi);  y = _atod(buf);
+        st=fi+1;                                                 z = _atod(st);
         mpos = startsWith(pch, "MPos");
         //GD_DEBUGF("Parsed Pos: %f %f %f\n", x,y,z);
 
@@ -139,9 +159,9 @@
                 }
             } else 
             if(startsWith(pch, "WCO:")) {
-                st=pch+4;fi = strchr(st, ',');   mystrcpy(buf, st, fi);  ofsX = atof(buf);
-                st=fi+1; fi = strchr(st, ',');   mystrcpy(buf, st, fi);  ofsY = atof(buf);
-                st=fi+1;                                                 ofsZ = atof(st);
+                st=pch+4;fi = strchr(st, ',');   mystrcpy(buf, st, fi);  ofsX = _atod(buf);
+                st=fi+1; fi = strchr(st, ',');   mystrcpy(buf, st, fi);  ofsY = _atod(buf);
+                st=fi+1;                                                 ofsZ = _atod(st);
                 //GD_DEBUGF("Parsed WCO: %f %f %f\n", ofsX, ofsY, ofsZ);
             }
 

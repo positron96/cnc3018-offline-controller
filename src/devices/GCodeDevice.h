@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <etl/observer.h>
-//#include <etl/queue.h>
+#include "WatchedSerial.h"
 #include "CommandQueue.h"
 
 #include "debug.h"
@@ -30,7 +30,7 @@ public:
     static GCodeDevice *getDevice();
     //static void setDevice(GCodeDevice *dev);
 
-    GCodeDevice(Stream * s): 
+    GCodeDevice(WatchedSerial * s): 
         printerSerial(s), connected(false)
     {
         assert(inst==nullptr);
@@ -41,7 +41,7 @@ public:
 
     virtual void begin() { 
         while(printerSerial->available()>0) printerSerial->read(); 
-        connected=true; 
+        readLockedStatus();
     };
 
 
@@ -67,7 +67,7 @@ public:
     virtual bool canSchedule(size_t len) { 
         if(panic) return false;
         if(len==0) return false;
-        return curUnsentCmdLen!=0; 
+        return curUnsentCmdLen==0; 
     }
 
     virtual bool jog(uint8_t axis, float dist, int feed=100)=0;
@@ -75,6 +75,7 @@ public:
     virtual bool canJog() { return true; }
 
     virtual void loop() {
+        readLockedStatus();
         sendCommands();
         receiveResponses();
         checkTimeout();
@@ -116,8 +117,10 @@ public:
 
     void addReceivedLineHandler( ReceivedLineHandler h) { receivedLineHandlers.push_back(h); }
 
+    bool isLocked() { return printerSerial->isLocked(); }
+
 protected:
-    Stream * printerSerial;
+    WatchedSerial * printerSerial;
 
     uint32_t serialRxTimeout;
     bool connected;
@@ -134,6 +137,8 @@ protected:
 
     bool xoff;
     bool xoffEnabled = false;
+
+    bool txLocked = false;
 
     Counter * sentCounter;
 
@@ -173,6 +178,12 @@ protected:
 
     virtual void tryParseResponse( char* cmd, size_t len ) = 0;
 
+    void readLockedStatus() {
+        bool t = printerSerial->isLocked(true);
+        if(t!=txLocked) notify_observers(DeviceStatusEvent{10});
+        txLocked = t;
+    }
+
 private:
     static GCodeDevice *inst;
 
@@ -182,132 +193,6 @@ private:
 };
 
 
-
-class GrblDevice : public GCodeDevice {
-public:
-
-    GrblDevice(Stream * s, int lockedPin): 
-        GCodeDevice(s), txLocked(false), pinLocked(lockedPin)
-    { 
-        sentCounter = &sentQueue; 
-        canTimeout = false;
-        pinMode(lockedPin, INPUT);
-        
-    };
-    GrblDevice() : GCodeDevice(), pinLocked(0) { sentCounter = &sentQueue; }
-
-    virtual ~GrblDevice() {}
-
-    bool jog(uint8_t axis, float dist, int feed) override;
-
-    bool canJog() override;
-
-    virtual void begin() {
-        GCodeDevice::begin();
-        readLockedStatus();
-        schedulePriorityCommand("$I");
-        requestStatusUpdate();
-    }
-
-    virtual void reset() {
-        panic = false;
-        cleanupQueue();
-        char c = 0x18;
-        schedulePriorityCommand(&c, 1);
-    }
-
-    virtual void loop() override {
-        readLockedStatus();
-        GCodeDevice::loop();
-    }
-
-    virtual void requestStatusUpdate() override {   
-        char c = '?';
-        schedulePriorityCommand(&c, 1);  
-    }
-
-    virtual bool schedulePriorityCommand( const char* cmd, size_t len=0) override {
-        if(txLocked) return false;
-        if(len==0) len = strlen(cmd);
-        if(isCmdRealtime(cmd, len) ) {
-            printerSerial->write(cmd, len);  
-            GD_DEBUGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0] );
-            return true;
-        }
-        return GCodeDevice::schedulePriorityCommand(cmd, len);
-    }
-
-    /// WPos = MPos - WCO
-    float getXOfs() { return ofsX; } 
-    float getYOfs() { return ofsY; }
-    float getZOfs() { return ofsZ; }
-    uint32_t getSpindleVal() { return spindleVal; }
-    uint32_t getFeed() { return feed; }
-    String & getStatus() { return status; }
-    String & getLastResponse() { return lastResponse; }
-
-    bool isLocked() { return txLocked; }
-
-protected:
-    void trySendCommand() override;
-
-    void tryParseResponse( char* cmd, size_t len ) override;
-    
-private:
-    
-    SimpleCounter<15,128> sentQueue;
-
-    const int pinLocked; ///< pin for reading woodpecker locked status
-    
-    String lastResponse;
-
-    String status;
-
-    bool txLocked; ///< woodpecker board has a pin that indicates if it's connected via USB. If it is, UART is occupied by USB_UART.
-
-    //WPos = MPos - WCO
-    float ofsX,ofsY,ofsZ;
-    uint32_t feed, spindleVal;
-
-    void parseGrblStatus(char* v);
-
-    bool isCmdRealtime(const char* data, size_t len);
-
-    void readLockedStatus() {
-        bool t = digitalRead(pinLocked) == HIGH;
-        if(t!=txLocked) notify_observers(DeviceStatusEvent{10});
-        txLocked = t;
-    }
-
-};
-
-
-
-
-// String readStringUntil(Stream &PrinterSerial, char terminator, size_t timeout);
-// String readString(Stream &PrinterSerial, size_t timeout, size_t timeout2=100);
-
-// class DeviceDetector {
-// public:
-
-//     constexpr static int N_TYPES = 2;
-
-//     constexpr static int N_SERIAL_BAUDS = 3;
-
-//     static const uint32_t serialBauds[];   // Marlin valid bauds (removed very low bauds; roughly ordered by popularity to speed things up)
-
-//     static GCodeDevice* detectPrinter(HardwareSerial &PrinterSerial);
-
-//     static GCodeDevice* detectPrinterAttempt(HardwareSerial &PrinterSerial, uint32_t speed, uint8_t type);
-
-//     static uint32_t serialBaud;    
-
-// private:
-//     static void sendProbe(uint8_t i, Stream &serial);
-
-//     static GCodeDevice* checkProbe(uint8_t i, String v, Stream &serial) ;
-
-// };
-
-
+String readStringUntil(Stream &PrinterSerial, char terminator, size_t timeout);
+String readString(Stream &PrinterSerial, size_t timeout, size_t timeout2=100);
 bool startsWith(const char *str, const char *pre);

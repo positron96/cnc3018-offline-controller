@@ -51,11 +51,19 @@
         //u8g2.setFont(u8g2_font_nokiafc22_tr);
         //u8g2.drawGlyph(64, 7, cMode==Mode::AXES ? 'M' : 'S');  
 
-        u8g2.setFont(u8g2_font_7x13B_tr );
-
         int sx = 2;
         int sy = Display::STATUS_BAR_HEIGHT+3, sx2=72;
         constexpr int lh = 11;
+
+        u8g2.setFont(u8g2_font_nokiafc22_tr );
+        const String &st = dev->getLastResponse();
+        if(st) {
+            u8g2.drawStr(sx, 7, st.c_str() );
+        }
+
+        u8g2.setFont(u8g2_font_7x13B_tr );
+        //u8g2.setFont(u8g2_font_freedoomr10_tu );
+        
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);
@@ -67,31 +75,33 @@
         } else {
             int t=43;
             u8g2.drawFrame(sx2-2,  sy-3, 54, lh*3+6);
-            u8g2.drawBox(sx2+t, sy-3, 9, lh*3+4);
+            u8g2.drawBox(sx2+t, sy-2, 9, lh*3+4);
             u8g2.setBitmapMode(1);
             u8g2.setDrawColor(2);
             t+=1;
             u8g2.drawXBM(sx2+t, sy, arrows_zud_width,arrows_zud_height, (uint8_t*)arrows_zud_bits);
-            u8g2.drawXBM(sx2+t, sy+lh, arrows_ud_width,arrows_ud_height, (uint8_t*)arrows_ud_bits);
+            u8g2.drawXBM(sx2+t, sy+lh+1, arrows_ud_width,arrows_ud_height, (uint8_t*)arrows_ud_bits);
             u8g2.drawXBM(sx2+t, sy+lh*2+3, arrows_lr_width,arrows_lr_height, (uint8_t*)arrows_lr_bits);
-        }
-        
+        }        
 
-        sx+=6;
-        snprintf(str, LEN, "X%7.2f", dev->getX() );   u8g2.drawStr(sx, sy, str);
-        snprintf(str, LEN, "Y%7.2f", dev->getY() );   u8g2.drawStr(sx, sy+lh, str);
-        snprintf(str, LEN, "Z%7.2f", dev->getZ() );   u8g2.drawStr(sx, sy+lh*2, str);
+        sx+=5;
+        drawAxis('X', dev->getX(), sx, sy);
+        drawAxis('Y', dev->getY(), sx, sy+lh);
+        drawAxis('Z', dev->getZ(), sx, sy+lh*2);
 
         sx2 +=3;
-        u8g2.drawXBM(sx2+1, sy,      spindle_width, spindle_height, (uint8_t*)spindle_bits);
+        u8g2.drawXBM(sx2+1, sy,    spindle_width, spindle_height, (uint8_t*)spindle_bits);
         u8g2.drawXBM(sx2, sy+lh+3, feed_width, feed_height, (uint8_t*)feed_bits);
         u8g2.drawXBM(sx2, sy+lh*2+3, dist_width, dist_height, (uint8_t*)dist_bits);
         sx2 += 10;
-        snprintf(str, LEN, "%d", dev->getSpindleVal() );   
+        snprintf(str, LEN, "%ld", dev->getSpindleVal() );   
         u8g2.drawStr(sx2, sy, str);
         snprintf(str, LEN, "%d", JOG_FEEDS[cFeed] );   
         u8g2.drawStr(sx2, sy+lh, str); 
-        snprintf(str, LEN, JOG_DISTS[cDist]<1?"%.1f":"%.0f", JOG_DISTS[cDist] );   
+
+        const float &jd = JOG_DISTS[cDist];
+        if(jd<1) snprintf(str, LEN, "0.%01u", unsigned(jd*10) );   
+        else snprintf(str, LEN, "%d", (int)jd );   
         u8g2.drawStr(sx2, sy+lh*2, str);  
 
     };
@@ -115,6 +125,7 @@
                     if(buttonWasPressedWithShift) { cMode = cMode==Mode::AXES ? Mode::SPINDLE : Mode::AXES; }
                 }
                 break;
+                default: break;
             }
             setDirty();
             return;
@@ -128,16 +139,15 @@
         } 
 
         if(cMode == Mode::AXES) {
-            onButtonAxes(bt, evt);
+            onButtonAxes(bt, evt, dev);
         } else {
-            onButtonShift(bt, evt);
+            onButtonShift(bt, evt, dev);
         }
         
     };
 
-    void GrblDRO::onButtonAxes(int bt, Evt evt) {
+    void GrblDRO::onButtonAxes(int bt, Evt evt, GrblDevice *dev) {
         if(evt==Evt::DOWN || evt==Evt::HOLD) {
-            GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
 
             int axis=-1;
             float d = JOG_DISTS[cDist];
@@ -159,8 +169,7 @@
         }
     }
 
-    void GrblDRO::onButtonShift(int bt, Evt evt) {
-        GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
+    void GrblDRO::onButtonShift(int bt, Evt evt, GrblDevice *dev) {
 
         if(! (evt==Evt::DOWN || evt==Evt::HOLD) ) return;
 

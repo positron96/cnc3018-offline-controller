@@ -4,9 +4,8 @@
 
 #include "Screen.h"
 
-// #define D_DEBUGF(...)  { Serial.printf(__VA_ARGS__); }
-// #define D_DEBUGFI(...)  { log_printf(__VA_ARGS__); }
-// #define D_DEBUGS(s)  { Serial.println(s); }
+#include "../devices/GrblDevice.h"
+
 
 Display * Display::inst = nullptr;
 
@@ -111,6 +110,9 @@ uint16_t Display::buttStates;
         dirty = false;
     }
 
+#include "../assets/locked.XBM"
+#include "../assets/connected.XBM"
+
     void Display::drawStatusBar() {
 
         GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
@@ -120,45 +122,39 @@ uint16_t Display::buttStates;
 
         u8g2.setFont(u8g2_font_nokiafc22_tr);
 
-        const int LEN=25;
-
+        constexpr int LEN=25;
         char str[LEN];
+
+        int x=2, y=-1;
+
         //snprintf(str, 25, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
         if(dev==nullptr || !dev->isConnected()) {
-            snprintf(str, LEN, "no conn");
+            u8g2.drawGlyph(x, y, 'X' );
+        } else if(dev->isLocked() ) {
+            u8g2.drawXBM(x,0, locked_width, locked_height, (const uint8_t*)locked_bits);
         } else {
-            if(dev->isInPanic()) {
-                snprintf(str, LEN, "ALERT"); 
-            } else if(dev->isLocked() ) {
-                snprintf(str, LEN, "LOCK");
-            } else {
-                snprintf(str, LEN, "conn");
-            }
+            u8g2.drawXBM(x,0, connected_width, connected_height, (const uint8_t*)connected_bits);
         }
-        u8g2.drawStr(2, -1, str );
+
+        if(dev==nullptr) return;
 
         snprintf(str, LEN, dev->getStatus().c_str() ); 
-        u8g2.drawStr(2, 7, str);  
+        u8g2.drawStr(12, y, str);  
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);
 
-        // job status
-        // Job *job = Job::getJob();
-        // char str[20];
-        // if(job->isValid() ) {
-        //     float p = job->getCompletion()*100;
-        //     if(p<10) snprintf(str, 20, " %.1f%%", p );
-        //     else snprintf(str, 20, " %d%%", (int)p );
-        //     if(job->isPaused() ) str[0] = '|';
-        // } else strncpy(str, " ---%", 20);
-        // int w = u8g2.getStrWidth(str);
-        // u8g2.drawStr(u8g2.getWidth()-w, 0, str);
-        //S_DEBUGF("drawing '%s' len %d\n", str, strlen(str) );
-
-
-        // line
-        //u8g2.drawHLine(0, STATUS_BAR_HEIGHT-1, u8g2.getWidth() );
+        //job status
+        Job *job = Job::getJob();
+        if(job->isValid() ) {
+            float p = job->getCompletion()*100;
+            /*if(p<10) snprintf(str, 20, " %.1f%%", p );
+            else */snprintf(str, LEN, " %d%%", (int)p );
+            if(job->isPaused() ) str[0] = '|';
+            int w = u8g2.getStrWidth(str);
+            u8g2.drawStr(u8g2.getWidth()-w-4, y, str);
+        }// else strncpy(str, " ---%", LEN);
+        
     }
 
 
