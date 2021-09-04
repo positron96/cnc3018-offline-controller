@@ -120,6 +120,8 @@ void GCodeDevice::sendCommands() {
 
     if(xoffEnabled && xoff) return;
 
+    if(txLocked) return;
+
     #ifdef ADD_LINECOMMENTS
     static size_t nline=0;
     #endif

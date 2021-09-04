@@ -6,9 +6,6 @@ Job Job::job;
 
 Job * Job::getJob() { return &job; }
 
-#define J_DEBUGF(...) // { Serial.printf(__VA_ARGS__); }
-#define J_DEBUGS(s)   // { Serial.println(s); }
-
 void Job::readNextLine() {
     if(gcodeFile.available()==0) { 
         stop();
@@ -29,6 +26,7 @@ void Job::readNextLine() {
         }
     }
     curLine[curLinePos]=0;
+    //J_DEBUGF("  J read line = %s\n", curLine);
 }
 
 bool Job::scheduleNextCommand(GCodeDevice *dev) {
@@ -43,11 +41,11 @@ bool Job::scheduleNextCommand(GCodeDevice *dev) {
         readNextLine();
         if(!running) return false;    // don't run next time
 
-        char* pos = strchr(curLine, ';');
+        char* pos = strchr(curLine, ';'); // strip comments
         if(pos!=NULL) {*pos = 0; curLinePos = pos-curLine; }
 
-        bool empty=false;//true;
-        //for(int i=0; i<curLinePos; i++) if(!isspace(curLine[i])) empty=false;
+        bool empty=true;
+        for(size_t i=0; i<curLinePos; i++) if(!isspace(curLine[i])) empty=false;
 
         if(curLinePos==0 || empty) { return true; } // can seek next
 
@@ -71,7 +69,10 @@ bool Job::scheduleNextCommand(GCodeDevice *dev) {
         curLinePos = 0;
         return true; //can try next command
 
-    } else return false; // stop trying for now
+    } else {
+        //J_DEBUGF("  J not queing line '%s', len %d\n", curLine, curLinePos ); // floods log
+        return false; // stop trying for now
+    }
 }
 
 void Job::loop() {

@@ -67,7 +67,7 @@ public:
     virtual bool canSchedule(size_t len) { 
         if(panic) return false;
         if(len==0) return false;
-        return curUnsentCmdLen!=0; 
+        return curUnsentCmdLen==0; 
     }
 
     virtual bool jog(uint8_t axis, float dist, int feed=100)=0;

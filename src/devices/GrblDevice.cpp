@@ -42,17 +42,14 @@
             case 0x9E: // toggle spindle
             case 0xA0: // toggle flood coolant
             case 0xA1: // toggle mist coolant      
+            case 0x90 ... 0x9D: // feed override, rapid override, spindle override
                 return true;
             default:
-                // feed override, rapid override, spindle override
-                if( c>=0x90 && c<=0x9D) return true;
                 return false;
         }
     }
 
     void GrblDevice::trySendCommand() {
-
-        if(txLocked) return;
 
         // if(isCmdRealtime(curUnsentPriorityCmd, curUnsentPriorityCmdLen) ) {
         //     printerSerial->write(curUnsentPriorityCmd, curUnsentPriorityCmdLen);  
@@ -68,11 +65,11 @@
         if( sentCounter->canPush(len) ) {
             sentCounter->push( cmd, len );
             printerSerial->write( (const uint8_t*)cmd, len);  
-            printerSerial->print('\n');
+            printerSerial->write('\n');
             GD_DEBUGF("<  (f%3d,%3d) '%s'(len %d)\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, len );
             len = 0;
         } else {
-            GD_DEBUGF("<  (f%3d,%3d) NO BUF: '%s'(len %d)\n", sentQueue.getFreeLines() , sentQueue.getFreeBytes(), cmd, len  );
+            GD_DEBUGF("<  (f%3d,%3d) NO SPACE: '%s'(len %d)\n", sentQueue.getFreeLines() , sentQueue.getFreeBytes(), cmd, len  );
         }
 
     }
@@ -80,10 +77,13 @@
     void GrblDevice::tryParseResponse( char* resp, size_t len ) {
         if (startsWith(resp, "ok")) {
             sentQueue.pop();
-            //responseDetail = "ok";
             connected = true;
             panic = false;
             notify_observers(DeviceStatusEvent{0}); 
+        } else 
+        if ( startsWith(resp, "<") ) {
+            parseGrblStatus(resp+1);
+            panic = false;
         } else 
         if (startsWith(resp, "error") ) {
             sentQueue.pop();
@@ -95,14 +95,16 @@
             panic = true;
             GD_DEBUGF("ALARM '%s'\n", resp ); 
             lastResponse = resp;
-        } else if ( startsWith(resp, "<") ) {
-            parseGrblStatus(resp+1);
-            panic = false;
+            // no mor status updates will come in, so update status.
+            status = "Alarm";
+            notify_observers(DeviceStatusEvent{2}); 
         } else 
         if(startsWith(resp, "[MSG:")) {
             GD_DEBUGF("Msg '%s'\n", resp ); 
-            lastResponse = resp;
-            panic = false; // this is the first message after reset
+            resp[len-1]=0; // strip last ']'
+            lastResponse = resp+5;
+            // this is the first message after reset
+            notify_observers(DeviceStatusEvent{3}); 
         }        
         
         GD_DEBUGF(" > (f%3d,%3d) '%s'(len %d) \n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(),resp, len );
@@ -130,6 +132,7 @@
         char* pch = strtok(v, "|");
         if(pch==nullptr) return;
         status = pch; 
+        if( strcmp(pch, "Alarm")==0 ) panic=true;
         //GD_DEBUGF("Parsed Status: %s\n", status.c_str() );
 
         // MPos:0.000,0.000,0.000

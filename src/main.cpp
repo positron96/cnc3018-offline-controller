@@ -48,6 +48,8 @@ WatchedSerial SerialCNC{Serial1, PIN_DET};
 uint8_t devbuf[sizeof(GrblDevice)];
 GrblDevice *dev;
 
+Job *job;
+
 Display display;
 GrblDRO dro;
 FileChooser fileChooser;
@@ -58,6 +60,7 @@ GrblDevice* createGrbl(WatchedSerial *s) {
     delay(1000);
     dev->begin();
     dev->add_observer(*Display::getDisplay());
+    dev->add_observer(*job);
     
     // dro.begin();
     // dro.enableRefresh();
@@ -68,8 +71,6 @@ GrblDevice* createGrbl(WatchedSerial *s) {
 using Detector = GrblDetector<WatchedSerial, SerialCNC, createGrbl >;
 
 DetectorScreen<Detector> detUI;
-
-Job *job;
 
 void setup() {
     SerialUSB.begin(115200);

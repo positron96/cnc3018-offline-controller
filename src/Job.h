@@ -6,6 +6,11 @@
 
 #include "devices/GCodeDevice.h"
 
+#include "debug.h"
+#define J_DEBUGF  LOGF
+#define J_DEBUGS  LOGLN
+#define J_DEBUGLN LOGLN
+
 
 //#define ADD_LINENUMBERS 
 
@@ -62,7 +67,7 @@ public:
 
     void notification(const DeviceStatusEvent& e) override {
         if(e.statusField==1 && isValid() ) {
-            Serial.println("Device error, canceling job");
+            J_DEBUGLN("Device error, canceling job");
             cancel();
         }
     }
