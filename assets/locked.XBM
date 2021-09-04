@@ -1,0 +1,4 @@
+#define locked_width 7
+#define locked_height 7
+static char locked_bits[] = {
+  0x1C, 0x22, 0x22, 0x7F, 0x7F, 0x7F, 0x7F, };

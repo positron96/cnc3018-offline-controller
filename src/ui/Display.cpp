@@ -110,6 +110,9 @@ uint16_t Display::buttStates;
         dirty = false;
     }
 
+#include "../assets/locked.XBM"
+#include "../assets/connected.XBM"
+
     void Display::drawStatusBar() {
 
         GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
@@ -126,21 +129,17 @@ uint16_t Display::buttStates;
 
         //snprintf(str, 25, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
         if(dev==nullptr || !dev->isConnected()) {
-            snprintf(str, LEN, "No conn");
+            u8g2.drawGlyph(x, y, 'X' );
         } else if(dev->isLocked() ) {
-            snprintf(str, LEN, "LOCKED");
+            u8g2.drawXBM(x,0, locked_width, locked_height, (const uint8_t*)locked_bits);
         } else {
-            snprintf(str, LEN, "Conn");
+            u8g2.drawXBM(x,0, connected_width, connected_height, (const uint8_t*)connected_bits);
         }
-        
-        u8g2.drawStr(x, y, str );
-        // if(dev->isInPanic()) {
-        //     snprintf(str, LEN, "ALERT"); 
 
         if(dev==nullptr) return;
 
         snprintf(str, LEN, dev->getStatus().c_str() ); 
-        u8g2.drawStr(35, y, str);  
+        u8g2.drawStr(12, y, str);  
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);

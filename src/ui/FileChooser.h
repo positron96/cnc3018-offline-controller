@@ -26,7 +26,7 @@ private:
     size_t topLine;
     File cDir;
     static const size_t MAX_FILES = 50;
-    static const size_t VISIBLE_FILES = 5;
+    static const size_t VISIBLE_FILES = 4;
     //String files[MAX_FILES];
     etl::vector<String, MAX_FILES> files;
     etl::vector<String, 5> trail;

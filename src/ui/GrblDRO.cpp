@@ -62,6 +62,8 @@
         }
 
         u8g2.setFont(u8g2_font_7x13B_tr );
+        //u8g2.setFont(u8g2_font_freedoomr10_tu );
+        
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);
