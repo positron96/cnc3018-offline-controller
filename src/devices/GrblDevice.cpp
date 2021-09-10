@@ -79,6 +79,7 @@
             sentQueue.pop();
             connected = true;
             panic = false;
+            lastResponse = "";
             notify_observers(DeviceStatusEvent{0}); 
         } else 
         if ( startsWith(resp, "<") ) {
