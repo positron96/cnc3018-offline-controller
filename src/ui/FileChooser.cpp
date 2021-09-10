@@ -2,6 +2,9 @@
 
 #include "../debug.h"
 
+    constexpr size_t FileChooser::MAX_FILES;
+    constexpr size_t FileChooser::VISIBLE_FILES;
+
     void FileChooser::begin() {
         //const char* t = cDir.name();
         //FC_DEBUGF("loadDirContents: cdir is %s\n", t);
@@ -95,7 +98,7 @@
 
 
     void FileChooser::onButton(int bt, Evt evt) {
-        if(evt!=Evt::UP) return;
+        if(evt!=Evt::DOWN) return;
 
         if(!haveCard) {
             if(bt== Display::BT_CENTER) {
