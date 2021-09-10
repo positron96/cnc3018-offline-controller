@@ -40,14 +40,14 @@ protected:
 
     virtual void onButton(int bt, Display::ButtonEvent arg) {};
 
-    //virtual void onMenuItemSelected(MenuItem & item) {};
+    virtual void onMenuItemSelected(MenuItem & item) {};
 
     virtual void onShow() {};
     virtual void onHide() {};
 
 private:
 
-    int firstDisplayedMenuItem;
+    size_t firstDisplayedMenuItem;
 
     friend class Display;
 

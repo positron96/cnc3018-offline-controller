@@ -22,6 +22,7 @@ private:
     };
     Mode cMode;
     bool buttonWasPressedWithShift;
+    bool useWCS;
 
     void onButtonAxes(int bt, Evt evt, GrblDevice *);
     void onButtonShift(int bt, Evt evt, GrblDevice *);

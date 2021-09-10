@@ -20,6 +20,7 @@ uint16_t Display::buttStates;
         cScreen = screen; 
         if(cScreen != nullptr) cScreen->onShow();
         selMenuItem = 0;
+        menuShown=false;
         dirty=true;
     }
 
@@ -29,7 +30,7 @@ uint16_t Display::buttStates;
         draw();
     }
 
-    constexpr int VISIBLE_MENUS = 6;
+    constexpr int VISIBLE_MENUS = 5;
 
     void Display::ensureSelMenuVisible() {
 
@@ -51,48 +52,53 @@ uint16_t Display::buttStates;
         decltype(buttStates) changed = buttStates ^ prevStates;
 
         if (cScreen == nullptr) return;
+        ButtonEvent evt;
         for(int i=0; i<N_BUTTONS; i++) {
             bool down = bitRead(buttStates, i);
             if(bitRead(changed, i) ) {
-                cScreen->onButton(i, down ? ButtonEvent::DOWN : ButtonEvent::UP);
+                if(i==BT_STEP && down && cScreen->menuItems.size()>0 ) { 
+                    menuShown = !menuShown; 
+                    setDirty();
+                } else {
+                    evt = down ? ButtonEvent::DOWN : ButtonEvent::UP;
+                    if(menuShown) { 
+                        processMenuButton(i, evt);
+                    } else {
+                        cScreen->onButton(i, evt);
+                    }
+                }
                 holdCounter[i] = 0;
             } else if(down) {
                 holdCounter[i]++;
                 if(holdCounter[i] == HOLD_COUNT) {
-                    cScreen->onButton(i, ButtonEvent::HOLD);
+                    evt = ButtonEvent::HOLD;
+                    if(menuShown) {
+                        processMenuButton(i, evt);
+                    } else {
+                        cScreen->onButton(i, evt);
+                    }
                     holdCounter[i] = 0;
                 }
             }
         }
         prevStates = buttStates;
         
+    }
 
-        // static const Button buttons[] = {Button::BT1, Button::BT2, Button::BT3};
-        // if (cScreen == nullptr) return;
-        // for(int bt=0; bt<3; bt++) {
-        //     bool p = buttonPressed[bt];
-        //     if(lastButtPressed[bt] != p) {
-        //         S_DEBUGF("button%d changed: %d\n", bt, p );
-        //         if(p) {
-        //             int menuLen = cScreen->menuItems.size();
-        //             if(menuLen!=0) {
-        //                 if(bt==0) { selMenuItem = selMenuItem>0 ? selMenuItem-1 : menuLen-1; ensureSelMenuVisible(); setDirty(); }
-        //                 if(bt==2) { selMenuItem = (selMenuItem+1) % menuLen; ensureSelMenuVisible(); setDirty(); }
-        //                 if(bt==1) {
-        //                     MenuItem& item = cScreen->menuItems[selMenuItem];
-        //                     if(!item.togglalbe) { item.onCmd(item); }
-        //                     else {
-        //                         if(item.on) { item.offCmd(item); item.on=false; } else { item.onCmd(item); item.on=true; }
-        //                     }
-        //                 }
-        //                 //cScreen->onMenuItemSelected(cScreen->menuItems[selMenuItem]);                    
-        //             } else {
-        //                 cScreen->onButton(buttons[bt], 1);
-        //             }
-        //         }
-        //         lastButtPressed[bt] = p;
-        //     }
-        // }
+    void  Display::processMenuButton(uint8_t bt, ButtonEvent evt) {
+        if(! (evt==ButtonEvent::DOWN || evt==ButtonEvent::HOLD) ) return;
+        size_t menuLen = cScreen->menuItems.size();
+        if(menuLen!=0) {
+            if(bt==BT_UP) { selMenuItem = selMenuItem>0 ? selMenuItem-1 : menuLen-1; ensureSelMenuVisible(); setDirty(); }
+            if(bt==BT_DOWN) { selMenuItem = (selMenuItem+1) % menuLen; ensureSelMenuVisible(); setDirty(); }
+            if(bt==BT_CENTER) {
+                MenuItem& item = cScreen->menuItems[selMenuItem];
+                if(!item.togglalbe) { item.on = !item.on; }
+                item.cmd(item);
+                menuShown = false;
+            }
+            //cScreen->onMenuItemSelected(cScreen->menuItems[selMenuItem]);                    
+        } 
     }
 
     void Display::draw() {
@@ -100,7 +106,7 @@ uint16_t Display::buttStates;
         u8g2.clearBuffer();
         if(cScreen!=nullptr) cScreen->drawContents();
         drawStatusBar();
-        drawMenu();
+        if(menuShown) drawMenu();
 
         //char str[15]; sprintf(str, "%lu", millis() ); u8g2.drawStr(20,20, str);
         //char str[15]; sprintf(str, "%4d %4d", potVal[0], potVal[1] ); u8g2.drawStr(5,110, str);
@@ -159,29 +165,40 @@ uint16_t Display::buttStates;
 
 
     void Display::drawMenu() {
-        // if(cScreen==nullptr) return;
-        // u8g2.setFont(u8g2_font_5x8_tr);
-        // u8g2.setDrawColor(2);
+        if(cScreen==nullptr) return;
+        u8g2.setFont(u8g2_font_nokiafc22_tr);
         
-        // int len = cScreen->menuItems.size();
+        size_t len = cScreen->menuItems.size();
 
-        // int onscreenLen = len - cScreen->firstDisplayedMenuItem;
-        // if (onscreenLen>VISIBLE_MENUS) onscreenLen=VISIBLE_MENUS;
-        // const int w=10;
-        // int y = u8g2.getHeight()-w;        
+        size_t onscreenLen = len - cScreen->firstDisplayedMenuItem;
+        if (onscreenLen>VISIBLE_MENUS) onscreenLen=VISIBLE_MENUS;
+        const int w = 80, x=20, lh=8;
+        int y = 6;
         
-        // for(int i=0; i<onscreenLen; i++) {
-        //     int idx = cScreen->firstDisplayedMenuItem + i;
-        //     if(selMenuItem == idx) {
-        //         u8g2.drawBox(i*w, y, w, w);    
-        //     } else {            
-        //         u8g2.drawFrame(i*w, y, w, w);
-        //     }
-        //     MenuItem &item = cScreen->menuItems[idx];
-        //     uint16_t c = item.glyph;
-        //     if(item.font != nullptr) u8g2.setFont(item.font);
-        //     u8g2.drawGlyph(i*w+2, y+1, c);
-        // }
+        u8g2.setDrawColor(0);
+        u8g2.drawBox(x,y, w, lh+onscreenLen*lh+4);
+        u8g2.setDrawColor(1);
+        u8g2.drawFrame(x,y, w, lh+onscreenLen*lh+4);
+
+        char str[20];
+        snprintf(str, 20, "Menu [%d/%d %d]", selMenuItem, len, sizeof(MenuItem) );
+        u8g2.drawStr(x+2, y+1, str);
+
+        y = 16;
+        
+        for(size_t i=0; i<onscreenLen; i++) {
+            size_t idx = cScreen->firstDisplayedMenuItem + i;
+            if(selMenuItem == idx) {
+                u8g2.setDrawColor(1);
+                u8g2.drawBox(x, y+i*lh, w, lh);    
+            } 
+            MenuItem &item = cScreen->menuItems[idx];
+            //uint16_t c = item.glyph;
+            if(item.font != nullptr) u8g2.setFont(item.font);
+            u8g2.setDrawColor(2);
+            //u8g2.drawGlyph(x+2, y+i*lh-1, c);
+            u8g2.drawStr(x+2, y+i*lh-1, item.text.c_str() );
+        }
     }
     
 

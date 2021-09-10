@@ -13,15 +13,15 @@
 
 struct MenuItem {
     int16_t id;
-    uint16_t glyph;
+    //uint16_t glyph;
+    String text;
     bool togglalbe;
     bool on;
     uint8_t * font;
     using ItemFunc = std::function<void(MenuItem &)>;
-    ItemFunc onCmd;
-    ItemFunc offCmd;
-    static MenuItem simpleItem(int16_t id, uint16_t glyph, ItemFunc func) {
-        return MenuItem{id, glyph, false, false, nullptr, func};
+    ItemFunc cmd;
+    static MenuItem simpleItem(int16_t id, const char* text, ItemFunc func) {
+        return MenuItem{id, text, false, false, nullptr, func};
     }
 };
 
@@ -53,7 +53,7 @@ public:
 
 
 
-    Display(): dirty{true} { 
+    Display(): dirty{true}, selMenuItem{0}, menuShown{false} { 
         assert(inst==nullptr);
         inst=this; 
     }
@@ -88,13 +88,15 @@ private:
 
     bool dirty;
 
-    int selMenuItem=0;
+    size_t selMenuItem=0;
+    bool menuShown;
 
     uint32_t nextRead;
     decltype(buttStates) prevStates;
     int16_t holdCounter[N_BUTTONS];
 
     void processButtons();
+    void processMenuButton(uint8_t bt, ButtonEvent evt);
 
     void drawStatusBar();
     void drawMenu() ;

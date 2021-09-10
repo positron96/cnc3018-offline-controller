@@ -1,33 +1,30 @@
 #include "GrblDRO.h"
 
-//#include "FileChooser.h"
-
-
-//extern FileChooser fileChooser;
+#include "FileChooser.h"
+extern FileChooser fileChooser;
 
     void GrblDRO::begin() {
         DRO::begin();
-        // menuItems.push_back( MenuItem::simpleItem(0, 'o', [](MenuItem&){  Display::getDisplay()->setScreen(&fileChooser); }) );
-        // menuItems.push_back( MenuItem::simpleItem(0, 'p', [this](MenuItem& m){   
-        //     Job *job = Job::getJob();
-        //     if(!job->isRunning() ) return;
-        //     job->setPaused(!job->isPaused());
-        //     m.glyph = job->isPaused() ? 'r':'p';
-        //     setDirty(true);
-        // }) );
-        // menuItems.push_back( MenuItem::simpleItem(1, 'x', [](MenuItem&){  GCodeDevice::getDevice()->reset(); }) );
-        // menuItems.push_back( MenuItem::simpleItem(2, 'u', [this](MenuItem& m){  
-        //     enableRefresh(!isRefreshEnabled() );
-        //     m.glyph = this->isRefreshEnabled() ? 'u' : 'U';
-        //     setDirty(true);
-        // }) );
+        menuItems.push_back( MenuItem::simpleItem(0, "Open", [](MenuItem&){  Display::getDisplay()->setScreen(&fileChooser); }) );
+        menuItems.push_back( MenuItem::simpleItem(1, "Pause", [this](MenuItem& m){   
+            Job *job = Job::getJob();
+            if(!job->isRunning() ) return;
+            job->setPaused(!job->isPaused());
+            m.text = job->isPaused() ? "Resume":"Pause";
+            setDirty(true);
+        }) );
+        menuItems.push_back( MenuItem::simpleItem(2, "Reset", [](MenuItem&){  GCodeDevice::getDevice()->reset(); }) );
+        menuItems.push_back( MenuItem::simpleItem(3, "Update", [this](MenuItem& m){  
+            enableRefresh(!isRefreshEnabled() );
+            m.text = this->isRefreshEnabled() ? "Don't update" : "Update";
+            setDirty(true);
+        }) );
 
-        // menuItems.push_back( MenuItem::simpleItem(3, 'H', [](MenuItem&){  GCodeDevice::getDevice()->schedulePriorityCommand("$H"); }) );
-        // menuItems.push_back( MenuItem::simpleItem(4, 'w', [](MenuItem&){  GCodeDevice::getDevice()->scheduleCommand("G10 L20 P1 X0Y0Z0"); GCodeDevice::getDevice()->scheduleCommand("G54"); }) );
-        // menuItems.push_back(MenuItem{5, 'L', true, false, nullptr,
-        //   [](MenuItem&){  GCodeDevice::getDevice()->scheduleCommand("M3 S1"); },
-        //   [](MenuItem&){  GCodeDevice::getDevice()->scheduleCommand("M5"); } 
-        // } );
+        menuItems.push_back( MenuItem::simpleItem(4, "Home", [](MenuItem&){  GCodeDevice::getDevice()->schedulePriorityCommand("$H"); }) );
+        menuItems.push_back( MenuItem::simpleItem(5, "Unlock", [](MenuItem&){  GCodeDevice::getDevice()->schedulePriorityCommand("$X"); }) );
+        menuItems.push_back( MenuItem::simpleItem(6, "Set zero", [](MenuItem&){  GCodeDevice::getDevice()->scheduleCommand("G10 L20 P1 X0Y0Z0"); GCodeDevice::getDevice()->scheduleCommand("G54"); }) );
+        menuItems.push_back( MenuItem::simpleItem(6, "Machine/Work", [this](MenuItem&){ useWCS=!useWCS; }) );
+
     };
 
 #include "../assets/arrows_lr.XBM"
@@ -85,9 +82,15 @@
         }        
 
         sx+=5;
-        drawAxis('X', dev->getX(), sx, sy);
-        drawAxis('Y', dev->getY(), sx, sy+lh);
-        drawAxis('Z', dev->getZ(), sx, sy+lh*2);
+        float t[3]={0,0,0};
+        char ax[3]={'X','Y','Z'};
+        if(useWCS) { 
+            t[0]=dev->getXOfs(); t[1]=dev->getYOfs(); t[2]=dev->getZOfs(); 
+            ax[0]='x'; ax[1]='y'; ax[2]='z';
+        }
+        drawAxis(ax[0], dev->getX()-t[0], sx, sy);
+        drawAxis(ax[1], dev->getY()-t[1], sx, sy+lh);
+        drawAxis(ax[2], dev->getZ()-t[2], sx, sy+lh*2);
 
         sx2 +=3;
         u8g2.drawXBM(sx2+1, sy,    spindle_width, spindle_height, (uint8_t*)spindle_bits);
