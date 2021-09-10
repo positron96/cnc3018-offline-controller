@@ -7,7 +7,7 @@
 
 #include "ui/DRO.h"
 #include "ui/GrblDRO.h"
-#include "ui/DetectorUI.h"
+#include "ui/DetectorScreen.h"
 #include "ui/FileChooser.h"
 
 #include "Job.h"
@@ -62,9 +62,9 @@ GrblDevice* createGrbl(WatchedSerial *s) {
     dev->add_observer(*Display::getDisplay());
     dev->add_observer(*job);
     
-    // dro.begin();
-    // dro.enableRefresh();
-    // display.setScreen(&dro);
+    dro.begin();
+    dro.enableRefresh();
+    display.setScreen(&dro);
     return dev;
 }
 
@@ -83,8 +83,8 @@ void setup() {
 
     display.begin();
 
-    //display.setScreen(&detUI); 
-    display.setScreen(&fileChooser);
+    display.setScreen(&detUI); 
+    //display.setScreen(&fileChooser);
     
     fileChooser.setCallback( [&](bool res, String path){
         if(res) {
