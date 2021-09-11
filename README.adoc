@@ -14,6 +14,8 @@ The information provided can be also useful for those who want to turn this cont
 The firmware is written for Arduino framework and PlatformIO build system. 
 VS Code IDE is used for development.
 
+**Soldering will be required to flash the firmware!**
+
 ## Goals of the project:
 
 . Reverse-engineer the schematic of the board (to the required extent)
@@ -60,8 +62,29 @@ You can clone the EasyEDA project of the schematic here:
 https://oshwlab.com/positron96/cnc-offline-controller-stm32
 
 
-## Links
+## Build & Install
 
+### Build
+
+Use PlatformIO. 
+It will install everything required to build the firmware.
+
+### Install
+
+The easiest way to flash the firmware is to solder 4 wires to SWD pads. 
+They are located at the top right corner of the PCB underside. 
+The order is (from the corner) GND, SWDCLK, SWDIO, +5V (see schematic above).
+
+The Platformio project is configured to use stlink. 
+OpenOCD will be configured with no flash size autodetection to allow more than 64k firmware on 64k MCU.
+Other SWD programmers like J-Link or Blackmagic Probe will work as well, though extra configuration should be made to allow >64k firmware to be flashed. 
+I have no idea how to tell these programmers to do so.
+
+Due to non-standard configuration used for >64k firmware, if you need to debug the firmware, you first need to upload it via upload command. 
+This way, the programmer packages are downloaded and installed.
+
+
+## Links
 * SSD1306 datasheet (old): https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
 * On SSD1306 connection: https://vivonomicon.com/2018/04/20/diy-oled-display-boards-ssd1306-and-ssd1331/
 * 3018 CNC board (Woodpecker v3.3) schematic: http://s3.amazonaws.com/s3.image.smart/download/101-60-280/Schematic_CAMTOOL%20CNC-V3.3.pdf
