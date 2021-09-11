@@ -24,15 +24,19 @@ VS Code IDE is used for development.
 .. Send gcode from files on SD card.
 .. Stream gcode from USB.
 
-### TODOs
+### Backlog
 
-. Implement menu
-.. File chooser
-.. Change work offsets (set zero to current pos)
-.. Homing, unlocking
-.. Grbl reset
-.. Job pause/resume
-. Display coordinates in WCS
+* [x] Jogging
+* [x] Spindle control (with 1% option for laser "pointer")
+* [x] File chooser UI
+* [ ] Job control (pause/cancel)
+* [x] Grbl state tracking (Alarm, error)
+* [x] Menu
+** [x] Change work offsets (set zero to current position). Only G54 supported.
+** [x] Homing ($H), unlocking ($X)
+** [x] Grbl reset (Ctrl+X)
+* [x] Display coordinates in WCS (done, but not intuitively for now)
+* [ ] Bridge GRBL and USB UART.
 
 ## Schematic and hardware
 
