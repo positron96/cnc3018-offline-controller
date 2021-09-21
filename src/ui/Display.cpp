@@ -144,8 +144,7 @@ uint16_t Display::buttStates;
 
         if(dev==nullptr) return;
 
-        snprintf(str, LEN, dev->getStatus().c_str() ); 
-        u8g2.drawStr(12, y, str);  
+        u8g2.drawStr(12, y, dev->getStatusStr());  
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);
@@ -168,20 +167,20 @@ uint16_t Display::buttStates;
         if(cScreen==nullptr) return;
         u8g2.setFont(u8g2_font_nokiafc22_tr);
         
-        size_t len = cScreen->menuItems.size();
+        const size_t len = cScreen->menuItems.size();
 
         size_t onscreenLen = len - cScreen->firstDisplayedMenuItem;
         if (onscreenLen>VISIBLE_MENUS) onscreenLen=VISIBLE_MENUS;
-        const int w = 80, x=20, lh=8;
+        const int w = 80, x=20, lh=8, h=onscreenLen*lh;
         int y = 6;
         
         u8g2.setDrawColor(0);
-        u8g2.drawBox(x,y, w, lh+onscreenLen*lh+4);
+        u8g2.drawBox(x,y, w, lh+h+4);
         u8g2.setDrawColor(1);
-        u8g2.drawFrame(x,y, w, lh+onscreenLen*lh+4);
+        u8g2.drawFrame(x,y, w, lh+h+4);
 
         char str[20];
-        snprintf(str, 20, "Menu [%d/%d %d]", selMenuItem, len, sizeof(MenuItem) );
+        snprintf(str, 20, "Menu [%d/%d]", selMenuItem+1, len);
         u8g2.drawStr(x+2, y+1, str);
 
         y = 16;
@@ -199,6 +198,18 @@ uint16_t Display::buttStates;
             //u8g2.drawGlyph(x+2, y+i*lh-1, c);
             u8g2.drawStr(x+2, y+i*lh-1, item.text.c_str() );
         }
+
+        u8g2.setDrawColor(0);
+        int xx = x + w-5;
+        u8g2.drawBox(xx-1, y, 5, h);
+        u8g2.setDrawColor(1);
+        u8g2.drawFrame(xx, y, 5, h);
+        if(len>VISIBLE_MENUS) {
+            const int hh = (h-2) * VISIBLE_MENUS / len;
+            const int sy = (h-hh) * cScreen->firstDisplayedMenuItem / (len-VISIBLE_MENUS);
+            u8g2.drawBox(xx+1, y+1 + sy, 3, hh);
+        }
+
     }
     
 

@@ -6,6 +6,10 @@
 class GrblDevice : public GCodeDevice {
 public:
 
+    enum class Status {
+        Idle, Run, Hold, Jog, Alarm, Door, Check, Home, Sleep
+    };
+
     GrblDevice(WatchedSerial * s): 
         GCodeDevice(s)
     { 
@@ -39,6 +43,7 @@ public:
     }
 
     void requestStatusUpdate() override {   
+        if(panic) return; // grbl does not respond in panic anyway
         char c = '?';
         schedulePriorityCommand(&c, 1);  
     }
@@ -60,7 +65,8 @@ public:
     float getZOfs() { return ofsZ; }
     uint32_t getSpindleVal() { return spindleVal; }
     uint32_t getFeed() { return feed; }
-    String & getStatus() { return status; }
+    Status getStatus() { return status; }
+    const char* getStatusStr();
     String & getLastResponse() { return lastResponse; }
 
     static void sendProbe(Stream &serial);
@@ -77,7 +83,7 @@ private:
     
     String lastResponse;
 
-    String status;
+    Status status;
 
     //WPos = MPos - WCO
     float ofsX,ofsY,ofsZ;
@@ -85,6 +91,8 @@ private:
 
     void parseGrblStatus(char* v);
 
-    bool isCmdRealtime(const char* data, size_t len);
+    bool setStatus(const char* s);
+
+    static bool isCmdRealtime(const char* data, size_t len);
 
 };

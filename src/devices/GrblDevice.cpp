@@ -25,8 +25,7 @@
     }
         
     bool GrblDevice::canJog() {        
-        return status=="Idle" || status=="Jog";
-        
+        return status==Status::Idle || status==Status::Jog;
     }
 
     bool GrblDevice::isCmdRealtime(const char* data, size_t len) {
@@ -69,7 +68,8 @@
             GD_DEBUGF("<  (f%3d,%3d) '%s'(len %d)\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, len );
             len = 0;
         } else {
-            GD_DEBUGF("<  (f%3d,%3d) NO SPACE: '%s'(len %d)\n", sentQueue.getFreeLines() , sentQueue.getFreeBytes(), cmd, len  );
+            //GD_DEBUGF("<  (f%3d,%3d) NO SPACE: '%s'(len %d)\n", sentQueue.getFreeLines() , sentQueue.getFreeBytes(), cmd, len  );
+            //GD_DEBUGF(".");
         }
 
     }
@@ -79,7 +79,7 @@
             sentQueue.pop();
             connected = true;
             panic = false;
-            lastResponse = "";
+            //lastResponse = "";
             notify_observers(DeviceStatusEvent{0}); 
         } else 
         if ( startsWith(resp, "<") ) {
@@ -97,7 +97,7 @@
             GD_DEBUGF("ALARM '%s'\n", resp ); 
             lastResponse = resp;
             // no mor status updates will come in, so update status.
-            status = "Alarm";
+            status = Status::Alarm;
             notify_observers(DeviceStatusEvent{2}); 
         } else 
         if(startsWith(resp, "[MSG:")) {
@@ -132,17 +132,16 @@
         // idle/jogging
         char* pch = strtok(v, "|");
         if(pch==nullptr) return;
-        status = pch; 
-        if( strcmp(pch, "Alarm")==0 ) panic=true;
-        //GD_DEBUGF("Parsed Status: %s\n", status.c_str() );
+        setStatus(pch);
+        
 
         // MPos:0.000,0.000,0.000
         pch = strtok(nullptr, "|"); 
         if(pch==nullptr) return;
         
         char *st, *fi;
-        st=pch+5;fi = strchr(st, ',');   mystrcpy(buf, st, fi);  x = _atod(buf);
-        st=fi+1; fi = strchr(st, ',');   mystrcpy(buf, st, fi);  y = _atod(buf);
+        st=pch+5;fi=strchr(st, ','); if(fi==nullptr)return;  mystrcpy(buf, st, fi);  x = _atod(buf);
+        st=fi+1; fi=strchr(st, ','); if(fi==nullptr)return;  mystrcpy(buf, st, fi);  y = _atod(buf);
         st=fi+1;                                                 z = _atod(st);
         mpos = startsWith(pch, "MPos");
         //GD_DEBUGF("Parsed Pos: %f %f %f\n", x,y,z);
@@ -153,15 +152,15 @@
         
             if( startsWith(pch, "FS:") || startsWith(pch, "F:")) {
                 if(pch[1] == 'S') {
-                    st=pch+3; fi = strchr(st, ','); mystrcpy(buf, st, fi);  feed = atoi(buf);
+                    st=pch+3; fi=strchr(st, ','); if(fi==nullptr)return; mystrcpy(buf, st, fi);  feed = atoi(buf);
                     st=fi+1;  spindleVal = atoi(st);
                 } else {
                     feed = atoi(pch+2);
                 }
             } else 
             if(startsWith(pch, "WCO:")) {
-                st=pch+4;fi = strchr(st, ',');   mystrcpy(buf, st, fi);  ofsX = _atod(buf);
-                st=fi+1; fi = strchr(st, ',');   mystrcpy(buf, st, fi);  ofsY = _atod(buf);
+                st=pch+4;fi=strchr(st, ','); if(fi==nullptr)return;  mystrcpy(buf, st, fi);  ofsX = _atod(buf);
+                st=fi+1; fi=strchr(st, ','); if(fi==nullptr)return;  mystrcpy(buf, st, fi);  ofsY = _atod(buf);
                 st=fi+1;                                                 ofsZ = _atod(st);
                 //GD_DEBUGF("Parsed WCO: %f %f %f\n", ofsX, ofsY, ofsZ);
             }
@@ -177,3 +176,32 @@
         notify_observers(DeviceStatusEvent{0});
     }
 
+
+    bool GrblDevice::setStatus(const char* pch) { 
+        if( strcmp(pch, "Idle")==0) status = Status::Idle; else
+        if( strcmp(pch, "Run")==0) status = Status::Run; else
+        if( strcmp(pch, "Jog")==0) status = Status::Jog; else
+        if( strcmp(pch, "Alarm")==0 ) status=Status::Alarm; else
+        if( startsWith(pch, "Hold")) status = Status::Hold; else        
+        if( startsWith(pch, "Door")) status = Status::Door; else
+        if( strcmp(pch, "Check")==0) status = Status::Check; else
+        if( strcmp(pch, "Home")==0 ) status = Status::Home; else
+        if( strcmp(pch, "Sleep")==0) status = Status::Sleep; else  return false;
+        //GD_DEBUGF("Parsed Status: %d\n", status );
+        return true;
+    }
+
+    const char* GrblDevice::getStatusStr() {
+        switch(status) {
+            case Status::Idle: return "Idle";
+            case Status::Run: return "Run";
+            case Status::Jog: return "Jog";
+            case Status::Alarm: return "Alarm";
+            case Status::Hold: return "Hold";
+            case Status::Door: return "Door";
+            case Status::Check: return "Check";
+            case Status::Home: return "Home";
+            case Status::Sleep: return "Sleep";
+            default: return "?";
+        }
+    }

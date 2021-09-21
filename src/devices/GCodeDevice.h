@@ -103,8 +103,6 @@ public:
         else nextStatusRequestTime = 0;
     }
 
-    String getDescrption() { return desc; }
-
     size_t getQueueLength() {  
         return 0; 
     }
@@ -124,7 +122,6 @@ protected:
 
     uint32_t serialRxTimeout;
     bool connected;
-    String desc;
     bool canTimeout;
 
     static const size_t MAX_GCODE_LINE = 96;
@@ -169,7 +166,7 @@ protected:
     }
 
     void cleanupQueue() { 
-        //sentCounter->clear();
+        sentCounter->clear();
         curUnsentCmdLen = 0;
         curUnsentPriorityCmdLen = 0;
     }
