@@ -26,8 +26,16 @@ extern FileChooser fileChooser;
 
         menuItems.push_back( MenuItem::simpleItem(4, "Home", [](MenuItem&){  GCodeDevice::getDevice()->schedulePriorityCommand("$H"); }) );
         menuItems.push_back( MenuItem::simpleItem(5, "Unlock", [](MenuItem&){  GCodeDevice::getDevice()->schedulePriorityCommand("$X"); }) );
-        menuItems.push_back( MenuItem::simpleItem(6, "Set zero", [](MenuItem&){  GCodeDevice::getDevice()->scheduleCommand("G10 L20 P1 X0Y0Z0"); GCodeDevice::getDevice()->scheduleCommand("G54"); }) );
-        menuItems.push_back( MenuItem::simpleItem(6, "Machine/Work", [this](MenuItem&){ useWCS=!useWCS; }) );
+        menuItems.push_back( MenuItem::simpleItem(6, "Set zero XYZ", [](MenuItem&){  
+            GCodeDevice::getDevice()->scheduleCommand("G10 L20 P1 X0Y0Z0"); 
+        }) );
+        menuItems.push_back( MenuItem::simpleItem(6, "Goto zero XY", [](MenuItem&){  
+            GCodeDevice::getDevice()->scheduleCommand("G0 X0Y0"); 
+        }) );
+        menuItems.push_back( MenuItem::simpleItem(6, "Machine/Work", [this](MenuItem&){ 
+            useWCS=!useWCS; 
+            //GCodeDevice::getDevice()->scheduleCommand(useWCS ? "G54" : "G53"); 
+        }) );
 
     };
 
@@ -63,27 +71,29 @@ extern FileChooser fileChooser;
         }
 
         u8g2.setFont(u8g2_font_7x13B_tr );
-        //u8g2.setFont(u8g2_font_freedoomr10_tu );
-        
+        //u8g2.setFont(u8g2_font_freedoomr10_tu );        
 
         //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
         //u8g2.drawStr(sx, 7, str);
         //u8g2.drawGlyph(115, 0, !dev.isConnected() ? '-' : dev.isInPanic() ? '!' : '+' );
 
-        u8g2.setDrawColor(1);
-        if(cMode==Mode::AXES) {
-            u8g2.drawFrame(sx-2,  sy-3, 70, lh*3+6);
-        } else {
-            int t=43;
-            u8g2.drawFrame(sx2-2,  sy-3, 54, lh*3+6);
-            u8g2.drawBox(sx2+t, sy-2, 9, lh*3+4);
-            u8g2.setBitmapMode(1);
-            u8g2.setDrawColor(2);
-            t+=1;
-            u8g2.drawXBM(sx2+t, sy, arrows_zud_width,arrows_zud_height, (uint8_t*)arrows_zud_bits);
-            u8g2.drawXBM(sx2+t, sy+lh+1, arrows_ud_width,arrows_ud_height, (uint8_t*)arrows_ud_bits);
-            u8g2.drawXBM(sx2+t, sy+lh*2+3, arrows_lr_width,arrows_lr_height, (uint8_t*)arrows_lr_bits);
-        }        
+        
+        if(dev->canJog() ) {
+            u8g2.setDrawColor(1);
+            if(cMode==Mode::AXES) {
+                u8g2.drawFrame(sx-2,  sy-3, 70, lh*3+6);
+            } else {
+                int t=43;
+                u8g2.drawFrame(sx2-2,  sy-3, 54, lh*3+6);
+                u8g2.drawBox(sx2+t, sy-2, 9, lh*3+4);
+                u8g2.setBitmapMode(1);
+                u8g2.setDrawColor(2);
+                t+=1;
+                u8g2.drawXBM(sx2+t, sy, arrows_zud_width,arrows_zud_height, (uint8_t*)arrows_zud_bits);
+                u8g2.drawXBM(sx2+t, sy+lh+1, arrows_ud_width,arrows_ud_height, (uint8_t*)arrows_ud_bits);
+                u8g2.drawXBM(sx2+t, sy+lh*2+3, arrows_lr_width,arrows_lr_height, (uint8_t*)arrows_lr_bits);
+            } 
+        } 
 
         sx+=5;
         float t[3]={0,0,0};
@@ -121,6 +131,8 @@ extern FileChooser fileChooser;
 
         S_DEBUGF("GrblDRO::onButton(%d,%d)\n", bt, (int)evt);
         
+        if( !dev->canJog() ) return;
+        
         if(bt==Display::BT_CENTER) {
             switch(evt) {
                 case Evt::DOWN: {
@@ -139,11 +151,6 @@ extern FileChooser fileChooser;
         } 
         
         if(evt==Evt::DOWN) buttonWasPressedWithShift = true;
-
-        if (bt==Display::BT_STEP && evt==Evt::HOLD) {
-            dev->scheduleCommand("$X"); 
-            return;
-        } 
 
         if(cMode == Mode::AXES) {
             onButtonAxes(bt, evt, dev);
