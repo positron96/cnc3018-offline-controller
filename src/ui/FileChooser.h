@@ -10,10 +10,9 @@
 class FileChooser: public Screen {
 public:
 
-    void begin() override;
-    
+    void begin() override;    
 
-    //void loop() override {    }
+    void onShow() override;
 
     void setCallback(const std::function<void(bool, String)> &cb) {
         returnCallback = cb;

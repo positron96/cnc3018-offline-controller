@@ -8,16 +8,19 @@
     void FileChooser::begin() {
         //const char* t = cDir.name();
         //FC_DEBUGF("loadDirContents: cdir is %s\n", t);
+        //menuItems.push_back("xClose");
+        //menuItems.push_back("yOpen");
+        //menuItems.push_back("^Up");
+    }
+
+    void FileChooser::onShow() {
+
         haveCard = SD.begin(PA3);
         if(!haveCard) { 
             S_DEBUGF("FileChooser::begin SD failed\n" );
             return;
         }
         loadDirContents(SD.open("/") );
-
-        //menuItems.push_back("xClose");
-        //menuItems.push_back("yOpen");
-        //menuItems.push_back("^Up");
     }
 
     bool FileChooser::isGCode(const String &s) {
@@ -35,6 +38,7 @@
             //FC_DEBUGF("loadDirContents opening new dir %s\n", cDir.name() );
         }
         topLine = 0;
+        selLine = 0;
         File file;
         files.clear();
         cDir.rewindDirectory();
@@ -72,7 +76,7 @@
 
         if(!haveCard) {
             u8g2.drawStr(2, y0, "NO CARD" ); 
-            u8g2.drawStr(2, y, "Press center to refresh" ); 
+            u8g2.drawStr(2, y, "Press OK to refresh" ); 
             return;
         }
 
@@ -102,7 +106,7 @@
 
         if(!haveCard) {
             if(bt== Display::BT_CENTER) {
-                begin();
+                onShow();
                 setDirty();
             }
             return;
@@ -136,7 +140,6 @@
                     // int p = newPath.lastIndexOf("/");
                     // if(p==-1) newPath="../"; else
                     // if(p==0) newPath="/"; else newPath = newPath.substring(0, p);
-                    selLine = 0;
                     loadDirContents( SD.open(newPath) );
                 }
                 break;
@@ -154,7 +157,6 @@
                 //String newPath = cDirName+file;
                 if(isDir) {
                     S_DEBUGF("cdir is %s, file is %s\n", cDir.name(), file.c_str() );
-                    selLine = 0;
                     trail.push_back(file);
                     loadDirContents(SD.open(currentPath()), 0);
                 } else {
