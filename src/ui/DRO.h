@@ -61,7 +61,7 @@ protected:
     constexpr static int JOG_FEEDS[] = {50,100,500,1000,2000};
     constexpr static size_t N_JOG_FEEDS = sizeof(JOG_FEEDS)/sizeof(JOG_FEEDS[0]);
     size_t cFeed;
-    constexpr static int SPINDLE_VALS[] = {0,1,50,100,255};
+    constexpr static int SPINDLE_VALS[] = {0,1,100,500,1000};
     constexpr static size_t N_SPINDLE_VALS = sizeof(SPINDLE_VALS)/sizeof(SPINDLE_VALS[0]);
     size_t cSpindleVal;
     
