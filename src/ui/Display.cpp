@@ -151,12 +151,12 @@ uint16_t Display::buttStates;
         //u8g2.drawStr(sx, 7, str);
 
         //job status
-        Job *job = Job::getJob();
-        if(job->isValid() ) {
-            float p = job->getCompletion()*100;
+        Job &job = Job::getJob();
+        if(job.isValid() ) {
+            float p = job.getCompletion()*100;
             /*if(p<10) snprintf(str, 20, " %.1f%%", p );
             else */snprintf(str, LEN, " %d%%", (int)p );
-            if(job->isPaused() ) str[0] = '|';
+            if(job.isPaused() ) str[0] = 'p';
             int w = u8g2.getStrWidth(str);
             u8g2.drawStr(u8g2.getWidth()-w-4, y, str);
         }// else strncpy(str, " ---%", LEN);

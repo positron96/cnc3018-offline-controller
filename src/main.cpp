@@ -100,7 +100,7 @@ void setup() {
 
 
 
-    job = Job::getJob();
+    job = &Job::getJob();
     job->add_observer( display );
     
     

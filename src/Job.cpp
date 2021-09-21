@@ -4,7 +4,7 @@ Job Job::job;
 
 //void Job::setJob(Job* _job) { job = *_job; }
 
-Job * Job::getJob() { return &job; }
+Job & Job::getJob() { return job; }
 
 void Job::readNextLine() {
     if(gcodeFile.available()==0) { 

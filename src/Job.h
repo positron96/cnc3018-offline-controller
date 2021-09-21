@@ -43,7 +43,7 @@ class Job : public DeviceObserver, public etl::observable<JobObserver, 3> {
 
 public:
 
-    static Job* getJob();
+    static Job& getJob();
     //static void setJob(Job* job);
 
     ~Job() { if(gcodeFile) gcodeFile.close(); clear_observers(); }

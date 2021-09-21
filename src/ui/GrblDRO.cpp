@@ -5,20 +5,24 @@ extern FileChooser fileChooser;
 
     void GrblDRO::begin() {
         DRO::begin();
-        menuItems.push_back( MenuItem::simpleItem(0, "Open", [](MenuItem&){  Display::getDisplay()->setScreen(&fileChooser); }) );
-        menuItems.push_back( MenuItem::simpleItem(1, "Pause", [this](MenuItem& m){   
-            Job *job = Job::getJob();
-            if(!job->isRunning() ) return;
-            job->setPaused(!job->isPaused());
-            m.text = job->isPaused() ? "Resume":"Pause";
+        menuItems.push_back( MenuItem::simpleItem(0, "Open", [](MenuItem&) {  
+            Job &job = Job::getJob();
+            if(job.isRunning() ) return;
+            Display::getDisplay()->setScreen(&fileChooser); // this will reset the card
+        }) );
+        menuItems.push_back( MenuItem::simpleItem(1, "Pause job", [this](MenuItem& m){   
+            Job &job = Job::getJob();
+            if(!job.isRunning() ) return;
+            job.setPaused(!job.isPaused());
+            m.text = job.isPaused() ? "Resume job":"Pause job";
             setDirty(true);
         }) );
         menuItems.push_back( MenuItem::simpleItem(2, "Reset", [](MenuItem&){  GCodeDevice::getDevice()->reset(); }) );
-        menuItems.push_back( MenuItem::simpleItem(3, "Update", [this](MenuItem& m){  
-            enableRefresh(!isRefreshEnabled() );
-            m.text = this->isRefreshEnabled() ? "Don't update" : "Update";
-            setDirty(true);
-        }) );
+        // menuItems.push_back( MenuItem::simpleItem(3, "Update", [this](MenuItem& m){  
+        //     enableRefresh(!isRefreshEnabled() );
+        //     m.text = this->isRefreshEnabled() ? "Don't update" : "Update";
+        //     setDirty(true);
+        // }) );
 
         menuItems.push_back( MenuItem::simpleItem(4, "Home", [](MenuItem&){  GCodeDevice::getDevice()->schedulePriorityCommand("$H"); }) );
         menuItems.push_back( MenuItem::simpleItem(5, "Unlock", [](MenuItem&){  GCodeDevice::getDevice()->schedulePriorityCommand("$X"); }) );
