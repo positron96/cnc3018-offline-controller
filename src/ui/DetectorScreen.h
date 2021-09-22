@@ -40,7 +40,7 @@ protected:
         u8g2.setFont(u8g2_font_7x13B_tr );
         if(Detector::getDetectResult()==0) {
             u8g2.drawStr(sx, sy, "Searching...");
-            snprintf(str, LEN, "Trying speed %ld", Detector::serialBaud);
+            snprintf(str, LEN, "Trying %ld baud", Detector::serialBaud);
             u8g2.drawStr(sx, sy+lh, str);
         } else {
             u8g2.drawStr(sx, sy, "Found");

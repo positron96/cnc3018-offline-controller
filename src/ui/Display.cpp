@@ -61,9 +61,10 @@ uint16_t Display::buttStates;
                     setDirty();
                 } else {
                     evt = down ? ButtonEvent::DOWN : ButtonEvent::UP;
+                    if(down) menuShownWhenDown = menuShown; // don't propagate events to screen if the click was in the menu
                     if(menuShown) { 
                         processMenuButton(i, evt);
-                    } else {
+                    } else if(!menuShownWhenDown) {
                         cScreen->onButton(i, evt);
                     }
                 }
@@ -96,6 +97,7 @@ uint16_t Display::buttStates;
                 if(!item.togglalbe) { item.on = !item.on; }
                 item.cmd(item);
                 menuShown = false;
+                setDirty();
             }
             //cScreen->onMenuItemSelected(cScreen->menuItems[selMenuItem]);                    
         } 

@@ -46,7 +46,7 @@ public:
     static uint16_t buttStates;
     static constexpr int STATUS_BAR_HEIGHT = 16;
 
-    static constexpr int HOLD_COUNT = 50; // 500 ms
+    static constexpr int HOLD_COUNT = 30; // x10 = ms
     enum class ButtonEvent {
         UP, DOWN, HOLD
     };
@@ -90,6 +90,7 @@ private:
 
     size_t selMenuItem=0;
     bool menuShown;
+    bool menuShownWhenDown;
 
     uint32_t nextRead;
     decltype(buttStates) prevStates;

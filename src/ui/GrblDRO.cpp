@@ -17,19 +17,23 @@ extern FileChooser fileChooser;
             m.text = job.isPaused() ? "Resume job":"Pause job";
             setDirty(true);
         }) );
-        menuItems.push_back( MenuItem::simpleItem(2, "Reset", [](MenuItem&){  GCodeDevice::getDevice()->reset(); }) );
+        menuItems.push_back( MenuItem::simpleItem(2, "Reset (Ctrl-X)", [](MenuItem&){  GCodeDevice::getDevice()->reset(); }) );
         // menuItems.push_back( MenuItem::simpleItem(3, "Update", [this](MenuItem& m){  
         //     enableRefresh(!isRefreshEnabled() );
         //     m.text = this->isRefreshEnabled() ? "Don't update" : "Update";
         //     setDirty(true);
         // }) );
 
-        menuItems.push_back( MenuItem::simpleItem(4, "Home", [](MenuItem&){  GCodeDevice::getDevice()->schedulePriorityCommand("$H"); }) );
-        menuItems.push_back( MenuItem::simpleItem(5, "Unlock", [](MenuItem&){  GCodeDevice::getDevice()->schedulePriorityCommand("$X"); }) );
-        menuItems.push_back( MenuItem::simpleItem(6, "Set zero XYZ", [](MenuItem&){  
+        menuItems.push_back( MenuItem::simpleItem(4, "Home ($H)", [](MenuItem&){  
+            GCodeDevice::getDevice()->schedulePriorityCommand("$H"); 
+        }) );
+        menuItems.push_back( MenuItem::simpleItem(5, "Unlock ($X)", [](MenuItem&){  
+            GCodeDevice::getDevice()->schedulePriorityCommand("$X"); 
+        }) );
+        menuItems.push_back( MenuItem::simpleItem(6, "Set XYZ to 0", [](MenuItem&){  
             GCodeDevice::getDevice()->scheduleCommand("G10 L20 P1 X0Y0Z0"); 
         }) );
-        menuItems.push_back( MenuItem::simpleItem(6, "Goto zero XY", [](MenuItem&){  
+        menuItems.push_back( MenuItem::simpleItem(6, "Goto XY=0", [](MenuItem&){  
             GCodeDevice::getDevice()->scheduleCommand("G0 X0Y0"); 
         }) );
         menuItems.push_back( MenuItem::simpleItem(6, "Machine/Work", [this](MenuItem&){ 
