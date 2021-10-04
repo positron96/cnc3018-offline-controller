@@ -42,21 +42,24 @@ VS Code IDE is used for development.
 
 ## Schematic and hardware
 
-The schematic reversing is mostly complete. 
-Everything that's needed to interface with MCU (pins, interfaces) is known.
+image::board-photo.jpg[display,1000]
+
+The schematic reversing is complete to the necessary degree. 
+Everything that's needed to interface with MCU (pins, interfaces) is discovered.
 
 The board features:
 
 * STM32F103C8T6 MCU. 
   64K Flash, 20K RAM. As usual, 128k is usable. 
 * 128x64 OLED display with SSD1306 IC. 
-  2-color, 16 rows yellow, rest cyan.
+  2-color, 16 rows are yellow, the rest is cyan.
   Connected via 4-wire software SPI.
 * Mini USB (no external crystal, so not datasheet-compliant).
-* Full size SD card socket. SPI interface is wired out.
+* Full size SD card socket. 
+  Connected to MCU via SPI interface.
 * 8-pin IDC connector for CNC machine. 
   Has 5V, GND, UART and USB detection pin 
-  (when CNC is connected to PC via its own USB-UART, the controller indicates that and does not communicate over UART).
+  (when the CNC is connected to PC via its own USB-UART, the controller detects that and does not send data over UART).
 * 8 buttons. 
   Buttons short MCU pin to ground, internal pullup required.
 * An unpopulated SWD socket
