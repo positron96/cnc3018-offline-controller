@@ -89,6 +89,8 @@ I have no idea how to tell these programmers to do so. If you do, please let me 
 Due to non-standard configuration used for >64k firmware, if you need to debug the firmware, you first need to upload it via upload command. 
 This way, the programmer packages are downloaded and installed.
 
+Original backup firmware from my controller can be found link:docs/original.hex[here].
+
 
 ## Links
 * SSD1306 datasheet (old): https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
