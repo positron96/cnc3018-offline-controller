@@ -2,7 +2,9 @@
 
 # Open-source firmware for an STM32-based "cnc3018 offline controller"
 
-image::controller.png[display,300]
+**Video demonstration:**
+
+image:https://img.youtube.com/vi/B5J12AMOc3k/mqdefault.jpg[link=https://www.youtube.com/watch?v=B5J12AMOc3k]
 
 This popular chineese (most probably) controller is frequently sold with 3018-type CNC machines.
 The machines themselves run GRBL on ATmega328 MCUs, while the controller uses STM32F103 MCU.
@@ -42,6 +44,7 @@ VS Code IDE is used for development.
 
 ## Schematic and hardware
 
+image::controller.png[display,300]
 image::board-photo.jpg[display,1000]
 
 The schematic reversing is complete to the necessary degree. 
@@ -65,7 +68,7 @@ The board features:
 * An unpopulated SWD socket
 
 image::MCU_SD_UART.svg[display,1000]
-image::Display_USB.svg[display,1000]
+image::Display_USB_SWD.svg[display,1000]
 
 You can clone the EasyEDA project of the schematic here:
 https://oshwlab.com/positron96/cnc-offline-controller-stm32
