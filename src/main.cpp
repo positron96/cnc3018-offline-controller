@@ -72,11 +72,17 @@ using Detector = GrblDetector<WatchedSerial, SerialCNC, createGrbl >;
 
 DetectorScreen<Detector> detUI;
 
+void setSSD1306VcomDeselect(uint8_t v) {
+   _u8g2.sendF("ca", 0xdb, v<<4);
+}
+
 void setup() {
     SerialUSB.begin(115200);
     //SerialCNC.begin(115200);
 
     _u8g2.begin();
+    setSSD1306VcomDeselect(0);
+    _u8g2.setContrast(0);
     _u8g2.setFontPosTop();
     _u8g2.setFontMode(1);
     _u8g2.setDrawColor(1);
