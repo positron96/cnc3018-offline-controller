@@ -1,5 +1,13 @@
 :imagesdir: docs
 
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
 # Open-source firmware for an STM32-based "cnc3018 offline controller"
 
 **Video demonstration:**
@@ -11,12 +19,25 @@ The machines themselves run GRBL on ATmega328 MCUs, while the controller uses ST
 The stock firmware is somewhat lacking in features (no DROs, no spindle speed, for example).
 
 The goal of this project is to make an alternative firmware to control a CNC machine.
-The information provided can be also useful for those who want to turn this controller into something else (a small gaming console, a controller for other equipment). 
+The information provided can be also useful for those who want to turn this controller into something else 
+(a small gaming console, a controller for other equipment). 
 
 The firmware is written for Arduino framework and PlatformIO build system. 
 VS Code IDE is used for development.
 
-**Soldering will be required to flash the firmware!**
+[IMPORTANT] 
+====
+This firmware is for a controller with an OLED display and a full-sized SD card.
+There are other, probably newer controllers with a colored TFT display and micro-SD cards.
+They have different hardware and this firmware will not with them!
+====
+
+[IMPORTANT]
+====
+There is no USB bootloader on the MCU, no access to BOOT pins, so flashing must be done via SWD.
+Therefore soldering will be required to flash the firmware!
+An SWD programmer will also be needed.
+====
 
 ## Goals of the project:
 
