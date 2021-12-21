@@ -102,6 +102,8 @@ https://oshwlab.com/positron96/cnc-offline-controller-stm32
 Use PlatformIO. 
 It will install everything required to build the firmware.
 
+You can also download the precompiled binaries (elf and hex) on https://github.com/positron96/cnc3018-offline-controller/releases/latest[Releases page].
+
 ### Install
 
 The easiest way to flash the firmware is to solder 4 wires to SWD pads. 
