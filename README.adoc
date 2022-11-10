@@ -29,7 +29,7 @@ VS Code IDE is used for development.
 ====
 This firmware is for a controller with an OLED display and a full-sized SD card.
 There are other, probably newer controllers with a colored TFT display and micro-SD cards.
-They have different hardware and this firmware will not with them!
+They have different hardware and this firmware will not work with them!
 ====
 
 [IMPORTANT]
@@ -53,15 +53,15 @@ An SWD programmer will also be needed.
 * [x] Spindle control (with 1% option for laser "pointer")
 * [x] File chooser UI
 * [ ] Job control (pause/cancel)
-* [x] Grbl state tracking (Alarm, error)
+* [x] Grbl state tracking (alarm, error)
 * [x] Menu
 ** [x] Change work offsets (set zero to current position). Only G54 supported.
 ** [x] Homing ($H), unlocking ($X)
 ** [x] Grbl reset (Ctrl+X)
 * [x] Display coordinates in WCS (done, but not intuitively for now)
-* [ ] Bridge GRBL and USB UART.
+* [ ] Bridge GRBL and USB UART
 * [x] Detection of GRBL USB connection via dedicated pin (works to some extent)
-* [ ] Improve continous jogging
+* [ ] Improve continuous jogging
 
 ## Schematic and hardware
 
@@ -110,7 +110,7 @@ The easiest way to flash the firmware is to solder 4 wires to SWD pads.
 They are located at the top right corner of the PCB underside. 
 The order is (from the corner) GND, SWDCLK, SWDIO, +5V (see schematic above).
 
-The Platformio project is configured to use stlink. 
+The PlatformIO project is configured to use stlink. 
 OpenOCD will be configured with no flash size autodetection to allow more than 64k firmware on 64k MCU.
 Other SWD programmers like J-Link or Blackmagic Probe will work as well, though extra configuration should be made to allow >64k firmware to be flashed. 
 I have no idea how to tell these programmers to do so. If you do, please let me know.
