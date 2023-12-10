@@ -3,19 +3,16 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <etl/observer.h>
+#include "debug.h"
 
 #include "devices/GCodeDevice.h"
 
-#include "debug.h"
-#define J_DEBUGF  LOGF
-#define J_DEBUGS  LOGLN
-#define J_DEBUGLN LOGLN
 
-
-//#define ADD_LINENUMBERS 
-
-//struct JobStatusEvent{  int status;  };
 typedef int JobStatusEvent;
+
+enum JobStatus {
+   REFRESH_SIG_0
+};
 
 typedef etl::observer<JobStatusEvent> JobObserver;
 
@@ -40,46 +37,62 @@ typedef etl::observer<JobStatusEvent> JobObserver;
  * ```
  */
 class Job : public DeviceObserver, public etl::observable<JobObserver, 3> {
-
 public:
 
     static Job& getJob();
-    //static void setJob(Job* job);
 
-    ~Job() { if(gcodeFile) gcodeFile.close(); clear_observers(); }
+    ~Job() {
+        if(gcodeFile) {
+            gcodeFile.close();
+            clear_observers();
+        }
+    }
 
     void loop();
 
-    void setFile(String file) { 
-        if(gcodeFile) gcodeFile.close();
-
+    void setFile(const String &file) {
+        if(gcodeFile) {
+            gcodeFile.close();
+        }
         gcodeFile = SD.open(file);
-        if(gcodeFile) fileSize = gcodeFile.size();
+        if (gcodeFile) {
+            fileSize = gcodeFile.size();
+        }
         filePos = 0;
         running = false; 
         paused = false;
         cancelled = false;
-        notify_observers(JobStatusEvent{0}); 
+        notify_observers(JobStatusEvent{ JobStatus::REFRESH_SIG_0});
         curLineNum = 0;
         startTime=0;
         endTime=0;
     }
 
-    void notification(const DeviceStatusEvent& e) override {
-        if(e.statusField==1 && isValid() ) {
-            J_DEBUGLN("Device error, canceling job");
+    void notification(const DeviceStatusEvent &e) override {
+        if(e.statusField == 1 && isValid() ) {
+            LOGLN("Device error, canceling job");
             cancel();
         }
     }
 
-    void start() { startTime = millis(); paused=false; running=true;  notify_observers(JobStatusEvent{0}); }
-    void cancel() { cancelled=true; stop(); notify_observers(JobStatusEvent{0});  }
+    void start() {
+        startTime = millis();
+        paused = false;
+        running = true;
+        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0});
+    }
+
+    void cancel() {
+        cancelled = true;
+        stop();
+        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0});
+    }
     bool isRunning() {  return running; }
     bool isCancelled() { return cancelled; }
 
     void pause() { setPaused(true);  }
     void resume() { setPaused(false); }
-    void setPaused(bool v) { paused = v; notify_observers(JobStatusEvent{0}); }
+    void setPaused(bool v) { paused = v; notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0}); }
     bool isPaused() { return paused; }
 
     float getCompletion() { if(isValid()) return 1.0 * filePos/fileSize; else return 0; }
@@ -111,8 +124,9 @@ private:
         paused = false;
         running = false; 
         endTime=millis();
-        if(gcodeFile) gcodeFile.close();
-        notify_observers(JobStatusEvent{0}); 
+        if(gcodeFile)
+            gcodeFile.close();
+        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0});
     }
     void readNextLine();
     bool scheduleNextCommand(GCodeDevice *dev);

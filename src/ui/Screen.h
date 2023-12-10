@@ -10,19 +10,14 @@
 
 #include "Display.h"
 
-#include "../debug.h"
-
-#define S_DEBUGF   LOGF
-#define S_DEBUGS   LOGLN
-
-
-
 class Screen {
 public:
 
     Screen() : firstDisplayedMenuItem(0) {}
 
-    void setDirty(bool fdirty=true) { Display::getDisplay()->setDirty(fdirty); }
+    void setDirty(bool fdirty=true) {
+        Display::getDisplay()->setDirty(fdirty);
+    }
 
     virtual void begin() { setDirty(true); }
 

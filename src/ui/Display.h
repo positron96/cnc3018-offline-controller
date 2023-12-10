@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include "../constants.h"
 
 #include "../devices/GCodeDevice.h"
 #include "../Job.h"
@@ -17,10 +18,11 @@ struct MenuItem {
     String text;
     bool togglalbe;
     bool on;
-    uint8_t * font;
+    uint8_t *font;
     using ItemFunc = std::function<void(MenuItem &)>;
     ItemFunc cmd;
-    static MenuItem simpleItem(int16_t id, const char* text, ItemFunc func) {
+
+    static MenuItem simpleItem(int16_t id, const char *text, ItemFunc func) {
         return MenuItem{id, text, false, false, nullptr, func};
     }
 };
@@ -52,29 +54,29 @@ public:
     };
 
 
-
-    Display(): dirty{true}, selMenuItem{0}, menuShown{false} { 
-        assert(inst==nullptr);
-        inst=this; 
+    Display() : dirty{true}, selMenuItem{0}, menuShown{false} {
+        assert(inst == nullptr);
+        inst = this;
     }
 
-    void setDirty(bool fdirty=true) { dirty=fdirty; }
+    void setDirty(bool fdirty = true) { dirty = fdirty; }
 
     void notification(const DeviceStatusEvent &e) override {
         setDirty();
     }
+
     void notification(JobStatusEvent e) override {
         setDirty();
     }
 
 
-    void begin() { dirty=true; }
+    void begin() { dirty = true; }
 
     void loop();
 
     void draw();
 
-    void setScreen(Screen *screen) ;    
+    void setScreen(Screen *screen);
 
     static Display *getDisplay();
 
@@ -88,7 +90,7 @@ private:
 
     bool dirty;
 
-    size_t selMenuItem=0;
+    size_t selMenuItem = 0;
     bool menuShown;
     bool menuShownWhenDown;
 
@@ -97,10 +99,12 @@ private:
     int16_t holdCounter[N_BUTTONS];
 
     void processButtons();
+
     void processMenuButton(uint8_t bt, ButtonEvent evt);
 
     void drawStatusBar();
-    void drawMenu() ;
+
+    void drawMenu();
 
     void ensureSelMenuVisible();
 

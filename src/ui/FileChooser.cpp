@@ -17,7 +17,7 @@
 
         haveCard = SD.begin(PA3);
         if(!haveCard) { 
-            S_DEBUGF("FileChooser::begin SD failed\n" );
+            LOGF("FileChooser::begin SD failed\n" );
             return;
         }
         loadDirContents(SD.open("/") );
@@ -32,7 +32,7 @@
 
     void FileChooser::loadDirContents(File newDir, int startingIndex) {
         if(!newDir) return;
-        S_DEBUGF("loadDirContents dir %s\n", newDir.name() );
+        LOGF("loadDirContents dir %s\n", newDir.name() );
         if( !cDir || strcmp(cDir.name(), newDir.name())!=0 ) {
             cDir = newDir;
             //FC_DEBUGF("loadDirContents opening new dir %s\n", cDir.name() );
@@ -46,7 +46,7 @@
         while ( file = cDir.openNextFile() ) {
             if(i>=startingIndex && i<startingIndex+(int)MAX_FILES) {
                 String name = file.name();
-                S_DEBUGF("loadDirContents: file %s\n", name.c_str() );
+                LOGF("loadDirContents: file %s\n", name.c_str() );
                 int p = name.lastIndexOf('/');  if(p>=0) name = name.substring(p+1);
 
                 if(file.isDirectory() ) { 
@@ -62,7 +62,7 @@
             file.close();
         }
 
-        S_DEBUGF("loadDirContents: file count %d\n", files.size() );
+        LOGF("loadDirContents: file count %d\n", files.size() );
         setDirty();
     }
 
@@ -130,13 +130,13 @@
                 String newPath = cDir.name();
 
                 if(trail.empty() ) {
-                    S_DEBUGF("FileChooser::onButtonPressed(BT2): quit\n" );
+                    LOGF("FileChooser::onButtonPressed(BT2): quit\n" );
                     if(returnCallback) returnCallback(false, "");
                 } else {
-                    S_DEBUGF("FileChooser::onButtonPressed(BT2): moving up from %s\n", newPath.c_str() );
+                    LOGF("FileChooser::onButtonPressed(BT2): moving up from %s\n", newPath.c_str() );
                     trail.pop_back();
                     newPath=currentPath();
-                    S_DEBUGF("FileChooser::onButtonPressed(BT2): moving to %s\n", newPath.c_str() );
+                    LOGF("FileChooser::onButtonPressed(BT2): moving to %s\n", newPath.c_str() );
                     // int p = newPath.lastIndexOf("/");
                     // if(p==-1) newPath="../"; else
                     // if(p==0) newPath="/"; else newPath = newPath.substring(0, p);
@@ -147,7 +147,7 @@
             case Display::BT_R:
             case Display::BT_CENTER: {
                 String file = files[selLine];
-                S_DEBUGF("FileChooser::onButtonPressed(BT1): cDir='%s'  file='%s'\n", cDir.name(), file.c_str() );
+                LOGF("FileChooser::onButtonPressed(BT1): cDir='%s'  file='%s'\n", cDir.name(), file.c_str() );
                 bool isDir = file.charAt(file.length()-1) == '/';
                 if(isDir) {
                     file = file.substring(0, file.length()-1 );
@@ -156,7 +156,7 @@
                 //if(cDirName.charAt(cDirName.length()-1) != '/' ) cDirName+="/";
                 //String newPath = cDirName+file;
                 if(isDir) {
-                    S_DEBUGF("cdir is %s, file is %s\n", cDir.name(), file.c_str() );
+                    LOGF("cdir is %s, file is %s\n", cDir.name(), file.c_str() );
                     trail.push_back(file);
                     loadDirContents(SD.open(currentPath()), 0);
                 } else {

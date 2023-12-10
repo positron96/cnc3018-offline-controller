@@ -4,7 +4,7 @@ Job Job::job;
 
 //void Job::setJob(Job* _job) { job = *_job; }
 
-Job & Job::getJob() { return job; }
+Job &Job::getJob() { return job; }
 
 void Job::readNextLine() {
     if(gcodeFile.available()==0) { 
@@ -13,20 +13,21 @@ void Job::readNextLine() {
     }
     while( gcodeFile.available()>0 ) {
         int rd = gcodeFile.read();
-        filePos++;  if(filePos%200==0) notify_observers(JobStatusEvent{0}); // every Nth byte
-        if(rd=='\n' || rd=='\r') {
-            if(curLinePos!=0) break; // if it's an empty string or LF after last CR, just continue reading
+        filePos++;
+        if (filePos % 200 == 0) notify_observers(JobStatusEvent{0}); // every Nth byte
+        if (rd == '\n' || rd == '\r') {
+            if (curLinePos != 0)
+                break; // if it's an empty string or LF after last CR, just continue reading
         } else {
             if(curLinePos<MAX_LINE) curLine[curLinePos++] = rd;
             else { 
                 stop(); 
-                J_DEBUGF("Line length exceeded\n");
+                LOGF("Line length exceeded\n");
                 break; 
             }
         }
     }
     curLine[curLinePos]=0;
-    //J_DEBUGF("  J read line = %s\n", curLine);
 }
 
 bool Job::scheduleNextCommand(GCodeDevice *dev) {
@@ -35,17 +36,24 @@ bool Job::scheduleNextCommand(GCodeDevice *dev) {
         return false;
     }
 
-    if(paused) return false;
-    
-    if(curLinePos==0) {
+    if(paused) // TODO no pause yet implemented
+        return false;
+
+    if (curLinePos == 0) {
         readNextLine();
-        if(!running) return false;    // don't run next time
+        if(!running)
+            return false;    // don't run next time
 
         char* pos = strchr(curLine, ';'); // strip comments
-        if(pos!=NULL) {*pos = 0; curLinePos = pos-curLine; }
+        if (pos != NULL) {
+            *pos = 0;
+            curLinePos = pos - curLine;
+        }
 
-        bool empty=true;
-        for(size_t i=0; i<curLinePos; i++) if(!isspace(curLine[i])) empty=false;
+        bool empty = true;
+        for (size_t i = 0; i < curLinePos; i++)
+            if (!isspace(curLine[i]))
+                empty = false;
 
         if(curLinePos==0 || empty) { return true; } // can seek next
 
@@ -60,17 +68,13 @@ bool Job::scheduleNextCommand(GCodeDevice *dev) {
     }
 
     if(dev->canSchedule(curLinePos)) {        
-        
-        J_DEBUGF("  J queueing line '%s', len %d\n", curLine, curLinePos );
-
+        LOGF("  J queueing line '%s', len %d\n", curLine, curLinePos );
         bool queued = dev->scheduleCommand(curLine, curLinePos);
         assert(queued);
-
         curLinePos = 0;
         return true; //can try next command
-
     } else {
-        //J_DEBUGF("  J not queing line '%s', len %d\n", curLine, curLinePos ); // floods log
+        //LOGF("  J not queing line '%s', len %d\n", curLine, curLinePos ); // floods log
         return false; // stop trying for now
     }
 }
@@ -82,5 +86,4 @@ void Job::loop() {
     if(dev==nullptr) return;
 
     while( scheduleNextCommand(dev) ) {}
-
 }

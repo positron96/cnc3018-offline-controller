@@ -133,7 +133,7 @@ extern FileChooser fileChooser;
         GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
         if(dev==nullptr) return;
 
-        S_DEBUGF("GrblDRO::onButton(%d,%d)\n", bt, (int)evt);
+        LOGF("GrblDRO::onButton(%d,%d)\n", bt, (int)evt);
         
         if( !dev->canJog() ) return;
         

@@ -10,12 +10,13 @@ public:
         Idle, Run, Hold, Jog, Alarm, Door, Check, Home, Sleep
     };
 
-    GrblDevice(WatchedSerial * s): 
+    GrblDevice(WatchedSerial *s) :
         GCodeDevice(s)
     { 
         sentCounter = &sentQueue; 
         canTimeout = false;
     };
+
     GrblDevice() : GCodeDevice() { sentCounter = &sentQueue; }
 
     virtual ~GrblDevice() {}
@@ -26,14 +27,14 @@ public:
 
     void begin() override {
         GCodeDevice::begin();
-        schedulePriorityCommand("$I");
+        schedulePriorityCommand("$I"); // TODO actual depends on realisation see inside fn
         requestStatusUpdate();
     }
 
     void reset() override {
         panic = false;
         cleanupQueue();
-        char c = 0x18;
+        char c = 0x18; // ^x, reset
         schedulePriorityCommand(&c, 1);
     }
 
@@ -48,14 +49,18 @@ public:
         schedulePriorityCommand(&c, 1);  
     }
 
-    bool schedulePriorityCommand( const char* cmd, size_t len=0) override {
+    bool schedulePriorityCommand( const char* cmd, size_t len = 0) override {
         if(txLocked) return false;
-        if(len==0) len = strlen(cmd);
-        if(isCmdRealtime(cmd, len) ) {
-            printerSerial->write((const uint8_t*)cmd, len);  
-            GD_DEBUGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0] );
-            return true;
+        if(len==0){ 
+            len = strlen(cmd);
         }
+        // TODO why it diff from Grbldev::trySendCommand
+        // it is send not sheduled
+//        if(isCmdRealtime(cmd, len) ) {
+//            printerSerial->write((const uint8_t*)cmd, len);
+//            LOGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0] );
+//            return true;
+//        }
         return GCodeDevice::schedulePriorityCommand(cmd, len);
     }
 
@@ -63,8 +68,10 @@ public:
     float getXOfs() { return ofsX; } 
     float getYOfs() { return ofsY; }
     float getZOfs() { return ofsZ; }
+
     uint32_t getSpindleVal() { return spindleVal; }
     uint32_t getFeed() { return feed; }
+    
     Status getStatus() { return status; }
     const char* getStatusStr();
     String & getLastResponse() { return lastResponse; }
@@ -75,7 +82,7 @@ public:
 protected:
     void trySendCommand() override;
 
-    void tryParseResponse( char* cmd, size_t len ) override;
+    void tryParseResponse(char *cmd, size_t len) override;
     
 private:
     

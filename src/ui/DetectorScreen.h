@@ -38,9 +38,9 @@ protected:
         int sy = Display::STATUS_BAR_HEIGHT+5;
         constexpr int lh = 11;
         u8g2.setFont(u8g2_font_7x13B_tr );
-        if(Detector::getDetectResult()==0) {
+        if(Detector::getDetectResult() == 0) {
             u8g2.drawStr(sx, sy, "Searching...");
-            snprintf(str, LEN, "Trying %ld baud", Detector::serialBaud);
+            snprintf(str, LEN, "%s on %ld baud", Detector::deviceName, Detector::serialBaud);
             u8g2.drawStr(sx, sy+lh, str);
         } else {
             u8g2.drawStr(sx, sy, "Found");
@@ -48,6 +48,5 @@ protected:
     };
 
     void onButton(int bt, Display::ButtonEvent arg) override {};
-
 
 };

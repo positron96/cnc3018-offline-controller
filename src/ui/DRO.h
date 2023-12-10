@@ -76,7 +76,7 @@ protected:
             case 1 : return 'Y';
             case 2 : return 'Z';
         }
-        S_DEBUGF("Unknown axis\n");
+        LOGF("Unknown axis\n");
         return 0;
     }
 

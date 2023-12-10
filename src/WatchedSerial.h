@@ -38,7 +38,7 @@ public:
     int read() override { return upstream.read(); };
     int peek() override { return upstream.peek(); };
     void flush() override { upstream.flush(); };
-
+// TODO how it works??
     bool isLocked(bool forceRead=false) {
         if(forceRead || int32_t(millis()-lastUpdate) > (int32_t)CACHE_DURATION) {
             cachedLocked = digitalRead(pin)==HIGH;

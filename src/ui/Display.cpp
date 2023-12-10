@@ -104,11 +104,15 @@ uint16_t Display::buttStates;
     }
 
     void Display::draw() {
-        if(!dirty) return;
+        if(!dirty)
+            return;
         u8g2.clearBuffer();
-        if(cScreen!=nullptr) cScreen->drawContents();
+        if(cScreen!=nullptr)
+            cScreen->drawContents();
+
         drawStatusBar();
-        if(menuShown) drawMenu();
+        if(menuShown)
+            drawMenu();
 
         //char str[15]; sprintf(str, "%lu", millis() ); u8g2.drawStr(20,20, str);
         //char str[15]; sprintf(str, "%4d %4d", potVal[0], potVal[1] ); u8g2.drawStr(5,110, str);
@@ -122,7 +126,6 @@ uint16_t Display::buttStates;
 #include "../assets/connected.XBM"
 
     void Display::drawStatusBar() {
-
         GrblDevice *dev = static_cast<GrblDevice*>( GCodeDevice::getDevice() );
 
         //u8g2.setFont(u8g2_font_5x8_tr);
@@ -135,7 +138,7 @@ uint16_t Display::buttStates;
 
         int x=2, y=-1;
 
-        //snprintf(str, 25, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
+        snprintf(str, 25, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
         if(dev==nullptr || !dev->isConnected()) {
             u8g2.drawGlyph(x, y, 'X' );
         } else if(dev->isLocked() ) {
