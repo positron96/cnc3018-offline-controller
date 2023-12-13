@@ -5,25 +5,25 @@
 #include <U8g2lib.h>
 
 #include <etl/vector.h>
+#include <etl/map.h>
+#include <printfloat.h>
 
-#include "../devices/GCodeDevice.h"
-
+#include "devices/GCodeDevice.h"
 #include "Display.h"
+
 
 class Screen {
 public:
+    Screen(): firstDisplayedMenuItem{0} {}
+    virtual ~Screen(){}
 
-    Screen() : firstDisplayedMenuItem(0) {}
-
-    void setDirty(bool fdirty=true) {
+    static void setDirty(bool fdirty = true) {
         Display::getDisplay()->setDirty(fdirty);
     }
 
     virtual void begin() { setDirty(true); }
 
     virtual void loop() {}
-
-    void draw();
 
 protected:
 
@@ -35,9 +35,10 @@ protected:
 
     virtual void onButton(int bt, Display::ButtonEvent arg) {};
 
-    virtual void onMenuItemSelected(MenuItem & item) {};
+    virtual void onMenuItemSelected(MenuItem &item) {};
 
     virtual void onShow() {};
+
     virtual void onHide() {};
 
 private:
@@ -45,5 +46,4 @@ private:
     size_t firstDisplayedMenuItem;
 
     friend class Display;
-
 };

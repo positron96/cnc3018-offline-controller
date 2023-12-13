@@ -19,6 +19,8 @@ bool GrblDevice::jog(uint8_t axis, float dist, int feed) {
     constexpr static char AXIS[] = {'X', 'Y', 'Z'};
     constexpr size_t LN = 25;
     char msg[LN];
+    // "$J=G91 G20 X0.5" will move +0.5 inches (12.7mm) to X=22.7mm (WPos).
+    // Note that G91 and G20 are only applied to this jog command
     int l = snprintf(msg, LN, "$J=G91 F%d %c", feed, AXIS[axis]);
     snprintfloat(msg + l, LN - l, dist, 3);
     return scheduleCommand(msg, strlen(msg));
@@ -51,16 +53,18 @@ bool GrblDevice::isCmdRealtime(const char *data, size_t len) {
 }
 
 void GrblDevice::trySendCommand() {
-    // TODO what is different from (1)
+// this can go with ADD_LINECOMMENTS
+#ifdef ADD_LINECOMMENTS
+    if (isCmdRealtime(curUnsentPriorityCmd, curUnsentPriorityCmdLen)) {
+        printerSerial->write((const uint8_t *) curUnsentPriorityCmd, curUnsentPriorityCmdLen);
 
-//         if(isCmdRealtime(curUnsentPriorityCmd, curUnsentPriorityCmdLen) ) {
-//             printerSerial->write((const uint8_t*)curUnsentPriorityCmd, curUnsentPriorityCmdLen);
-//
-//             GD_DEBUGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), curUnsentPriorityCmd[0] );
-//
-//             curUnsentPriorityCmdLen = 0;
-//             return;
-//         }
+        LOGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(),
+                  curUnsentPriorityCmd[0]);
+
+        curUnsentPriorityCmdLen = 0;
+        return;
+    }
+#endif // ADD_LINECOMMENTS
 
     char *cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
     size_t &len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
@@ -80,20 +84,20 @@ void GrblDevice::trySendCommand() {
 }
 
 void GrblDevice::tryParseResponse(char *resp, size_t len) {
-    LOGF(">  >>>> Resp(%d): %s", len, resp);
+    LOGF(">   Resp(%d): %s", len, resp);
     if (startsWith(resp, "ok")) {
         sentQueue.pop();
         connected = true;
         panic = false;
-        //lastResponse = "";
-        notify_observers(DeviceStatusEvent{0});
+        lastResponse = "ok";
+        notify_observers(DeviceStatusEvent{DeviceStatus::OK});
     } else if (startsWith(resp, "<")) {
         parseGrblStatus(resp + 1);
         panic = false;
     } else if (startsWith(resp, "error")) {
         sentQueue.pop();
         LOGF("ERR '%s'\n", resp);
-        notify_observers(DeviceStatusEvent{1});
+        notify_observers(DeviceStatusEvent{DeviceStatus::DEV_ERROR});
         lastResponse = resp;
     } else if (startsWith(resp, "ALARM:")) {
         panic = true;
@@ -101,13 +105,13 @@ void GrblDevice::tryParseResponse(char *resp, size_t len) {
         lastResponse = resp;
         // no mor status updates will come in, so update status.
         status = Status::Alarm;
-        notify_observers(DeviceStatusEvent{2});
+        notify_observers(DeviceStatusEvent{DeviceStatus::ALARM});
     } else if (startsWith(resp, "[MSG:")) {
         LOGF("Msg '%s'\n", resp);
         resp[len - 1] = 0; // strip last ']'
         lastResponse = resp + 5;
         // this is the first message after reset
-        notify_observers(DeviceStatusEvent{3});
+        notify_observers(DeviceStatusEvent{DeviceStatus::MSG});
     }
 
     LOGF(" > (f%3d,%3d) '%s'(len %d) \n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(), resp, len);
@@ -122,9 +126,9 @@ void mystrcpy(char *dst, const char *start, const char *end) {
 
 void GrblDevice::parseGrblStatus(char *v) {
     //<Idle|MPos:9.800,0.000,0.000|FS:0,0|WCO:0.000,0.000,0.000>
+    //                                        override values in percent of programmed values for
+    //                                    v-- feed, rapids, and spindle speed
     //<Idle|MPos:9.800,0.000,0.000|FS:0,0|Ov:100,100,100>
-    //LOGF("parsing %s\n", v.c_str() );
-
     char buf[10];
     bool mpos;
     char cpy[100];
@@ -132,17 +136,16 @@ void GrblDevice::parseGrblStatus(char *v) {
     v = cpy;
 
     // idle/jogging
-    char *pch = strtok(v, "|");
-    if (pch == nullptr) return;
-    setStatus(pch);
-
+    char *fromGrbl = strtok(v, "|");
+    if (fromGrbl == nullptr) return;
+    setStatus(fromGrbl);
 
     // MPos:0.000,0.000,0.000
-    pch = strtok(nullptr, "|");
-    if (pch == nullptr) return;
+    fromGrbl = strtok(nullptr, "|");
+    if (fromGrbl == nullptr) return;
     // ===========++++
     char *st, *fi;
-    st = pch + 5;
+    st = fromGrbl + 5;
     fi = strchr(st, ',');
     if (fi == nullptr)
         return;
@@ -159,15 +162,16 @@ void GrblDevice::parseGrblStatus(char *v) {
     st = fi + 1;
     z = _atod(st);
 
-    mpos = startsWith(pch, "MPos");
-    //LOGF("Parsed Pos: %f %f %f\n", x,y,z);
-
-    // FS:500,8000 or F:500
-    pch = strtok(nullptr, "|");
-    while (pch != nullptr) {
-        if (startsWith(pch, "FS:") || startsWith(pch, "F:")) {
-            if (pch[1] == 'S') {
-                st = pch + 3;
+    mpos = startsWith(fromGrbl, "MPos");
+    LOGF("Parsed Pos: %f %f %f\n", x,y,z);
+    //    +--  feed
+    //    v   v-- spindle v-- feed
+    // FS:500,8000     or F:500
+    fromGrbl = strtok(nullptr, "|");
+    while (fromGrbl != nullptr) {
+        if (startsWith(fromGrbl, "FS:") || startsWith(fromGrbl, "F:")) {
+            if (fromGrbl[1] == 'S') {
+                st = fromGrbl + 3;
                 fi = strchr(st, ',');
                 if (fi == nullptr)return;
                 mystrcpy(buf, st, fi);
@@ -175,10 +179,10 @@ void GrblDevice::parseGrblStatus(char *v) {
                 st = fi + 1;
                 spindleVal = atoi(st);
             } else {
-                feed = atoi(pch + 2);
+                feed = atoi(fromGrbl + 2);
             }
-        } else if (startsWith(pch, "WCO:")) {
-            st = pch + 4;
+        } else if (startsWith(fromGrbl, "WCO:")) {
+            st = fromGrbl + 4;
             fi = strchr(st, ',');
             if (fi == nullptr)return;
             mystrcpy(buf, st, fi);
@@ -192,9 +196,7 @@ void GrblDevice::parseGrblStatus(char *v) {
             ofsZ = _atod(st);
             LOGF("Parsed WCO: %f %f %f\n", ofsX, ofsY, ofsZ);
         }
-
-        pch = strtok(nullptr, "|");
-
+        fromGrbl = strtok(nullptr, "|");
     }
 
     if (!mpos) {
@@ -203,7 +205,7 @@ void GrblDevice::parseGrblStatus(char *v) {
         z -= ofsZ;
     }
 
-    notify_observers(DeviceStatusEvent{0});
+    notify_observers(DeviceStatusEvent{DeviceStatus::OK});
 }
 
 
@@ -224,7 +226,7 @@ bool GrblDevice::setStatus(const char *pch) {
     return true;
 }
 
-const char *GrblDevice::getStatusStr() {
+const char *GrblDevice::getStatusStr() const {
     switch (status) {
         case Status::Idle:
             return "Idle";

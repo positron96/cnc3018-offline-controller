@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Display.h"
 #include "Screen.h"
 
 template<class Detector>
@@ -13,8 +14,7 @@ public:
     };
 
     void loop() override {
-        Screen::loop();
-        if(nextRefresh!=0 && millis()>nextRefresh) {
+        if (nextRefresh != 0 && millis() > nextRefresh) {
             nextRefresh = millis() + REFRESH_INTL;
             setDirty();
         }

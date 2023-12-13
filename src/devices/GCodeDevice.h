@@ -7,14 +7,10 @@
 
 #include "debug.h"
 
-//#define ADD_LINECOMMENTS
-
-
-
 #define KEEPALIVE_INTERVAL 5000    // Marlin defaults to 2 seconds, get a little of margin
 #define STATUS_REQUEST_INTERVAL  500
 
-const int MAX_DEVICE_OBSERVERS = 3;
+constexpr uint8_t MAX_DEVICE_OBSERVERS = 3;
 
 struct DeviceStatusEvent {
     int statusField;
@@ -22,19 +18,20 @@ struct DeviceStatusEvent {
 
 using DeviceObserver = etl::observer<const DeviceStatusEvent &>;
 
-using ReceivedLineHandler = std::function<void(const char *str, size_t len)>;
-
 class GCodeDevice : public etl::observable<DeviceObserver, MAX_DEVICE_OBSERVERS> {
 public:
 
-    static GCodeDevice *getDevice() {
-        return inst;
-    }
+    enum DeviceStatus {
+        OK = 0,
+        DEV_ERROR,
+        ALARM,
+        MSG,
+        UNLOCKED = 10
+    };
 
     GCodeDevice(WatchedSerial *s) :
             printerSerial(s), connected(false) {
-        assert(inst == nullptr);
-        inst = this;
+
     }
 
     GCodeDevice() : printerSerial(nullptr), connected(false) {}
@@ -104,34 +101,32 @@ public:
 
     virtual void receiveResponses();
 
-    float getX() { return x; }
+    float getX() const { return x; }
 
-    float getY() { return y; }
+    float getY() const { return y; }
 
-    float getZ() { return z; }
+    float getZ() const { return z; }
 
-    bool isConnected() { return connected; }
+    uint32_t getSpindleVal() const { return spindleVal; }
+
+    uint32_t getFeed() const { return feed; }
+
+    bool isConnected() const { return connected; }
 
     virtual void reset() = 0;
 
-    bool isInPanic() { return panic; }
+    bool isInPanic() const { return panic; }
 
-    virtual void enableStatusUpdates(bool v = true) {
-        if (v) nextStatusRequestTime = millis();
-        else nextStatusRequestTime = 0;
-    }
-
-    size_t getQueueLength() {
-        return 0;
-    }
-
-    size_t getSentQueueLength() {
-        return sentCounter->bytes();
+    void enableStatusUpdates(bool v = true) {
+        if (v)
+            nextStatusRequestTime = millis();
+        else
+            nextStatusRequestTime = 0;
     }
 
     virtual void requestStatusUpdate() = 0;
 
-    void addReceivedLineHandler(ReceivedLineHandler h) { receivedLineHandlers.push_back(h); }
+    virtual const char *getStatusStr() const = 0;
 
     bool isLocked() { return printerSerial->isLocked(); }
 
@@ -141,19 +136,19 @@ protected:
     uint32_t serialRxTimeout;
     bool connected;
     bool canTimeout;
+    bool panic = false;
+    bool xoff;
+    bool xoffEnabled = false;
+    bool txLocked = false;
 
     static const size_t MAX_GCODE_LINE = 96;
+
     char curUnsentCmd[MAX_GCODE_LINE + 1], curUnsentPriorityCmd[MAX_GCODE_LINE + 1];
     size_t curUnsentCmdLen, curUnsentPriorityCmdLen;
 
     float x, y, z;
-    bool panic = false;
+    uint32_t feed, spindleVal;
     uint32_t nextStatusRequestTime;
-
-    bool xoff;
-    bool xoffEnabled = false;
-
-    bool txLocked = false;
 
     Counter *sentCounter;
 
@@ -186,7 +181,7 @@ protected:
             connected = false;
             cleanupQueue();
             disarmRxTimeout();
-            notify_observers(DeviceStatusEvent{1});
+            notify_observers(DeviceStatusEvent{DeviceStatus::DEV_ERROR});
         }
     }
 
@@ -203,22 +198,14 @@ protected:
     void readLockedStatus() {
         bool t = printerSerial->isLocked(true);
         if (t != txLocked)
-            notify_observers(DeviceStatusEvent{10});
+            notify_observers(DeviceStatusEvent{DeviceStatus::UNLOCKED});
         txLocked = t;
     }
 
 private:
-    static GCodeDevice *inst;
-
-    etl::vector<ReceivedLineHandler, 3> receivedLineHandlers;
-    //friend void loop();
 
 };
-
-
-String readStringUntil(Stream &PrinterSerial, char terminator, size_t timeout);
-
-String readString(Stream &PrinterSerial, size_t timeout, size_t timeout2 = 100);
+// todo utils for string was here
 
 inline bool startsWith(const char *str, const char *pre) {
     return strncmp(pre, str, strlen(pre)) == 0;

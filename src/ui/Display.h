@@ -1,20 +1,22 @@
 #pragma once
 
 #include <Arduino.h>
-#include "../constants.h"
+#include "constants.h"
 
-#include "../devices/GCodeDevice.h"
-#include "../Job.h"
+#include "devices/GCodeDevice.h"
+#include "Job.h"
 
 #include <U8g2lib.h>
 
 #include <etl/vector.h>
 #include <functional>
 
+class Screen;
+
+// TODO ??? Do display need device line at all?
 
 struct MenuItem {
     int16_t id;
-    //uint16_t glyph;
     String text;
     bool togglalbe;
     bool on;
@@ -27,24 +29,25 @@ struct MenuItem {
     }
 };
 
-class Screen;
 
 class Display : public JobObserver, public DeviceObserver {
 public:
     static U8G2 &u8g2;
-    //static bool buttonPressed[3];
+
     enum {
-        BT_ZDOWN = 0,
-        BT_ZUP,
-        BT_R,
-        BT_L,
-        BT_CENTER,
-        BT_UP,
-        BT_DOWN,
-        BT_STEP,
-        N_BUTTONS
+        BT_ZDOWN = 0,  //
+        BT_ZUP,        //
+                       //     +----------------------------------------------------+
+        BT_R,          //     |  Z_UP   +--------------+         BT_UP             |
+        BT_L,          //     |         |              |                           |
+        BT_CENTER,     //     |         |              |   BT_L  BT_CENTER   BT_R  |
+        BT_UP,         //     |         |              |                           |
+        BT_DOWN,       //     |  Z_DOWN +--------------+         BT_DOWN  BT_STEP  |
+        BT_STEP,       //     +----------------------------------------------------+
+                       //
+        N_BUTTONS      //
     } _butt;
-    //static constexpr int N_BUTTONS = 8;
+
     static uint16_t buttStates;
     static constexpr int STATUS_BAR_HEIGHT = 16;
 
@@ -53,11 +56,11 @@ public:
         UP, DOWN, HOLD
     };
 
-
     Display() : dirty{true}, selMenuItem{0}, menuShown{false} {
         assert(inst == nullptr);
         inst = this;
     }
+    ~Display () {}
 
     void setDirty(bool fdirty = true) { dirty = fdirty; }
 
@@ -69,7 +72,6 @@ public:
         setDirty();
     }
 
-
     void begin() { dirty = true; }
 
     void loop();
@@ -77,6 +79,7 @@ public:
     void draw();
 
     void setScreen(Screen *screen);
+    void setDevice(GCodeDevice *dev);
 
     static Display *getDisplay();
 
@@ -87,6 +90,7 @@ private:
     static Display *inst;
 
     Screen *cScreen;
+    GCodeDevice *dev;
 
     bool dirty;
 

@@ -14,15 +14,16 @@ U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI _u8g2(
 
 #include "WatchedSerial.h"
 
-#include "ui/DRO.h"
 #include "ui/DetectorScreen.h"
 #include "ui/GrblDRO.h"
+#include "ui/MarlinDRO.h"
 #include "ui/FileChooser.h"
 #include "ui/Display.h"
 
 #include "devices/DeviceDetector.h"
-#include "devices/GCodeDevice.h"
+
 #include "devices/GrblDevice.h"
+#include "devices/MarlinDevice.h"
 
 #include "Job.h"
 
@@ -42,29 +43,38 @@ constexpr uint32_t buttPins[N_BUTT] = {
 WatchedSerial SerialCNC{Serial1, PIN_DET};
 
 U8G2 &Display::u8g2 = _u8g2;
-
+// todo work with Pin_detect
 // // GrblDevice dev{&SerialCNC, PIN_DET};
 
-uint8_t devBuf[sizeof(GrblDevice)];
-GrblDevice *dev;
-
-Job *job;
+uint8_t devBuf[MAX(sizeof(GrblDevice), sizeof(MarlinDevice))];
+uint8_t droBuf[MAX(sizeof(GrblDRO), sizeof(MarlinDRO))];
 
 Display display;
-GrblDRO dro;
+
+GCodeDevice *dev;
+Job job;
+DRO *dro;
+
 FileChooser fileChooser;
 
-GrblDevice* createGrbl(WatchedSerial *s) {
-    if(dev!=nullptr) return dev;
-    dev = new(devBuf) GrblDevice(s);
-    delay(1000);
-    dev->begin();
-    dev->add_observer(*Display::getDisplay());
-    dev->add_observer(*job);
+GCodeDevice* createGrbl(WatchedSerial *s) {
+    if (dev != nullptr) return dev;
 
-    dro.begin();
-    dro.enableRefresh();
-    display.setScreen(&dro);
+    GrblDevice *device = new(devBuf) GrblDevice(s);
+
+    delay(1000);
+    device->begin();
+    device->add_observer(*Display::getDisplay());
+    device->add_observer(job);
+
+    dro = new (droBuf) GrblDRO(*device);
+    dro->begin();
+    dro->enableRefresh();
+    display.setScreen(dro);
+    display.setDevice(device);
+    job.setDevice(device);
+
+    dev = device;
     return dev;
 }
 
@@ -88,17 +98,16 @@ void setup() {
     fileChooser.setCallback( [&](bool res, String path){
         if(res) {
             LOGF("Starting job %s\n", path.c_str() );
-            job->setFile(path);
-            job->start();
+            job.setFile(path);
+            job.start();   // TODO what happens on job stop
         } else {
             // cancel
         }
-        Display::getDisplay()->setScreen(&dro);
+        Display::getDisplay()->setScreen(dro);
     } );
     fileChooser.begin();
 
-    job = &Job::getJob();
-    job->add_observer( display );
+    job.add_observer( display );
 
     for(auto pin: buttPins) {
         pinMode(pin, INPUT_PULLUP);
@@ -108,7 +117,7 @@ void setup() {
 #if LOG_DEBUG
     File cDir = SD.open("/");
     File file;
-    while ( file = cDir.openNextFile() ) {
+    while ( (file = cDir.openNextFile()) ) {
         LOGF("file %s\n", file.name() );
         file.close();
     }
@@ -117,31 +126,30 @@ void setup() {
 }
 
 void loop() {
-
     static uint32_t nextRead;
     // poll buttons
     if( int32_t(millis() - nextRead) > 0) {
         for(int i=0; i<N_BUTT; i++) {
-            bitWrite(display.buttStates, i, (digitalRead(buttPins[i])==0 ? 1:0) );
+            bitWrite(display.buttStates, i, (digitalRead(buttPins[i]) == 0 ? 1 : 0));
         }
         // display.processInput();
         nextRead = millis() + 10;
     }
     //END poll buttons
     display.loop();
-    job->loop();
+    job.loop();
 
     if (dev != nullptr) {
         dev->loop();
     } else {
         Detector::loop();
     }
-
-    if(SerialUSB.available()) {
-        while(SerialUSB.available()) {
-            SerialCNC.write(SerialUSB.read());
-        }
-    }
+    // todo check and fix
+//    if(SerialUSB.available()) {
+//        while(SerialUSB.available()) {
+//            SerialCNC.write(SerialUSB.read());
+//        }
+//    }
 
 }
 

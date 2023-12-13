@@ -17,6 +17,12 @@ public:
     void setCallback(const std::function<void(bool, String)> &cb) {
         returnCallback = cb;
     }
+protected:
+
+    void drawContents() override;
+
+    void onButton(int bt, Evt evt) override;
+
 
 private:
     std::function<void(bool, String)> returnCallback;
@@ -26,7 +32,6 @@ private:
     File cDir;
     static constexpr size_t MAX_FILES = 50;
     static constexpr size_t VISIBLE_FILES = 4;
-    //String files[MAX_FILES];
     etl::vector<String, MAX_FILES> files;
     etl::vector<String, 5> trail;
 
@@ -35,11 +40,5 @@ private:
     bool isGCode(const String &s);
 
     String currentPath();
-
-protected:
-
-    void drawContents() override;
-
-    void onButton(int bt, Evt evt) override;
 
 };

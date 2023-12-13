@@ -11,9 +11,8 @@ public:
     };
 
     GrblDevice(WatchedSerial *s) :
-        GCodeDevice(s)
-    { 
-        sentCounter = &sentQueue; 
+            GCodeDevice(s) {
+        sentCounter = &sentQueue;
         canTimeout = false;
     };
 
@@ -28,7 +27,8 @@ public:
     void begin() override {
         GCodeDevice::begin();
         schedulePriorityCommand("$I"); // TODO actual depends on realisation see inside fn
-        requestStatusUpdate();
+        requestStatusUpdate(); //TODO how this all begin works in real GRBL ???
+        // TODO why it has 2 tracts 1: send with serial 2: schedule Priority ???
     }
 
     void reset() override {
@@ -38,68 +38,62 @@ public:
         schedulePriorityCommand(&c, 1);
     }
 
-    void loop() override {
-        readLockedStatus();
-        GCodeDevice::loop();
-    }
 
-    void requestStatusUpdate() override {   
-        if(panic) return; // grbl does not respond in panic anyway
+    void requestStatusUpdate() override {
+        if (panic) return; // grbl does not respond in panic anyway
         char c = '?';
-        schedulePriorityCommand(&c, 1);  
+        schedulePriorityCommand(&c, 1);
     }
 
-    bool schedulePriorityCommand( const char* cmd, size_t len = 0) override {
-        if(txLocked) return false;
-        if(len==0){ 
+    bool schedulePriorityCommand(const char *cmd, size_t len = 0) override {
+        if (txLocked) return false;
+        if (len == 0) {
             len = strlen(cmd);
         }
-        // TODO why it diff from Grbldev::trySendCommand
-        // it is send not sheduled
-//        if(isCmdRealtime(cmd, len) ) {
-//            printerSerial->write((const uint8_t*)cmd, len);
-//            LOGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0] );
-//            return true;
-//        }
-        return GCodeDevice::schedulePriorityCommand(cmd, len);
+        if (isCmdRealtime(cmd, len)) {
+            printerSerial->write((const uint8_t *) cmd, len);
+            LOGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0]);
+            return true;
+        } else {
+            return GCodeDevice::schedulePriorityCommand(cmd, len);
+        }
     }
 
     /// WPos = MPos - WCO
-    float getXOfs() { return ofsX; } 
-    float getYOfs() { return ofsY; }
-    float getZOfs() { return ofsZ; }
+    float getXOfs() const { return ofsX; }
 
-    uint32_t getSpindleVal() { return spindleVal; }
-    uint32_t getFeed() { return feed; }
-    
-    Status getStatus() { return status; }
-    const char* getStatusStr();
-    String & getLastResponse() { return lastResponse; }
+    float getYOfs() const { return ofsY; }
+
+    float getZOfs() const { return ofsZ; }
+
+    const char *getStatusStr() const override;
+
+    const String &getLastResponse() const { return lastResponse; }
 
     static void sendProbe(Stream &serial);
+
     static bool checkProbeResponse(const String s);
 
 protected:
     void trySendCommand() override;
 
     void tryParseResponse(char *cmd, size_t len) override;
-    
+
 private:
-    
-    SimpleCounter<15,128> sentQueue;
-    
+
+    SimpleCounter<15, 128> sentQueue;
+
     String lastResponse;
 
     Status status;
 
     //WPos = MPos - WCO
-    float ofsX,ofsY,ofsZ;
-    uint32_t feed, spindleVal;
+    float ofsX, ofsY, ofsZ;
 
-    void parseGrblStatus(char* v);
+    void parseGrblStatus(char *v);
 
-    bool setStatus(const char* s);
+    bool setStatus(const char *s);
 
-    static bool isCmdRealtime(const char* data, size_t len);
+    static bool isCmdRealtime(const char *data, size_t len);
 
 };

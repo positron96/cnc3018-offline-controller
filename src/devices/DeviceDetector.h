@@ -6,9 +6,9 @@
 #include "debug.h"
 #include "gcode/gcode.h"
 
-using GrblDevice_ptr = GrblDevice *;
+using GrbDevice_ptr = GCodeDevice *;
 
-template<class T, T &printerSerial, GrblDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
 class GrblDetector {
 public:
 
@@ -121,29 +121,29 @@ private:
 };
 
 // friend funcs for Detector Screen
-template<class T, T &printerSerial, GrblDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
 uint32_t GrblDetector<T, printerSerial, createDevice>::serialBaud;
 
-template<class T, T &printerSerial, GrblDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
 const char *GrblDetector<T, printerSerial, createDevice>::deviceName;
 
-template<class T, T &printerSerial, GrblDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
 uint8_t GrblDetector<T, printerSerial, createDevice>::cSpeed;
 
-template<class T, T &printerSerial, GrblDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
 uint8_t  GrblDetector<T, printerSerial, createDevice>::cAttempt;
 
-template<class T, T &printerSerial, GrblDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
 int  GrblDetector<T, printerSerial, createDevice>::cResult;
 
-template<class T, T &printerSerial, GrblDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
 uint8_t  GrblDetector<T, printerSerial, createDevice>::cDev;
 
-template<class T, T &printerSerial, GrblDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
 uint32_t  GrblDetector<T, printerSerial, createDevice>::nextProbeTime;
 
-template<class T, T &printerSerial, GrblDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
 constexpr uint32_t GrblDetector<T, printerSerial, createDevice>::serialBauds[];
 
-template<class T, T &printerSerial, GrblDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
 constexpr const char* GrblDetector<T, printerSerial, createDevice>::deviceNames[];

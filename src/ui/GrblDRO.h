@@ -1,30 +1,20 @@
 #pragma once
 
 #include "DRO.h"
-#include "../devices/GrblDevice.h"
+#include "devices/GrblDevice.h"
 
 class GrblDRO : public DRO {
-
 public:
-    GrblDRO() : cMode{Mode::AXES} {}
-    void begin() override ;
+    GrblDRO(GrblDevice &d) : DRO(d), dev(d) {}
+
+    ~GrblDRO() {}
+
+    void begin() override;
 
 protected:
-    
-    void drawContents() override;
+    void drawAxisCoords(int sx, int sy) override;
 
-    void onButton(int bt, Evt evt) override;
-
+    GrblDevice &dev;
 private:
-    
-    enum class Mode {
-        AXES, SPINDLE
-    };
-    Mode cMode;
-    bool buttonWasPressedWithShift;
     bool useWCS;
-
-    void onButtonAxes(int bt, Evt evt, GrblDevice *);
-    void onButtonShift(int bt, Evt evt, GrblDevice *);
-    
 };
