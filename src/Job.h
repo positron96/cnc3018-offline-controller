@@ -38,10 +38,6 @@ typedef etl::observer<JobStatusEvent> JobObserver;
  */
 class Job : public DeviceObserver, public etl::observable<JobObserver, 3> {
 public:
-    /**
-     * todo leave this way
-     * @return
-     */
     static Job &getJob();
 
 

@@ -4,6 +4,7 @@
 #include <etl/observer.h>
 #include "WatchedSerial.h"
 #include "CommandQueue.h"
+#include "util.h"
 
 #include "debug.h"
 
@@ -124,6 +125,8 @@ public:
             nextStatusRequestTime = 0;
     }
 
+    const String &getLastResponse() const { return lastResponse; }
+
     virtual void requestStatusUpdate() = 0;
 
     virtual const char *getStatusStr() const = 0;
@@ -145,6 +148,7 @@ protected:
 
     char curUnsentCmd[MAX_GCODE_LINE + 1], curUnsentPriorityCmd[MAX_GCODE_LINE + 1];
     size_t curUnsentCmdLen, curUnsentPriorityCmdLen;
+    String lastResponse;
 
     float x, y, z;
     uint32_t feed, spindleVal;
@@ -206,7 +210,3 @@ private:
 
 };
 // todo utils for string was here
-
-inline bool startsWith(const char *str, const char *pre) {
-    return strncmp(pre, str, strlen(pre)) == 0;
-}

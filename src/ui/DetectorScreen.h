@@ -2,6 +2,7 @@
 
 #include "Display.h"
 #include "Screen.h"
+#include "debug.h"
 
 template<class Detector>
 class DetectorScreen: public Screen {
@@ -31,19 +32,21 @@ protected:
     void drawContents() override {
         U8G2 &u8g2 = Display::u8g2;   
 
-        const int LEN = 20;
+        const int LEN = 21;
         char str[LEN];
 
         int sx = 4;
-        int sy = Display::STATUS_BAR_HEIGHT+5;
+        int sy = Display::STATUS_BAR_HEIGHT + 5;
         constexpr int lh = 11;
         u8g2.setFont(u8g2_font_7x13B_tr );
         if(Detector::getDetectResult() == 0) {
             u8g2.drawStr(sx, sy, "Searching...");
-            snprintf(str, LEN, "%s on %ld baud", Detector::deviceName, Detector::serialBaud);
+            snprintf(str, LEN, "> %s ", Detector::deviceName);
             u8g2.drawStr(sx, sy+lh, str);
+            snprintf(str, LEN, "on %ld baud", Detector::serialBaud);
+            u8g2.drawStr(sx, sy+lh * 2, str);
         } else {
-            u8g2.drawStr(sx, sy, "Found");
+            u8g2.drawStr(sx, sy, "> Found <");
         }
     };
 

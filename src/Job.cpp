@@ -12,15 +12,17 @@ void Job::readNextLine() {
     while (gcodeFile.available() > 0) {
         int rd = gcodeFile.read();
         filePos++;
-        if (filePos % 200 == 0) notify_observers(JobStatusEvent{0}); // every Nth byte
+        if (filePos % 200 == 0)
+            notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0}); // every Nth byte
         if (rd == '\n' || rd == '\r') {
             if (curLinePos != 0)
                 break; // if it's an empty string or LF after last CR, just continue reading
         } else {
-            if (curLinePos < MAX_LINE) curLine[curLinePos++] = rd;
+            if (curLinePos < MAX_LINE)
+                curLine[curLinePos++] = rd;
             else {
                 stop();
-                LOGF("Line length exceeded\n");
+                LOGLN("Line length exceeded");
                 break;
             }
         }
@@ -34,7 +36,7 @@ bool Job::scheduleNextCommand() {
         return false;
     }
 
-    if (paused) // TODO no pause yet implemented
+    if (paused)
         return false;
 
     if (curLinePos == 0) {

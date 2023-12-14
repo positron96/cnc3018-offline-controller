@@ -13,7 +13,6 @@
 
 class Screen;
 
-// TODO ??? Do display need device line at all?
 
 struct MenuItem {
     int16_t id;
@@ -37,14 +36,14 @@ public:
     enum {
         BT_ZDOWN = 0,  //
         BT_ZUP,        //
-                       //     +----------------------------------------------------+
+        //     +----------------------------------------------------+
         BT_R,          //     |  Z_UP   +--------------+         BT_UP             |
         BT_L,          //     |         |              |                           |
         BT_CENTER,     //     |         |              |   BT_L  BT_CENTER   BT_R  |
         BT_UP,         //     |         |              |                           |
         BT_DOWN,       //     |  Z_DOWN +--------------+         BT_DOWN  BT_STEP  |
         BT_STEP,       //     +----------------------------------------------------+
-                       //
+        //
         N_BUTTONS      //
     } _butt;
 
@@ -60,7 +59,8 @@ public:
         assert(inst == nullptr);
         inst = this;
     }
-    ~Display () {}
+
+    ~Display() {}
 
     void setDirty(bool fdirty = true) { dirty = fdirty; }
 
@@ -79,6 +79,7 @@ public:
     void draw();
 
     void setScreen(Screen *screen);
+
     void setDevice(GCodeDevice *dev);
 
     static Display *getDisplay();
@@ -98,7 +99,6 @@ private:
     bool menuShown;
     bool menuShownWhenDown;
 
-    uint32_t nextRead;
     decltype(buttStates) prevStates;
     int16_t holdCounter[N_BUTTONS];
 

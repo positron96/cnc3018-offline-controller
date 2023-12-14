@@ -34,15 +34,15 @@ public:
     void reset() override {
         panic = false;
         cleanupQueue();
-        char c = 0x18; // ^x, reset
-        schedulePriorityCommand(&c, 1);
+        // ^x, reset
+        schedulePriorityCommand("\x18", 1);
     }
 
 
     void requestStatusUpdate() override {
-        if (panic) return; // grbl does not respond in panic anyway
-        char c = '?';
-        schedulePriorityCommand(&c, 1);
+        if (panic)
+            return; // grbl does not respond in panic anyway
+        schedulePriorityCommand("?", 1);
     }
 
     bool schedulePriorityCommand(const char *cmd, size_t len = 0) override {
@@ -52,7 +52,7 @@ public:
         }
         if (isCmdRealtime(cmd, len)) {
             printerSerial->write((const uint8_t *) cmd, len);
-            LOGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0]);
+//            LOGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0]);
             return true;
         } else {
             return GCodeDevice::schedulePriorityCommand(cmd, len);
@@ -68,11 +68,9 @@ public:
 
     const char *getStatusStr() const override;
 
-    const String &getLastResponse() const { return lastResponse; }
-
     static void sendProbe(Stream &serial);
 
-    static bool checkProbeResponse(const String s);
+    static bool checkProbeResponse(String s);
 
 protected:
     void trySendCommand() override;
@@ -83,14 +81,12 @@ private:
 
     SimpleCounter<15, 128> sentQueue;
 
-    String lastResponse;
-
     Status status;
 
     //WPos = MPos - WCO
     float ofsX, ofsY, ofsZ;
 
-    void parseGrblStatus(char *v);
+    void parseStatus(char *v);
 
     bool setStatus(const char *s);
 

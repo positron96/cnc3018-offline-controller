@@ -6,6 +6,7 @@
 
 #include "../devices/GrblDevice.h"
 
+constexpr int VISIBLE_MENUS = 5;
 
 Display *Display::inst = nullptr;
 
@@ -14,9 +15,11 @@ uint16_t Display::buttStates;
 Display *Display::getDisplay() { return inst; }
 
 void Display::setScreen(Screen *screen) {
-    if (cScreen != nullptr) cScreen->onHide();
+    if (cScreen != nullptr)
+        cScreen->onHide();
     cScreen = screen;
-    if (cScreen != nullptr) cScreen->onShow();
+    if (cScreen != nullptr)
+        cScreen->onShow();
     selMenuItem = 0;
     menuShown = false;
     dirty = true;
@@ -28,11 +31,10 @@ void Display::setDevice(GCodeDevice *de) {
 
 
 void Display::loop() {
-    if (cScreen != nullptr) cScreen->loop();
+    if (cScreen != nullptr)
+        cScreen->loop();
     draw();
 }
-
-constexpr int VISIBLE_MENUS = 5;
 
 void Display::ensureSelMenuVisible() {
 
@@ -48,7 +50,6 @@ void Display::processInput() {
     processButtons();
 }
 
-
 void Display::processButtons() {
 
     decltype(buttStates) changed = buttStates ^ prevStates;
@@ -58,7 +59,7 @@ void Display::processButtons() {
     for (int i = 0; i < N_BUTTONS; i++) {
         bool down = bitRead(buttStates, i);
         if (bitRead(changed, i)) {
-            if (i == BT_STEP && down && cScreen->menuItems.size() > 0) {
+            if (i == BT_STEP && down && !cScreen->menuItems.empty()) {
                 menuShown = !menuShown;
                 setDirty();
             } else {
@@ -109,7 +110,6 @@ void Display::processMenuButton(uint8_t bt, ButtonEvent evt) {
             menuShown = false;
             setDirty();
         }
-        //cScreen->onMenuItemSelected(cScreen->menuItems[selMenuItem]);
     }
 }
 
@@ -124,10 +124,6 @@ void Display::draw() {
     if (menuShown)
         drawMenu();
 
-    //char str[15]; sprintf(str, "%lu", millis() ); u8g2.drawStr(20,20, str);
-    //char str[15]; sprintf(str, "%4d %4d", potVal[0], potVal[1] ); u8g2.drawStr(5,110, str);
-    //char str[15]; sprintf(str, "%d", encVal ); u8g2.drawStr(5,110, str);
-
     u8g2.sendBuffer();
     dirty = false;
 }
@@ -138,15 +134,14 @@ void Display::draw() {
 void Display::drawStatusBar() {
     //u8g2.setFont(u8g2_font_5x8_tr);
     u8g2.setDrawColor(1);
-
     u8g2.setFont(u8g2_font_nokiafc22_tr);
 
     constexpr int LEN = 25;
     char str[LEN];
 
     int x = 2, y = -1;
-
-    snprintf(str, 25, "DET:%c", digitalRead(PIN_DET) == 0 ? '0' : '1');
+    snprintf(str, 6, "DET:%c", digitalRead(PIN_DET) == 0 ? '0' : '1');
+    u8g2.drawStr(45, y, str);
 
     if (dev == nullptr) return;
 
@@ -157,12 +152,7 @@ void Display::drawStatusBar() {
     } else {
         u8g2.drawXBM(x, 0, connected_width, connected_height, (const uint8_t *) connected_bits);
     }
-
     u8g2.drawStr(12, y, dev->getStatusStr());
-
-    //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
-    //u8g2.drawStr(sx, 7, str);
-
     //job status
     Job &job = Job::getJob();
     if (job.isValid()) {
@@ -176,7 +166,6 @@ void Display::drawStatusBar() {
     }
 }
 
-
 void Display::drawMenu() {
     if (cScreen == nullptr) return;
     u8g2.setFont(u8g2_font_nokiafc22_tr);
@@ -184,7 +173,8 @@ void Display::drawMenu() {
     const size_t len = cScreen->menuItems.size();
 
     size_t onscreenLen = len - cScreen->firstDisplayedMenuItem;
-    if (onscreenLen > VISIBLE_MENUS) onscreenLen = VISIBLE_MENUS;
+    if (onscreenLen > VISIBLE_MENUS)
+        onscreenLen = VISIBLE_MENUS;
     const int w = 80, x = 20, lh = 8, h = onscreenLen * lh;
     int y = 6;
 
@@ -225,5 +215,3 @@ void Display::drawMenu() {
     }
 
 }
-    
-

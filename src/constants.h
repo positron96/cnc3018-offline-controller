@@ -21,6 +21,7 @@ constexpr uint32_t PIN_BT_CENTER= PB12;
 constexpr uint32_t PIN_BT_UP    = PB13;
 constexpr uint32_t PIN_BT_DOWN  = PB14;
 constexpr uint32_t PIN_BT_STEP  = PB15;
+
 constexpr uint32_t PIN_DET      = PC13;    ///< 0V=no USB on CNC, 1=CNC connected to USB.
 
 #endif //CNC_3018_CONSTANTS_H

@@ -6,11 +6,6 @@ constexpr size_t FileChooser::MAX_FILES;
 constexpr size_t FileChooser::VISIBLE_FILES;
 
 void FileChooser::begin() {
-    //const char* t = cDir.name();
-    //FC_DEBUGF("loadDirContents: cdir is %s\n", t);
-    //menuItems.push_back("xClose");
-    //menuItems.push_back("yOpen");
-    //menuItems.push_back("^Up");
 }
 
 void FileChooser::onShow() {
@@ -163,7 +158,10 @@ void FileChooser::onButton(int bt, Evt evt) {
                 trail.push_back(file);
                 loadDirContents(SD.open(currentPath()), 0);
             } else {
-                if (returnCallback) returnCallback(true, currentPath() + "/" + file); else LOGF("no  ret callback\n");
+                if (returnCallback)
+                    returnCallback(true, currentPath() + "/" + file);
+                else
+                    LOGLN("no ret callback");
             }
             break;
         }

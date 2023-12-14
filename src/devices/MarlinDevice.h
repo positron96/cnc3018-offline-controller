@@ -39,9 +39,9 @@ public:
     }
 
 
-    void requestStatusUpdate() {
+    void requestStatusUpdate() override {
         if (panic) return; // todo
-        schedulePriorityCommand(GET_CURRENT_POS);
+        schedulePriorityCommand(M114_GET_CURRENT_POS);
     }
 
     bool schedulePriorityCommand(const char *cmd, size_t len = 0) override {
@@ -50,8 +50,6 @@ public:
     }
 
     const char *getStatusStr() const override;
-
-    String &getLastResponse() { return lastResponse; }
 
     static void sendProbe(Stream &serial);
 
@@ -63,8 +61,7 @@ protected:
     void tryParseResponse(char *cmd, size_t len) override;
 
 private:
-
-    String lastResponse;
+    SimpleCounter<15, 128> sentQueue;
 
     void parseStatus(char *v);
 };

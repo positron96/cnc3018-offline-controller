@@ -6,9 +6,8 @@ void GrblDevice::sendProbe(Stream &serial) {
     serial.print("\n$I\n");
 }
 
-bool GrblDevice::checkProbeResponse(const String v) {
+bool GrblDevice::checkProbeResponse(const String v)  {
     if (v.indexOf("[VER:") != -1) {
-        LOGLN(">> Detected GRBL device <<");
         return true;
     }
     return false;
@@ -53,7 +52,7 @@ bool GrblDevice::isCmdRealtime(const char *data, size_t len) {
 }
 
 void GrblDevice::trySendCommand() {
-// this can go with ADD_LINECOMMENTS
+
 #ifdef ADD_LINECOMMENTS
     if (isCmdRealtime(curUnsentPriorityCmd, curUnsentPriorityCmdLen)) {
         printerSerial->write((const uint8_t *) curUnsentPriorityCmd, curUnsentPriorityCmdLen);
@@ -68,7 +67,6 @@ void GrblDevice::trySendCommand() {
 
     char *cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
     size_t &len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
-    // TODO this is (1)
     cmd[len] = 0;
     if (sentCounter->canPush(len)) {
         sentCounter->push(cmd, len);
@@ -84,15 +82,14 @@ void GrblDevice::trySendCommand() {
 }
 
 void GrblDevice::tryParseResponse(char *resp, size_t len) {
-    LOGF(">   Resp(%d): %s", len, resp);
     if (startsWith(resp, "ok")) {
         sentQueue.pop();
         connected = true;
         panic = false;
-        lastResponse = "ok";
+        lastResponse = resp;
         notify_observers(DeviceStatusEvent{DeviceStatus::OK});
     } else if (startsWith(resp, "<")) {
-        parseGrblStatus(resp + 1);
+        parseStatus(resp + 1);
         panic = false;
     } else if (startsWith(resp, "error")) {
         sentQueue.pop();
@@ -124,7 +121,7 @@ void mystrcpy(char *dst, const char *start, const char *end) {
     *dst = 0;
 }
 
-void GrblDevice::parseGrblStatus(char *v) {
+void GrblDevice::parseStatus(char *v) {
     //<Idle|MPos:9.800,0.000,0.000|FS:0,0|WCO:0.000,0.000,0.000>
     //                                        override values in percent of programmed values for
     //                                    v-- feed, rapids, and spindle speed

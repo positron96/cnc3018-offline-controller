@@ -11,6 +11,8 @@ extern FileChooser fileChooser;
 extern const char AXIS[];
 extern const char AXIS_WCS[];
 
+constexpr int LINE_HEIGHT = 11;
+
 using JogDist = unsigned int;
 
 class DRO : public Screen {
@@ -19,7 +21,7 @@ public:
 
     DRO(GCodeDevice &d) : dev(d), nextRefresh{1}, cDist{1}, cFeed{0}, cMode{Mode::AXES} {}
 
-    virtual ~DRO() {} // todo check parent call for destr
+    virtual ~DRO() {}
 
     void begin() override {
         menuItems.push_back(MenuItem::simpleItem(0, "Open", [](MenuItem &) {
@@ -43,15 +45,12 @@ public:
         if (nextRefresh != 0 && millis() > nextRefresh) {
             nextRefresh = millis() + REFRESH_INTL;
             dev.requestStatusUpdate();
-            //setDirty();
         }
     }
 
     void enableRefresh(bool r = true) { nextRefresh = r ? millis() : 0; }
 
     bool isRefreshEnabled() const { return nextRefresh != 0; }
-
-private:
 
 protected:
     enum class Mode {
@@ -66,7 +65,7 @@ protected:
     constexpr static int JOG_FEEDS[] = {50, 100, 500, 1000, 2000};
     constexpr static size_t N_JOG_FEEDS = sizeof(JOG_FEEDS) / sizeof(JOG_FEEDS[0]);
     size_t cFeed;
-    constexpr static int SPINDLE_VALS[] = {1, 64, 128, 255};
+    constexpr static int SPINDLE_VALS[] = { 0, 1, 64, 128, 255};
     constexpr static size_t N_SPINDLE_VALS = sizeof(SPINDLE_VALS) / sizeof(SPINDLE_VALS[0]);
     size_t cSpindleVal;
 
@@ -86,8 +85,8 @@ protected:
 
     virtual void drawAxisCoords(int sx, int sy) {
         drawAxis(AXIS[0], dev.getX(), sx, sy);
-        drawAxis(AXIS[1], dev.getY(), sx, sy + 11); // Todo make konstant
-        drawAxis(AXIS[2], dev.getZ(), sx, sy + 11 * 2);
+        drawAxis(AXIS[1], dev.getY(), sx, sy + LINE_HEIGHT);
+        drawAxis(AXIS[2], dev.getZ(), sx, sy + LINE_HEIGHT * 2);
     };
 
     void onButton(int bt, Evt arg) override;
@@ -95,5 +94,7 @@ protected:
     void onButtonAxes(int bt, Evt evt);
 
     void onButtonShift(int bt, Evt evt);
+
+private:
 
 };

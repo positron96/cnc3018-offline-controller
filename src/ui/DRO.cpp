@@ -31,7 +31,7 @@ void DRO::drawContents() {
     constexpr int lh = 11;
 
     u8g2.setFont(u8g2_font_nokiafc22_tr);
-//    const String &st = dev->getLastResponse(); todo ??
+//    const String &st = dev.getLastResponse();
 //    if (st) {
 //        u8g2.drawStr(sx, 7, st.c_str());
 //    }

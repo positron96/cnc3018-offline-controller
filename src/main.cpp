@@ -40,16 +40,15 @@ constexpr uint32_t buttPins[N_BUTT] = {
     PIN_BT_STEP
 };
 
-WatchedSerial SerialCNC{Serial1, PIN_DET};
-
 U8G2 &Display::u8g2 = _u8g2;
-// todo work with Pin_detect
-// // GrblDevice dev{&SerialCNC, PIN_DET};
+WatchedSerial serialCNC{Serial1, PIN_DET};
+
 
 uint8_t devBuf[MAX(sizeof(GrblDevice), sizeof(MarlinDevice))];
 uint8_t droBuf[MAX(sizeof(GrblDRO), sizeof(MarlinDRO))];
 
 Display display;
+
 
 GCodeDevice *dev;
 Job job;
@@ -62,7 +61,7 @@ GCodeDevice* createGrbl(WatchedSerial *s) {
 
     GrblDevice *device = new(devBuf) GrblDevice(s);
 
-    delay(1000);
+    delay(5000);
     device->begin();
     device->add_observer(*Display::getDisplay());
     device->add_observer(job);
@@ -78,7 +77,7 @@ GCodeDevice* createGrbl(WatchedSerial *s) {
     return dev;
 }
 
-using Detector = GrblDetector<WatchedSerial, SerialCNC, createGrbl>;
+using Detector = GrblDetector<WatchedSerial, serialCNC, createGrbl>;
 
 DetectorScreen<Detector> detUI;
 
@@ -99,9 +98,7 @@ void setup() {
         if(res) {
             LOGF("Starting job %s\n", path.c_str() );
             job.setFile(path);
-            job.start();   // TODO what happens on job stop
-        } else {
-            // cancel
+            job.start();
         }
         Display::getDisplay()->setScreen(dro);
     } );
@@ -132,10 +129,11 @@ void loop() {
         for(int i=0; i<N_BUTT; i++) {
             bitWrite(display.buttStates, i, (digitalRead(buttPins[i]) == 0 ? 1 : 0));
         }
-        // display.processInput();
+        display.processInput();
         nextRead = millis() + 10;
     }
     //END poll buttons
+    
     display.loop();
     job.loop();
 
