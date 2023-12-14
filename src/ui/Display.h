@@ -68,7 +68,7 @@ public:
         setDirty();
     }
 
-    void notification(JobStatusEvent e) override {
+    void notification(const JobStatusEvent e) override {
         setDirty();
     }
 

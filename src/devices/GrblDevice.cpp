@@ -68,7 +68,7 @@ void GrblDevice::trySendCommand() {
     char *cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
     size_t &len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
     cmd[len] = 0;
-    if (sentCounter->canPush(len)) {
+    if (sentCounter->canPush(len)) { //todo how it work on resend
         sentCounter->push(cmd, len);
         printerSerial->write((const uint8_t *) cmd, len);
         printerSerial->write('\n');

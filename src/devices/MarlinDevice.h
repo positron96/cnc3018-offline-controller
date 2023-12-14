@@ -11,12 +11,8 @@ public:
 
     };
 
-    MarlinDevice(WatchedSerial *s) :
-            GCodeDevice(s) {
-        canTimeout = false;
-    };
-
-    MarlinDevice() : GCodeDevice() {}
+    explicit MarlinDevice(WatchedSerial *s) :
+            GCodeDevice(s) {}
 
     virtual ~MarlinDevice() {}
 
@@ -60,8 +56,18 @@ protected:
 
     void tryParseResponse(char *cmd, size_t len) override;
 
+    bool scheduleCommand(const char *cmd, size_t len) override;
+
 private:
     SimpleCounter<15, 128> sentQueue;
 
-    void parseStatus(char *v);
+    float hotendTemp, bedTemp = 0.0;
+    float e = 0;
+    int resendLine = -1;
+
+    void parseError(const char *input);
+
+    void parseStatus(const char *v);
+
+    void parseOk(const char *v);
 };
