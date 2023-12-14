@@ -52,7 +52,7 @@ public:
         }
         if (isCmdRealtime(cmd, len)) {
             printerSerial->write((const uint8_t *) cmd, len);
-//            LOGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0]);
+            LOGF("<RT (f%3d,%3d) '%c'\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0]);
             return true;
         } else {
             return GCodeDevice::schedulePriorityCommand(cmd, len);

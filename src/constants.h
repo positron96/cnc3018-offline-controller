@@ -4,6 +4,8 @@
 
 #ifndef CNC_3018_CONSTANTS_H
 #define CNC_3018_CONSTANTS_H
+// ====================== SD ======================
+constexpr uint32_t PIN_CD = PA3;
 
 // ===================== LCD =====================
 constexpr uint32_t PIN_LCD_CS = PA2; // not connected

@@ -94,14 +94,16 @@ void setup() {
 
     display.setScreen(&detUI);
 
-    fileChooser.setCallback( [&](bool res, String path){
-        if(res) {
-            LOGF("Starting job %s\n", path.c_str() );
+    fileChooser.setCallback([&](bool res, const char *path) {
+        if (res) {
+            LOGF("Starting job %s\n", path);
             job.setFile(path);
             job.start();
+        } else {
+            LOGLN("Return to prev screen");
         }
         Display::getDisplay()->setScreen(dro);
-    } );
+    });
     fileChooser.begin();
 
     job.add_observer( display );

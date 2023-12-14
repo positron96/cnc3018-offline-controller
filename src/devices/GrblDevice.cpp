@@ -6,7 +6,7 @@ void GrblDevice::sendProbe(Stream &serial) {
     serial.print("\n$I\n");
 }
 
-bool GrblDevice::checkProbeResponse(const String v)  {
+bool GrblDevice::checkProbeResponse(const String v) {
     if (v.indexOf("[VER:") != -1) {
         return true;
     }
@@ -72,7 +72,7 @@ void GrblDevice::trySendCommand() {
         sentCounter->push(cmd, len);
         printerSerial->write((const uint8_t *) cmd, len);
         printerSerial->write('\n');
-        LOGF("<  (f%3d,%3d) '%s'(len %d)\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, len);
+        LOGF("<  (f%3d,%3d) '%s'\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, len);
         len = 0;
     } else {
         LOGF("<  (f%3d,%3d) NO SPACE: '%s'(len %d)\n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(), cmd, len);
@@ -110,8 +110,7 @@ void GrblDevice::tryParseResponse(char *resp, size_t len) {
         // this is the first message after reset
         notify_observers(DeviceStatusEvent{DeviceStatus::MSG});
     }
-
-    LOGF(" > (f%3d,%3d) '%s'(len %d) \n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(), resp, len);
+    LOGF("> (f%3d,%3d) '%s'\n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(), resp);
 }
 
 void mystrcpy(char *dst, const char *start, const char *end) {
@@ -160,7 +159,7 @@ void GrblDevice::parseStatus(char *v) {
     z = _atod(st);
 
     mpos = startsWith(fromGrbl, "MPos");
-    LOGF("Parsed Pos: %f %f %f\n", x,y,z);
+    LOGF("Parsed Pos: %f %f %f\n", x, y, z);
     //    +--  feed
     //    v   v-- spindle v-- feed
     // FS:500,8000     or F:500

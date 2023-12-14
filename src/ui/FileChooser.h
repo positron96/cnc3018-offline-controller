@@ -1,11 +1,11 @@
 #pragma once
-
-#include "Screen.h"
-
 #include <SD.h>
 #include <functional>
 #include <etl/vector.h>
 
+#include "Screen.h"
+
+using CallbackFn = std::function<void(bool, const char*)>;
 
 class FileChooser: public Screen {
 public:
@@ -14,7 +14,7 @@ public:
 
     void onShow() override;
 
-    void setCallback(const std::function<void(bool, String)> &cb) {
+    void setCallback(const CallbackFn &cb) {
         returnCallback = cb;
     }
 protected:
@@ -25,7 +25,7 @@ protected:
 
 
 private:
-    std::function<void(bool, String)> returnCallback;
+    CallbackFn returnCallback;
     bool haveCard;
     size_t selLine;
     size_t topLine;

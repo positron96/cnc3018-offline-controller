@@ -55,7 +55,7 @@ public:
         dev = de;
     }
 
-    void setFile(const String &file) {
+    void setFile(const char *file) {
         if (gcodeFile) {
             gcodeFile.close();
         }

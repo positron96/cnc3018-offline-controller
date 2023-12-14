@@ -9,7 +9,7 @@ void FileChooser::begin() {
 }
 
 void FileChooser::onShow() {
-    haveCard = SD.begin(PA3);
+    haveCard = SD.begin(PIN_CD);
     if (!haveCard) {
         LOGF("FileChooser::begin SD failed\n");
         return;
@@ -68,7 +68,9 @@ void FileChooser::drawContents() {
     u8g2.setDrawColor(1);
     u8g2.setFont(u8g2_font_nokiafc22_tr);
 
-    int y0 = Display::STATUS_BAR_HEIGHT / 2, y = Display::STATUS_BAR_HEIGHT, h = 10;
+    int y0 = Display::STATUS_BAR_HEIGHT / 2,
+            y = Display::STATUS_BAR_HEIGHT,
+            h = 10;
 
     if (!haveCard) {
         u8g2.drawStr(2, y0, "NO CARD");
@@ -79,8 +81,6 @@ void FileChooser::drawContents() {
     const char *t = cDir.name();
 
     u8g2.drawStr(2, y0, t);
-    //u8g2.drawHLine(0, y+9, u8g2.getWidth() );
-
 
     const int visibleLines = min(VISIBLE_FILES, files.size() - topLine);
     for (int i = 0; i < visibleLines; i++) {
@@ -103,6 +103,8 @@ void FileChooser::onButton(int bt, Evt evt) {
         if (bt == Display::BT_CENTER) {
             onShow();
             setDirty();
+        } else if (bt == Display::BT_STEP) {
+            returnCallback(false, nullptr);
         }
         return;
     }
@@ -158,9 +160,10 @@ void FileChooser::onButton(int bt, Evt evt) {
                 trail.push_back(file);
                 loadDirContents(SD.open(currentPath()), 0);
             } else {
-                if (returnCallback)
-                    returnCallback(true, currentPath() + "/" + file);
-                else
+                if (returnCallback) {
+                    String c = currentPath() + "/" + file;
+                    returnCallback(true, c.c_str());
+                } else
                     LOGLN("no ret callback");
             }
             break;
@@ -173,7 +176,9 @@ void FileChooser::onButton(int bt, Evt evt) {
 
 String FileChooser::currentPath() {
     String ret;
-    for (const String &p: trail) { ret += "/" + p; }
+    for (const String &p: trail) {
+        ret += "/" + p;
+    }
     LOGF("FileChooser::currentPath = %s\n", ret.c_str());
     return ret;
 }
