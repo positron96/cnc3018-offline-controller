@@ -10,6 +10,9 @@ endif::[]
 
 # Open-source firmware for an STM32-based "cnc3018 offline controller"
 
+
+## Arduino cmake https://github.com/queezythegreat/arduino-cmake TODO
+
 **Video demonstration:**
 
 image:https://img.youtube.com/vi/B5J12AMOc3k/mqdefault.jpg[link=https://www.youtube.com/watch?v=B5J12AMOc3k]
