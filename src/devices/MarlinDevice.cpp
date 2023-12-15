@@ -2,6 +2,8 @@
 #include "MarlinDevice.h"
 #include "printfloat.h"
 #include "util.h"
+#include "debug.h"
+
 
 void MarlinDevice::sendProbe(Stream &serial) {
     serial.print("\n");
@@ -29,6 +31,8 @@ bool MarlinDevice::checkProbeResponse(const String v) {
 bool MarlinDevice::jog(uint8_t axis, float dist, int feed) {
     constexpr size_t LN = 25;
     char msg[LN];
+    // adding G91_SET_RELATIVE_COORDINATES to command
+    // does not work. 
     int l = snprintf(msg, LN, "G0 F%d %c", feed, AXIS[axis]);
     snprintfloat(msg + l, LN - l, dist, 3); //todo why + l -l  ???
     return scheduleCommand(msg, strlen(msg));
@@ -38,6 +42,7 @@ void MarlinDevice::trySendCommand() {
     char *cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
     size_t &len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
     cmd[len] = 0;
+    LOGF("Try [%s]\n", cmd);
     if (sentCounter->canPush(len)) { //todo how it work on resend
         sentCounter->push(cmd, len);
         printerSerial->write((const uint8_t *) cmd, len);
@@ -54,15 +59,15 @@ bool MarlinDevice::scheduleCommand(const char *cmd, size_t len = 0) {
 }
 
 void MarlinDevice::tryParseResponse(char *resp, size_t len) {
-    LOGF("> : %s\n", resp);
+    LOGF("> [%s]\n", resp);
     if (startsWith(resp, "Error") || startsWith(resp, "!!")) {
         if (startsWith(resp, "Error")) {
             sentQueue.pop();
-            parseError(resp + 5);
+            lastResponse = resp + 5;
+            parseError(lastResponse); // TODO
         } else {
             cleanupQueue();
             sentQueue.pop();
-
             lastResponse = resp + 2;
         }
         panic = true;
@@ -73,18 +78,20 @@ void MarlinDevice::tryParseResponse(char *resp, size_t len) {
                 resendLine = -1;
             }
             sentQueue.pop();
-            parseOk(resp + 3); // ok  + space
             lastResponse = resp;
         } else if (startsWith(resp, "busy: ")) {
             sentQueue.pop();
-            lastResponse = resp + 6; // marlin do space after :
+            lastResponse = resp + 5; // marlin do space after :
             // TODO busy state
         } else if (startsWith(resp, "Resend: ")) {
-            lastResponse = resp + 8;
+            lastResponse = resp + 7;
             resendLine = atoi(resp);
             // no pop. resend
         } else if (startsWith(resp, "DEBUG:")) {
             lastResponse = resp;
+        } else {
+            // M114 
+            parseOk(resp);
         }
         connected = true;
         panic = false;

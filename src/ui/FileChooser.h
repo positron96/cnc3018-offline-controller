@@ -26,12 +26,12 @@ protected:
 
 private:
     CallbackFn returnCallback;
+    static constexpr size_t MAX_FILES = 50;
+    static constexpr size_t VISIBLE_FILES = 4;
     bool haveCard;
     size_t selLine;
     size_t topLine;
     File cDir;
-    static constexpr size_t MAX_FILES = 50;
-    static constexpr size_t VISIBLE_FILES = 4;
     etl::vector<String, MAX_FILES> files;
     etl::vector<String, 5> trail;
 

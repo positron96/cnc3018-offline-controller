@@ -8,7 +8,10 @@ class MarlinDevice : public GCodeDevice {
 public:
 
     MarlinDevice(WatchedSerial *s) :
-            GCodeDevice(s) {}
+            GCodeDevice(s) {
+        sentCounter = &sentQueue;
+        canTimeout = false;
+    }
 
     MarlinDevice() : GCodeDevice() { sentCounter = &sentQueue; }
 
@@ -43,7 +46,17 @@ public:
         return GCodeDevice::schedulePriorityCommand(cmd, len);
     }
 
+    bool scheduleCommand(const char *cmd, size_t len) override;
+
     const char *getStatusStr() const override;
+
+    bool isRelative() const {
+        return relative;
+    }
+
+    void toggleRelative() {
+        relative = !relative;
+    }
 
     static void sendProbe(Stream &serial);
 
@@ -54,14 +67,13 @@ protected:
 
     void tryParseResponse(char *cmd, size_t len) override;
 
-    bool scheduleCommand(const char *cmd, size_t len) override;
-
 private:
     SimpleCounter<15, 128> sentQueue;
 
     float hotendTemp, bedTemp = 0.0;
     float e = 0;
     int resendLine = -1;
+    bool relative = false;
 
     void parseError(const char *input);
 

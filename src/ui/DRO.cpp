@@ -79,7 +79,7 @@ void DRO::drawContents() {
 };
 
 void DRO::onButton(int bt, Display::ButtonEvent evt) {
-    LOGF("GrblDRO::onButton(%d,%d)\n", bt, (int) evt);
+    LOGF("onButton(%d,%d)\n", bt, (int) evt);
     if (!dev.canJog()) return;
     if (bt == Display::BT_CENTER) {
         switch (evt) {

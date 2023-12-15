@@ -32,15 +32,13 @@ protected:
     uint32_t nextRefresh;
 
     void drawContents() override {
+        constexpr int lh = 7;
         U8G2 &u8g2 = Display::u8g2;
-
         const int LEN = 21;
         char str[LEN];
-
+        u8g2.setFont(u8g2_font_7x13B_tr);
         int sx = 4;
         int sy = Display::STATUS_BAR_HEIGHT;
-        constexpr int lh = 11;
-        u8g2.setFont(u8g2_font_7x13B_tr);
         if (Detector::getDetectResult() == 0) {
             u8g2.drawStr(sx, sy, "Searching...");
             snprintf(str, LEN, "%s on %ld", Detector::deviceName, Detector::serialBaud);

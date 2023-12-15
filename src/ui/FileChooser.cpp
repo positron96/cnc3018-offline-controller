@@ -9,9 +9,10 @@ void FileChooser::begin() {
 }
 
 void FileChooser::onShow() {
-    haveCard = SD.begin(PIN_CD);
+    haveCard = SD.begin(PIN_CD); //todo can be done better.
+    // on show show, on begin init
     if (!haveCard) {
-        LOGF("FileChooser::begin SD failed\n");
+        LOGF("SD failed\n");
         return;
     }
     loadDirContents(SD.open("/"));
@@ -23,15 +24,18 @@ bool FileChooser::isGCode(const String &s) {
         return true; // files without extension can be printed
     String ext = s.substring(p + 1);
     ext.toLowerCase();
-    return (ext == "gcode" || ext == "nc" || ext == "gc" || ext == "gco");
+    return (ext == "nc" ||
+            ext == "gc" ||
+            ext == "gco" ||
+            ext == "txt" ||
+            ext == "gcode");
 }
 
 void FileChooser::loadDirContents(File newDir, int startingIndex) {
     if (!newDir) return;
-    LOGF("loadDirContents dir %s\n", newDir.name());
+    LOGF("load dir %s\n", newDir.name());
     if (!cDir || strcmp(cDir.name(), newDir.name()) != 0) {
         cDir = newDir;
-        //FC_DEBUGF("loadDirContents opening new dir %s\n", cDir.name() );
     }
     topLine = 0;
     selLine = 0;
@@ -59,7 +63,7 @@ void FileChooser::loadDirContents(File newDir, int startingIndex) {
         file.close();
     }
 
-    LOGF("loadDirContents: file count %d\n", files.size());
+    LOGF("file count %d\n", files.size());
     setDirty();
 }
 
@@ -103,7 +107,7 @@ void FileChooser::onButton(int bt, Evt evt) {
         if (bt == Display::BT_CENTER) {
             onShow();
             setDirty();
-        } else if (bt == Display::BT_STEP) {
+        } else if (bt == Display::BT_L) {
             returnCallback(false, nullptr);
         }
         return;
@@ -130,13 +134,14 @@ void FileChooser::onButton(int bt, Evt evt) {
             String newPath = cDir.name();
 
             if (trail.empty()) {
-                LOGF("FileChooser::onButtonPressed(BT2): quit\n");
-                if (returnCallback) returnCallback(false, "");
+                LOGF("onButtonPressed(BT2): quit\n");
+                if (returnCallback)
+                    returnCallback(false, "");
             } else {
-                LOGF("FileChooser::onButtonPressed(BT2): moving up from %s\n", newPath.c_str());
+                LOGF("onButtonPressed(BT2): moving up from %s\n", newPath.c_str());
                 trail.pop_back();
                 newPath = currentPath();
-                LOGF("FileChooser::onButtonPressed(BT2): moving to %s\n", newPath.c_str());
+                LOGF("onButtonPressed(BT2): moving to %s\n", newPath.c_str());
                 // int p = newPath.lastIndexOf("/");
                 // if(p==-1) newPath="../"; else
                 // if(p==0) newPath="/"; else newPath = newPath.substring(0, p);
@@ -147,7 +152,7 @@ void FileChooser::onButton(int bt, Evt evt) {
         case Display::BT_R:
         case Display::BT_CENTER: {
             String file = files[selLine];
-            LOGF("FileChooser::onButtonPressed(BT1): cDir='%s'  file='%s'\n", cDir.name(), file.c_str());
+            LOGF("onButtonPressed(BT1): cDir='%s'  file='%s'\n", cDir.name(), file.c_str());
             bool isDir = file.charAt(file.length() - 1) == '/';
             if (isDir) {
                 file = file.substring(0, file.length() - 1);
@@ -163,8 +168,7 @@ void FileChooser::onButton(int bt, Evt evt) {
                 if (returnCallback) {
                     String c = currentPath() + "/" + file;
                     returnCallback(true, c.c_str());
-                } else
-                    LOGLN("no ret callback");
+                }
             }
             break;
         }
@@ -179,6 +183,6 @@ String FileChooser::currentPath() {
     for (const String &p: trail) {
         ret += "/" + p;
     }
-    LOGF("FileChooser::currentPath = %s\n", ret.c_str());
+    LOGF("currentPath = %s\n", ret.c_str());
     return ret;
 }

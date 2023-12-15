@@ -6,14 +6,14 @@
 class MarlinDRO : public DRO {
 
 public:
-    MarlinDRO(MarlinDevice &d) : DRO(d) {}
+    MarlinDRO(MarlinDevice &d) : DRO(d) , dev(d) {}
 
     ~MarlinDRO() {}
 
     void begin() override;
 
 protected:
-
+    MarlinDevice &dev;
 private:
     bool relative;
 

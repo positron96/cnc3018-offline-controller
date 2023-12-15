@@ -58,7 +58,7 @@ FileChooser fileChooser;
 
 void createGrbl(int i, WatchedSerial *s) {
     if (dev != nullptr) return;
-
+    delay(500);
     switch (i) {
         case 0: {
             GrblDevice *device = new(devBuf) GrblDevice(s);
@@ -71,19 +71,16 @@ void createGrbl(int i, WatchedSerial *s) {
             dro = new(droBuf) MarlinDRO(*device);
             dev = device;
         }
-            break;
     }
-
-    delay(5000);
-    dev->begin();
-    dev->add_observer(*Display::getDisplay());
-    dev->add_observer(job);
-
-    dro->begin();
-    dro->enableRefresh();
     display.setScreen(dro);
     display.setDevice(dev);
     job.setDevice(dev);
+    dev->begin();
+    dev->add_observer(*Display::getDisplay());
+    dev->add_observer(job);
+    dro->begin();
+    dro->enableRefresh();
+    LOGLN("Created");
 }
 
 using Detector = GrblDetector<WatchedSerial, serialCNC, createGrbl>;
@@ -108,8 +105,6 @@ void setup() {
             LOGF("Starting job %s\n", path);
             job.setFile(path);
             job.start();
-        } else {
-            LOGLN("Return to prev screen");
         }
         Display::getDisplay()->setScreen(dro);
     });
@@ -122,15 +117,6 @@ void setup() {
     }
 
     Detector::init();
-#if LOG_DEBUG
-    File cDir = SD.open("/");
-    File file;
-    while ( (file = cDir.openNextFile()) ) {
-        LOGF("file %s\n", file.name() );
-        file.close();
-    }
-    cDir.close();
-#endif  //LOG_DEBUG
 }
 
 void loop() {
@@ -153,12 +139,14 @@ void loop() {
     } else {
         Detector::loop();
     }
-    // todo check and fix
-//    if(SerialUSB.available()) {
-//        while(SerialUSB.available()) {
-//            SerialCNC.write(SerialUSB.read());
-//        }
-//    }
-
+    
+#ifdef LOG_DEBUG
+    //send all data from pc to device
+   if(SerialUSB.available()) {
+       while(SerialUSB.available()) {
+           serialCNC.write(SerialUSB.read());
+       }
+   }
+#endif
 }
 
