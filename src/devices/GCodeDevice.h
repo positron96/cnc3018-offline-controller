@@ -21,7 +21,6 @@ using DeviceObserver = etl::observer<const DeviceStatusEvent &>;
 
 class GCodeDevice : public etl::observable<DeviceObserver, MAX_DEVICE_OBSERVERS> {
 public:
-
     enum DeviceStatus {
         OK = 0,
         DEV_ERROR,
@@ -31,9 +30,7 @@ public:
     };
 
     GCodeDevice(WatchedSerial *s) :
-            printerSerial(s), connected(false) {
-
-    }
+            printerSerial(s), connected(false) {}
 
     GCodeDevice() : printerSerial(nullptr), connected(false) {}
 

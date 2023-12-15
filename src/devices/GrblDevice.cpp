@@ -1,6 +1,6 @@
+#include "constants.h"
 #include "GrblDevice.h"
 #include "printfloat.h"
-
 
 void GrblDevice::sendProbe(Stream &serial) {
     serial.print("\n$I\n");
@@ -13,9 +13,7 @@ bool GrblDevice::checkProbeResponse(const String v) {
     return false;
 }
 
-
 bool GrblDevice::jog(uint8_t axis, float dist, int feed) {
-    constexpr static char AXIS[] = {'X', 'Y', 'Z'};
     constexpr size_t LN = 25;
     char msg[LN];
     // "$J=G91 G20 X0.5" will move +0.5 inches (12.7mm) to X=22.7mm (WPos).

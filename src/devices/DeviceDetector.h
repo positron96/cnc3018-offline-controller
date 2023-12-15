@@ -1,21 +1,19 @@
 #pragma once
 
 #include "GCodeDevice.h"
+#include "MarlinDevice.h"
 #include "GrblDevice.h"
-#include <HardwareSerial.h>
-
-#include "debug.h"
 #include "gcode/gcode.h"
 
-using GrbDevice_ptr = GCodeDevice *;
+#include "debug.h"
 
-const int N_SERIAL_BAUDS = 4;
-const int N_DEVICES = 2;
-const uint32_t serialBauds[] = { 9600 ,57600, 115200, 250000 };
-const char *deviceNames[] = { "grbl\0", "marlin\0"};
+const uint8_t N_SERIAL_BAUDS = 4;
+const uint8_t N_DEVICES = 2;
 const uint8_t N_ATTEMPTS = 3;
+const uint32_t serialBauds[] = {115200, 57600, 9600, 250000};
+const char *deviceNames[] = {"grbl\0", "marlin\0"};
 
-template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, void (*createDevice)(int, T *)>
 class GrblDetector {
 public:
     static void init() {
@@ -60,25 +58,26 @@ private:
         }
         printerSerial.end();
         printerSerial.begin(serialBaud);
-
+        LOGF("Send");
         switch (cDev) {
-            case 0: 
+            case 0:
+                LOGLN(" grbl");
                 GrblDevice::sendProbe(printerSerial);
                 break;
             default :
+                LOGLN(" marlin");
                 MarlinDevice::sendProbe(printerSerial);
         }
 
         cAttempt++;
-        // LOGF("dev:%s speed: %s attempt:%d \n", deviceNames[cDev], serialBauds[cSpeed], cAttempt);
         if (cAttempt == N_ATTEMPTS) {
             cAttempt = 0;
-            cSpeed++;
-            if (cSpeed == N_SERIAL_BAUDS) {
-                cSpeed = 0;
+            cDev++;
+            if (cDev == N_DEVICES) {
+                cDev = 0;
                 // ring
-                cDev++;
-                cDev %= N_DEVICES;
+                cSpeed++;
+                cSpeed %= N_SERIAL_BAUDS;
             }
         }
     }
@@ -90,16 +89,17 @@ private:
 
         while (printerSerial.available()) {
             char ch = (char) printerSerial.read();
-            LOGF("> Read [%s]\n", ch);
             switch (ch) {
                 case '\n':
                 case '\r':
                     break;
                 default:
-                    if (respLen < MAX_LINE) resp[respLen++] = ch;
+                    if (respLen < MAX_LINE)
+                        resp[respLen++] = ch;
             }
             if (ch == '\n') {
                 resp[respLen] = 0;
+                LOGF("> [%s]\n", resp);
                 bool ret = false;
                 if (cDev == 0) {
                     ret = GrblDevice::checkProbeResponse(resp);
@@ -108,8 +108,7 @@ private:
                 }
 
                 if (ret) {
-                    LOGF("> Detected  %s", resp);
-                    createDevice(&printerSerial);
+                    createDevice(cDev, &printerSerial);
                     cResult = 1;
                     return;
                 }
@@ -121,29 +120,23 @@ private:
 };
 
 // friend funcs for Detector Screen
-template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, void (*createDevice)(int, T *)>
 uint32_t GrblDetector<T, printerSerial, createDevice>::serialBaud;
 
-template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, void (*createDevice)(int, T *)>
 const char *GrblDetector<T, printerSerial, createDevice>::deviceName;
 
-template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, void (*createDevice)(int, T *)>
 uint8_t GrblDetector<T, printerSerial, createDevice>::cSpeed;
 
-template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, void (*createDevice)(int, T *)>
 uint8_t  GrblDetector<T, printerSerial, createDevice>::cAttempt;
 
-template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, void (*createDevice)(int, T *)>
 int  GrblDetector<T, printerSerial, createDevice>::cResult;
 
-template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, void (*createDevice)(int, T *)>
 uint8_t  GrblDetector<T, printerSerial, createDevice>::cDev;
 
-template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
+template<class T, T &printerSerial, void (*createDevice)(int, T *)>
 uint32_t  GrblDetector<T, printerSerial, createDevice>::nextProbeTime;
-//
-//template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
-//constexpr uint32_t GrblDetector<T, printerSerial, createDevice>::serialBauds[];
-//
-//template<class T, T &printerSerial, GrbDevice_ptr(*createDevice)(T *)>
-//constexpr const char *GrblDetector<T, printerSerial, createDevice>::deviceNames[];

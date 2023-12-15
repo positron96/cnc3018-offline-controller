@@ -1,4 +1,6 @@
+#include "constants.h"
 #include "MarlinDevice.h"
+#include "printfloat.h"
 #include "util.h"
 
 void MarlinDevice::sendProbe(Stream &serial) {
@@ -22,6 +24,14 @@ bool MarlinDevice::checkProbeResponse(const String v) {
         return true;
     }
     return false;
+}
+
+bool MarlinDevice::jog(uint8_t axis, float dist, int feed) {
+    constexpr size_t LN = 25;
+    char msg[LN];
+    int l = snprintf(msg, LN, "G0 F%d %c", feed, AXIS[axis]);
+    snprintfloat(msg + l, LN - l, dist, 3); //todo why + l -l  ???
+    return scheduleCommand(msg, strlen(msg));
 }
 
 void MarlinDevice::trySendCommand() {
@@ -132,8 +142,7 @@ void MarlinDevice::parseOk(const char *input) {
         }
         fromMachine = strtok(nullptr, " ");
     }
-    end:
-    while (0) {};
+    end: ;
     // noop
 }
 

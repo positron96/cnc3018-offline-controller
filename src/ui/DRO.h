@@ -3,13 +3,12 @@
 #include <etl/map.h>
 #include <printfloat.h>
 
+#include "constants.h"
 #include "Screen.h"
-#include "../devices/GCodeDevice.h"
+#include "devices/GCodeDevice.h"
 #include "FileChooser.h"
 
 extern FileChooser fileChooser;
-extern const char AXIS[];
-extern const char AXIS_WCS[];
 
 constexpr int LINE_HEIGHT = 11;
 
@@ -17,7 +16,7 @@ using JogDist = unsigned int;
 
 class DRO : public Screen {
 public:
-    static constexpr uint16_t REFRESH_INTL = 500;
+    constexpr static uint16_t REFRESH_INTL = 500;
 
     DRO(GCodeDevice &d) : dev(d), nextRefresh{1}, cDist{1}, cFeed{0}, cMode{Mode::AXES} {}
 

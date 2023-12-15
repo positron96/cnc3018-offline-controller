@@ -4,8 +4,7 @@
 constexpr int DRO::JOG_FEEDS[];
 constexpr float DRO::JOG_DISTS[];
 constexpr int DRO::SPINDLE_VALS[];
-const char AXIS[] = {'X', 'Y', 'Z'};
-const char AXIS_WCS[] = {'x', 'y', 'z'};
+
 #include "../assets/arrows_lr.XBM"
 #include "../assets/arrows_ud.XBM"
 #include "../assets/arrows_zud.XBM"
@@ -20,17 +19,13 @@ void DRO::drawContents() {
     char str[LEN];
     // need to know type
     // Grbl CNC has axis offsets
-
     U8G2 &u8g2 = Display::u8g2;
-
     //u8g2.setFont(u8g2_font_nokiafc22_tr);
     //u8g2.drawGlyph(64, 7, cMode==Mode::AXES ? 'M' : 'S');
-
     int sx = 2;
     int sy = Display::STATUS_BAR_HEIGHT + 3, sx2 = 72;
     constexpr int lh = 11;
-
-    u8g2.setFont(u8g2_font_nokiafc22_tr);
+//    u8g2.setFont(u8g2_font_nokiafc22_tr);
 //    const String &st = dev.getLastResponse();
 //    if (st) {
 //        u8g2.drawStr(sx, 7, st.c_str());
@@ -45,6 +40,7 @@ void DRO::drawContents() {
 
 
     if (dev.canJog()) {
+        /// =============== draw frame =============
         u8g2.setDrawColor(1);
         if (cMode == Mode::AXES) {
             u8g2.drawFrame(sx - 2, sy - 3, 70, lh * 3 + 6);
@@ -62,7 +58,7 @@ void DRO::drawContents() {
     }
 
     sx += 5;
-    drawAxisCoords(sx,sy);
+    drawAxisCoords(sx, sy);
     sx2 += 3;
     u8g2.drawXBM(sx2 + 1, sy, spindle_width, spindle_height, (uint8_t *) spindle_bits);
     u8g2.drawXBM(sx2, sy + lh + 3, feed_width, feed_height, (uint8_t *) feed_bits);
@@ -83,36 +79,34 @@ void DRO::drawContents() {
 };
 
 void DRO::onButton(int bt, Display::ButtonEvent evt) {
-
-    LOGF("GrblDRO::onButton(%d,%d)\n", bt, (int)evt);
-
-    if( !dev.canJog() ) return;
-
+    LOGF("GrblDRO::onButton(%d,%d)\n", bt, (int) evt);
+    if (!dev.canJog()) return;
     if (bt == Display::BT_CENTER) {
-        switch(evt) {
+        switch (evt) {
             case Evt::DOWN: {
-                cMode = cMode==Mode::AXES ? Mode::SPINDLE : Mode::AXES;
+                cMode = cMode == Mode::AXES ? Mode::SPINDLE : Mode::AXES;
                 buttonWasPressedWithShift = false;
             }
                 break;
             case Evt::UP: {
-                if(buttonWasPressedWithShift) { cMode = cMode==Mode::AXES ? Mode::SPINDLE : Mode::AXES; }
+                if (buttonWasPressedWithShift) { cMode = cMode == Mode::AXES ? Mode::SPINDLE : Mode::AXES; }
             }
                 break;
-            default: break;
+            default:
+                break;
         }
         setDirty();
         return;
     }
 
-    if(evt==Evt::DOWN) buttonWasPressedWithShift = true;
+    if (evt == Evt::DOWN)
+        buttonWasPressedWithShift = true;
 
-    if(cMode == Mode::AXES) {
+    if (cMode == Mode::AXES) {
         onButtonAxes(bt, evt);
     } else {
         onButtonShift(bt, evt);
     }
-
 }
 
 void DRO::onButtonAxes(int bt, Evt evt) {
@@ -193,16 +187,14 @@ void DRO::onButtonShift(int bt, Evt evt) {
             else if (cFeed > 0)
                 cFeed--;
             break;
-        case Display::BT_UP: //dev->schedulePriorityCommand("?");  break;
+        case Display::BT_UP:
             if (evt == Evt::HOLD)
                 cFeed = N_JOG_FEEDS - 1;
             else if (cFeed < N_JOG_FEEDS - 1)
                 cFeed++;
             break;
-        default:
-            ; // skip
+        default:; // skip
 
     }
     setDirty();
-
 }

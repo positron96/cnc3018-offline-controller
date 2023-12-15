@@ -140,8 +140,8 @@ void Display::drawStatusBar() {
     char str[LEN];
 
     int x = 2, y = -1;
-    snprintf(str, 6, "DET:%c", digitalRead(PIN_DET) == 0 ? '0' : '1');
-    u8g2.drawStr(45, y, str);
+//    snprintf(str, 6, "DET:%c", digitalRead(PIN_DET) == 0 ? '0' : '1');
+//    u8g2.drawStr(45, y, str);
 
     if (dev == nullptr) return;
 

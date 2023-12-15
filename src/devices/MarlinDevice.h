@@ -7,12 +7,10 @@
 class MarlinDevice : public GCodeDevice {
 public:
 
-    enum class Status {
-
-    };
-
-    explicit MarlinDevice(WatchedSerial *s) :
+    MarlinDevice(WatchedSerial *s) :
             GCodeDevice(s) {}
+
+    MarlinDevice() : GCodeDevice() { sentCounter = &sentQueue; }
 
     virtual ~MarlinDevice() {}
 

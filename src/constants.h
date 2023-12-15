@@ -4,6 +4,8 @@
 
 #ifndef CNC_3018_CONSTANTS_H
 #define CNC_3018_CONSTANTS_H
+
+#include <Arduino.h>
 // ====================== SD ======================
 constexpr uint32_t PIN_CD = PA3;
 
@@ -25,5 +27,9 @@ constexpr uint32_t PIN_BT_DOWN  = PB14;
 constexpr uint32_t PIN_BT_STEP  = PB15;
 
 constexpr uint32_t PIN_DET      = PC13;    ///< 0V=no USB on CNC, 1=CNC connected to USB.
+
+
+constexpr char AXIS[] = {'X', 'Y', 'Z'};
+constexpr char AXIS_WCS[] = {'x', 'y', 'z'};
 
 #endif //CNC_3018_CONSTANTS_H

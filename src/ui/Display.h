@@ -36,7 +36,7 @@ public:
     enum {
         BT_ZDOWN = 0,  //
         BT_ZUP,        //
-        //     +----------------------------------------------------+
+//                            +----------------------------------------------------+
         BT_R,          //     |  Z_UP   +--------------+         BT_UP             |
         BT_L,          //     |         |              |                           |
         BT_CENTER,     //     |         |              |   BT_L  BT_CENTER   BT_R  |
@@ -44,7 +44,7 @@ public:
         BT_DOWN,       //     |  Z_DOWN +--------------+         BT_DOWN  BT_STEP  |
         BT_STEP,       //     +----------------------------------------------------+
         //
-        N_BUTTONS      //
+        N_BUTTONS
     } _butt;
 
     static uint16_t buttStates;
@@ -99,7 +99,8 @@ private:
     bool menuShown;
     bool menuShownWhenDown;
 
-    decltype(buttStates) prevStates;
+    decltype(buttStates)
+    prevStates;
     int16_t holdCounter[N_BUTTONS];
 
     void processButtons();

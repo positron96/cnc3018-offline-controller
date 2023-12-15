@@ -4,12 +4,12 @@
 #include "constants.h"
 
 U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI _u8g2(
-    U8G2_R0,
-    PIN_LCD_CLK,
-    PIN_LCD_MOSI,
-    PIN_LCD_CS,
-    PIN_LCD_DC,
-    PIN_LCD_RST
+        U8G2_R0,
+        PIN_LCD_CLK,
+        PIN_LCD_MOSI,
+        PIN_LCD_CS,
+        PIN_LCD_DC,
+        PIN_LCD_RST
 );
 
 #include "WatchedSerial.h"
@@ -28,16 +28,16 @@ U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI _u8g2(
 #include "Job.h"
 
 constexpr uint32_t buttPins[N_BUTT] = {
-    PIN_BT_ZDOWN,
-    PIN_BT_ZUP,
+PIN_BT_ZDOWN,
+PIN_BT_ZUP,
 
-    PIN_BT_R,
-    PIN_BT_L,
-    PIN_BT_CENTER,
-    PIN_BT_UP,
-    PIN_BT_DOWN,
+PIN_BT_R,
+PIN_BT_L,
+PIN_BT_CENTER,
+PIN_BT_UP,
+PIN_BT_DOWN,
 
-    PIN_BT_STEP
+PIN_BT_STEP
 };
 
 U8G2 &Display::u8g2 = _u8g2;
@@ -56,25 +56,34 @@ DRO *dro;
 
 FileChooser fileChooser;
 
-GCodeDevice* createGrbl(WatchedSerial *s) {
-    if (dev != nullptr) return dev;
+void createGrbl(int i, WatchedSerial *s) {
+    if (dev != nullptr) return;
 
-    GrblDevice *device = new(devBuf) GrblDevice(s);
+    switch (i) {
+        case 0: {
+            GrblDevice *device = new(devBuf) GrblDevice(s);
+            dro = new(droBuf) GrblDRO(*device);
+            dev = device;
+        }
+            break;
+        default: {
+            MarlinDevice *device = new(devBuf) MarlinDevice(s);
+            dro = new(droBuf) MarlinDRO(*device);
+            dev = device;
+        }
+            break;
+    }
 
     delay(5000);
-    device->begin();
-    device->add_observer(*Display::getDisplay());
-    device->add_observer(job);
+    dev->begin();
+    dev->add_observer(*Display::getDisplay());
+    dev->add_observer(job);
 
-    dro = new (droBuf) GrblDRO(*device);
     dro->begin();
     dro->enableRefresh();
     display.setScreen(dro);
-    display.setDevice(device);
-    job.setDevice(device);
-
-    dev = device;
-    return dev;
+    display.setDevice(dev);
+    job.setDevice(dev);
 }
 
 using Detector = GrblDetector<WatchedSerial, serialCNC, createGrbl>;
@@ -106,9 +115,9 @@ void setup() {
     });
     fileChooser.begin();
 
-    job.add_observer( display );
+    job.add_observer(display);
 
-    for(auto pin: buttPins) {
+    for (auto pin: buttPins) {
         pinMode(pin, INPUT_PULLUP);
     }
 
@@ -127,15 +136,15 @@ void setup() {
 void loop() {
     static uint32_t nextRead;
     // poll buttons
-    if( int32_t(millis() - nextRead) > 0) {
-        for(int i=0; i<N_BUTT; i++) {
+    if (int32_t(millis() - nextRead) > 0) {
+        for (int i = 0; i < N_BUTT; i++) {
             bitWrite(display.buttStates, i, (digitalRead(buttPins[i]) == 0 ? 1 : 0));
         }
         display.processInput();
         nextRead = millis() + 10;
     }
     //END poll buttons
-    
+
     display.loop();
     job.loop();
 
