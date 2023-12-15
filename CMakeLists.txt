@@ -46,6 +46,10 @@ include_directories("${CMAKE_CURRENT_LIST_DIR}/.pio/libdeps/controller/Embedded 
 include_directories("${CMAKE_CURRENT_LIST_DIR}/.pio/libdeps/controller/Embedded Template Library")
 include_directories("${CMAKE_CURRENT_LIST_DIR}/.pio/libdeps/controller/SD/src")
 
+SET(PLATFORMIO_HOME $ENV{HOME}/.platformio/packages)
+SET(FRAMEWORK ${PLATFORMIO_HOME}/framework-arduinoststm32)
+SET(FRAMEWORK_CMSIS ${PLATFORMIO_HOME}/framework-cmsis/CMSIS)
+
 add_library(printfloat STATIC
         lib/printfloat/printfloat.cpp
         )
@@ -55,6 +59,8 @@ target_include_directories(printfloat
 FILE(GLOB_RECURSE SRC_LIST "src/*.cpp")
 add_executable(main ${SRC_LIST})
 
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${FRAMEWORK}/system/ldscript.ld")
+
 target_include_directories(main
         PUBLIC src
         src/ui
@@ -63,33 +69,31 @@ target_include_directories(main
         lib/printfloat/
         )
 
+link_directories(BEFORE ${PLATFORMIO_HOME}/toolchain-gccarmnoneeabi/lib)
+link_directories(${PLATFORMIO_HOME}/toolchain-gccarmnoneeabi/lib/gcc/arm-none-eabi/9.2.1)
 
-SET(TYPE TOOLCHAIN)
-if (TYPE MATCHES "TOOLCHAIN")
+target_link_libraries(main printfloat)
 
-    set(CMAKE_CONFIGURATION_TYPES "controller" CACHE STRING "Build Types reflect PlatformIO Environments" FORCE)
 
-    SET(FRAMEWORK $ENV{HOME}/.platformio/packages/framework-arduinoststm32)
-    SET(FRAMEWORK_CMSIS $ENV{HOME}/.platformio/packages/framework-cmsis/CMSIS)
+set(CMAKE_CONFIGURATION_TYPES "controller" CACHE STRING "Build Types reflect PlatformIO Environments" FORCE)
 
-    include_directories("${FRAMEWORK}/cores/arduino")
-    include_directories("${FRAMEWORK}/cores/arduino/stm32")
-    include_directories("${FRAMEWORK}/cores/arduino/stm32/LL")
-    include_directories("${FRAMEWORK}/cores/arduino/stm32/usb")
-    include_directories("${FRAMEWORK}/variants/STM32F1xx/F103C8T_F103CB(T-U)")
-    include_directories("${FRAMEWORK_CMSIS}/CMSIS/Core/Include")
-    include_directories("${FRAMEWORK_CMSIS}/Core/Include")
-    include_directories("${FRAMEWORK_CMSIS}/DSP/Include")
-    include_directories("${FRAMEWORK_CMSIS}/DSP/PrivateInclude")
 
-    include_directories("${FRAMEWORK}/system/STM32F1xx")
-    include_directories("${FRAMEWORK}/system/Drivers/CMSIS/Device/ST/STM32F1xx/Include")
-    include_directories("${FRAMEWORK}/system/Drivers/CMSIS/Device/ST/STM32F1xx/Include")
-    include_directories("${FRAMEWORK}/system/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/gcc")
-    include_directories("${FRAMEWORK}/system/Drivers/STM32F1xx_HAL_Driver/Inc")
-    include_directories("${FRAMEWORK}/system/Drivers/STM32F1xx_HAL_Driver/Src")
-    include_directories("${FRAMEWORK}/system/Middlewares/ST/STM32_USB_Device_Library/Core/Inc")
-    include_directories("${FRAMEWORK}/system/Middlewares/ST/STM32_USB_Device_Library/Core/Src")
+include_directories("${FRAMEWORK}/cores/arduino")
+include_directories("${FRAMEWORK}/cores/arduino/stm32")
+include_directories("${FRAMEWORK}/cores/arduino/stm32/LL")
+include_directories("${FRAMEWORK}/cores/arduino/stm32/usb")
+include_directories("${FRAMEWORK}/variants/STM32F1xx/F103C8T_F103CB(T-U)")
+include_directories("${FRAMEWORK_CMSIS}/CMSIS/Core/Include")
+include_directories("${FRAMEWORK_CMSIS}/Core/Include")
+include_directories("${FRAMEWORK_CMSIS}/DSP/Include")
+include_directories("${FRAMEWORK_CMSIS}/DSP/PrivateInclude")
 
-endif ()
+include_directories("${FRAMEWORK}/system/STM32F1xx")
+include_directories("${FRAMEWORK}/system/Drivers/CMSIS/Device/ST/STM32F1xx/Include")
+include_directories("${FRAMEWORK}/system/Drivers/CMSIS/Device/ST/STM32F1xx/Include")
+include_directories("${FRAMEWORK}/system/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/gcc")
+include_directories("${FRAMEWORK}/system/Drivers/STM32F1xx_HAL_Driver/Inc")
+include_directories("${FRAMEWORK}/system/Drivers/STM32F1xx_HAL_Driver/Src")
+include_directories("${FRAMEWORK}/system/Middlewares/ST/STM32_USB_Device_Library/Core/Inc")
+include_directories("${FRAMEWORK}/system/Middlewares/ST/STM32_USB_Device_Library/Core/Src")
 
