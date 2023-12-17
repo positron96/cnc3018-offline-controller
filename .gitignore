@@ -2,7 +2,6 @@
 .vscode/
 
 cmake-*/
-CMakeLists.txt
 firmware.map
 
 .idea/
