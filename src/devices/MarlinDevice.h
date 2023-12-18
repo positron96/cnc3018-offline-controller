@@ -58,6 +58,16 @@ public:
 
     float getE() const { return e; }
 
+    void tempChange(uint8_t temp) {
+        constexpr size_t LN = 11;
+        char msg[LN];
+        // "$J=G91 G20 X0.5" will move +0.5 inches (12.7mm) to X=22.7mm (WPos).
+        // Note that G91 and G20 are only applied to this jog command
+        int l = snprintf(msg, LN, "%s S%d", M104_SET_EXTRUDER_TEMP, temp);
+        scheduleCommand(msg, l);
+        //todo must return
+    }
+
     float getTemp() const { return hotendTemp; }
 
     float getBedTemp() const { return bedTemp; }

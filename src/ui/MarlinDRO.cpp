@@ -41,18 +41,24 @@ void MarlinDRO::drawContents() {
     // todo Refactor this peace  todo
 
     u8g2.setFont(u8g2_font_7x13B_tr);
-    constexpr uint8_t startRight = 72;
-    constexpr uint8_t lineWidth = 7;
-    constexpr uint8_t lineHeight = 13;
+    const uint8_t lineWidth = u8g2.getMaxCharWidth();
+    const uint8_t lineHeight = u8g2.getMaxCharHeight();
+
+    constexpr uint8_t startLeftPanel = 0;
+    constexpr uint8_t startRightPanel = 72;
+
     constexpr uint8_t ICON_TOP_PADDING = 4;
-    uint8_t sx = 0, sx_start_right = 72;
+    constexpr uint8_t box_width = 43;
+
+    uint8_t sx = startLeftPanel,
+            sx_start_right = startRightPanel;
     uint8_t sy = Display::STATUS_BAR_HEIGHT; // bar Height 0 - 15.
     if (dev.canJog()) {
-        /// =============== draw control frame =============
+        /// =============== draw control bar =============
         u8g2.setDrawColor(1);
         uint8_t lineY = sy - 2;
         constexpr uint8_t endOfLeft = 43;
-        constexpr uint8_t endOfRight = startRight + 46;
+        constexpr uint8_t endOfRight = startRightPanel + 46;
         uint8_t boxY = lineY + 2;
         switch (cMode) {
             case Mode::AXES : {
@@ -62,7 +68,6 @@ void MarlinDRO::drawContents() {
                 break;
             }
             case Mode::SPINDLE: {
-                uint8_t box_width = endOfLeft;
                 constexpr uint8_t startRightLineY = 6;
                 u8g2.drawLine(sx_start_right + startRightLineY, lineY, endOfRight, lineY);
                 drawAxisIcons(sx_start_right + box_width, boxY, lineHeight);
@@ -109,6 +114,7 @@ void MarlinDRO::drawContents() {
     }
     ///  draw right panel ====================
     sx_start_right += 3;
+
     sy += 1;
     u8g2.drawXBM(sx_start_right, sy + ICON_TOP_PADDING,
                  dist_width, dist_height, (uint8_t *) dist_bits);
@@ -120,9 +126,9 @@ void MarlinDRO::drawContents() {
     }
     sy -= 1;
 
+    /// distance  ======
     sx_start_right += 10;
     sy += 2;
-    /// distance  ======
     const float &jd = JOG_DISTS[cDist];
     if (jd < 1)
         snprintf(str, LEN, "0.%01u", unsigned(jd * 10));
@@ -247,6 +253,7 @@ void MarlinDRO::onButtonTemp(uint8_t bt, Evt evt) {
                 }
                 break;
         }
+        dev.tempChange(expectedTemp);
         setDirty();
     }
 }

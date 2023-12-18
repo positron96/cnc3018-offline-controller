@@ -31,6 +31,9 @@ struct MenuItem {
 
 class Display : public JobObserver, public DeviceObserver {
 public:
+    static constexpr int STATUS_BAR_HEIGHT = 16;
+    static constexpr int HOLD_COUNT = 30; // x10 = ms
+
     static U8G2 &u8g2;
 
     enum {
@@ -45,12 +48,10 @@ public:
         BT_STEP,       //     +----------------------------------------------------+
         //
         N_BUTTONS
-    } _butt;
+    };
 
     static uint16_t buttStates;
-    static constexpr int STATUS_BAR_HEIGHT = 16;
 
-    static constexpr int HOLD_COUNT = 30; // x10 = ms
     enum class ButtonEvent {
         UP, DOWN, HOLD
     };
@@ -87,20 +88,17 @@ public:
     void processInput();
 
 private:
-
     static Display *inst;
-
     Screen *cScreen;
     GCodeDevice *dev;
 
     bool dirty;
-
     size_t selMenuItem = 0;
     bool menuShown;
     bool menuShownWhenDown;
 
-    decltype(buttStates)
-    prevStates;
+    decltype(buttStates) prevStates;
+
     int16_t holdCounter[N_BUTTONS];
 
     void processButtons();

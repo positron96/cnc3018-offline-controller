@@ -132,18 +132,16 @@ void Display::draw() {
 #include "../assets/connected.XBM"
 
 void Display::drawStatusBar() {
-    //u8g2.setFont(u8g2_font_5x8_tr);
-    u8g2.setDrawColor(1);
-    u8g2.setFont(u8g2_font_nokiafc22_tr);
-
     constexpr int LEN = 25;
     char str[LEN];
 
-    int x = 2, y = -1;
-//    snprintf(str, 6, "DET:%c", digitalRead(PIN_DET) == 0 ? '0' : '1');
-//    u8g2.drawStr(45, y, str);
+    if (dev == nullptr)
+        return;
 
-    if (dev == nullptr) return;
+    u8g2.setDrawColor(1);
+    u8g2.setFont(u8g2_font_nokiafc22_tr);
+
+    int x = 2, y = -1;
 
     if (!dev->isConnected()) {
         u8g2.drawGlyph(x, y, 'X');
@@ -157,10 +155,9 @@ void Display::drawStatusBar() {
     Job &job = Job::getJob();
     if (job.isValid()) {
         float p = job.getCompletion() * 100;
-        /*if(p<10) snprintf(str, 20, " %.1f%%", p );
-        else */
         snprintf(str, LEN, " %d%%", (int) p);
-        if (job.isPaused()) str[0] = 'p';
+        if (job.isPaused())
+            str[0] = 'p';
         int w = u8g2.getStrWidth(str);
         u8g2.drawStr(u8g2.getWidth() - w - 4, y, str);
     }
