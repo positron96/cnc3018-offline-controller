@@ -7,6 +7,7 @@
 
 #include "debug.h"
 
+const int PROBE_INTERVAL = 600;
 const uint8_t N_SERIAL_BAUDS = 4;
 const uint8_t N_DEVICES = 2;
 const uint8_t N_ATTEMPTS = 3;
@@ -30,7 +31,7 @@ public:
 
         if (int32_t(millis() - nextProbeTime) > 0) {
             sendNextProbe();
-            nextProbeTime = millis() + 1000;
+            nextProbeTime = millis() + PROBE_INTERVAL;
         } else {
             collectResponse();
         }
@@ -61,11 +62,9 @@ private:
         LOGF("Send");
         switch (cDev) {
             case 0:
-                LOGLN(" grbl");
                 GrblDevice::sendProbe(printerSerial);
                 break;
             default :
-                LOGLN(" marlin");
                 MarlinDevice::sendProbe(printerSerial);
         }
 

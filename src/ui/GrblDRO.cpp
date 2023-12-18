@@ -36,7 +36,7 @@ void GrblDRO::begin() {
     }));
 };
 
-void GrblDRO::drawAxisCoords(int sx, int sy) {
+void GrblDRO::drawAxisCoords(int sx, int sy, u_int8_t lineHeight) {
     float t[3] = {0, 0, 0};
 
     char ax[3];

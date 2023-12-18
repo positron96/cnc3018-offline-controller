@@ -52,13 +52,14 @@ public:
     bool isRefreshEnabled() const { return nextRefresh != 0; }
 
 protected:
-    enum class Mode {
-        AXES, SPINDLE
+    enum class Mode : uint8_t {
+        // 0    1      2
+        AXES, SPINDLE, TEMP , N_VALS
     };
     GCodeDevice &dev;
 
     uint32_t nextRefresh;
-    constexpr static float JOG_DISTS[] = {0.1, 1, 5, 10, 50};
+    constexpr static float JOG_DISTS[] = {0.1, 0.5, 1, 5, 10, 50};
     constexpr static size_t N_JOG_DISTS = sizeof(JOG_DISTS) / sizeof(JOG_DISTS[0]);
     JogDist cDist;
     constexpr static int JOG_FEEDS[] = {50, 100, 500, 1000, 2000};
@@ -82,10 +83,10 @@ protected:
 
     void drawContents() override;
 
-    virtual void drawAxisCoords(int sx, int sy) {
+    virtual void drawAxisCoords(int sx, int sy, u_int8_t lineHeight) {
         drawAxis(AXIS[0], dev.getX(), sx, sy);
-        drawAxis(AXIS[1], dev.getY(), sx, sy + LINE_HEIGHT);
-        drawAxis(AXIS[2], dev.getZ(), sx, sy + LINE_HEIGHT * 2);
+        drawAxis(AXIS[1], dev.getY(), sx, sy + lineHeight);
+        drawAxis(AXIS[2], dev.getZ(), sx, sy + lineHeight * 2);
     };
 
     void onButton(int bt, Evt arg) override;

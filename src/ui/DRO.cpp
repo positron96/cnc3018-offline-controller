@@ -15,36 +15,21 @@ constexpr int DRO::SPINDLE_VALS[];
 #include "Screen.h"
 
 void DRO::drawContents() {
+    U8G2 &u8g2 = Display::u8g2;
+
     const int LEN = 20;
     char str[LEN];
-    // need to know type
-    // Grbl CNC has axis offsets
-    U8G2 &u8g2 = Display::u8g2;
-    //u8g2.setFont(u8g2_font_nokiafc22_tr);
-    //u8g2.drawGlyph(64, 7, cMode==Mode::AXES ? 'M' : 'S');
     int sx = 2;
     int sy = Display::STATUS_BAR_HEIGHT + 3, sx2 = 72;
     constexpr int lh = 11;
-//    u8g2.setFont(u8g2_font_nokiafc22_tr);
-//    const String &st = dev.getLastResponse();
-//    if (st) {
-//        u8g2.drawStr(sx, 7, st.c_str());
-//    }
-
     u8g2.setFont(u8g2_font_7x13B_tr);
-    //u8g2.setFont(u8g2_font_freedoomr10_tu );
-
-    //snprintf(str, 100, "u:%c bt:%d", digitalRead(PIN_DET)==0 ? 'n' : 'y',  buttStates);
-    //u8g2.drawStr(sx, 7, str);
-    //u8g2.drawGlyph(115, 0, !dev.isConnected() ? '-' : dev.isInPanic() ? '!' : '+' );
-
 
     if (dev.canJog()) {
         /// =============== draw frame =============
         u8g2.setDrawColor(1);
         if (cMode == Mode::AXES) {
             u8g2.drawFrame(sx - 2, sy - 3, 70, lh * 3 + 6);
-        } else {
+        } else if (cMode == Mode::SPINDLE) {
             int t = 43;
             u8g2.drawFrame(sx2 - 2, sy - 3, 54, lh * 3 + 6);
             u8g2.drawBox(sx2 + t, sy - 2, 9, lh * 3 + 4);
@@ -58,7 +43,7 @@ void DRO::drawContents() {
     }
 
     sx += 5;
-    drawAxisCoords(sx, sy);
+    drawAxisCoords(sx, sy, LINE_HEIGHT);
     sx2 += 3;
     u8g2.drawXBM(sx2 + 1, sy, spindle_width, spindle_height, (uint8_t *) spindle_bits);
     u8g2.drawXBM(sx2, sy + lh + 3, feed_width, feed_height, (uint8_t *) feed_bits);
@@ -83,14 +68,14 @@ void DRO::onButton(int bt, Display::ButtonEvent evt) {
     if (!dev.canJog()) return;
     if (bt == Display::BT_CENTER) {
         switch (evt) {
-            case Evt::DOWN: {
+            case Evt::DOWN:
                 cMode = cMode == Mode::AXES ? Mode::SPINDLE : Mode::AXES;
                 buttonWasPressedWithShift = false;
-            }
                 break;
-            case Evt::UP: {
-                if (buttonWasPressedWithShift) { cMode = cMode == Mode::AXES ? Mode::SPINDLE : Mode::AXES; }
-            }
+            case Evt::UP:
+                if (buttonWasPressedWithShift) {
+                    cMode = cMode == Mode::AXES ? Mode::SPINDLE : Mode::AXES;
+                }
                 break;
             default:
                 break;

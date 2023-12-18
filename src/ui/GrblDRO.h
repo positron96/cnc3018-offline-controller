@@ -12,7 +12,7 @@ public:
     void begin() override;
 
 protected:
-    void drawAxisCoords(int sx, int sy) override;
+    void drawAxisCoords(int sx, int sy, u_int8_t lineHeight) override;
 
     GrblDevice &dev;
 private:

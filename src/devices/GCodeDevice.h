@@ -145,7 +145,7 @@ protected:
 
     char curUnsentCmd[MAX_GCODE_LINE + 1], curUnsentPriorityCmd[MAX_GCODE_LINE + 1];
     size_t curUnsentCmdLen, curUnsentPriorityCmdLen;
-    String lastResponse;
+    const char* lastResponse;
 
     float x, y, z;
     uint32_t feed, spindleVal;

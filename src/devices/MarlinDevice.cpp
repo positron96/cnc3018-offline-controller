@@ -45,9 +45,11 @@ void MarlinDevice::trySendCommand() {
     LOGF("Try [%s]\n", cmd);
     if (sentCounter->canPush(len)) { //todo how it work on resend
         sentCounter->push(cmd, len);
-        printerSerial->write((const uint8_t *) cmd, len);
-        printerSerial->write('\n');
-        len = 0; // todo this how it works on resend
+        if (printerSerial->availableForWrite()){
+            printerSerial->write((const uint8_t *) cmd, len);
+            printerSerial->write('\n');
+            len = 0; // todo this how it works on resend
+        }
     }
 }
 
@@ -105,14 +107,14 @@ void MarlinDevice::tryParseResponse(char *resp, size_t len) {
 }
 
 const char *MarlinDevice::getStatusStr() const {
-    return lastResponse.c_str(); //todo
+    return lastResponse; //todo
 }
 
 ///  marlin dont jog, just do G0
 /// \return
 bool MarlinDevice::canJog() {
-    return !panic;
-    return true; // todo depend on state
+    // return !panic;
+    return true; // todo depend on state remove
 }
 
 void MarlinDevice::parseOk(const char *input) {

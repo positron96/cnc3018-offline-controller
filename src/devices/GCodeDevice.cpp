@@ -3,7 +3,7 @@
 #define XOFF  0x13
 #define XON   0x11
 
-// todo utils for string was here
+// utils for string was here
 
 void GCodeDevice::sendCommands() {
     if (panic) {

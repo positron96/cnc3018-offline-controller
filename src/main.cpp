@@ -84,7 +84,6 @@ void createGrbl(int i, WatchedSerial *s) {
 }
 
 using Detector = GrblDetector<WatchedSerial, serialCNC, createGrbl>;
-
 DetectorScreen<Detector> detUI;
 
 void setup() {

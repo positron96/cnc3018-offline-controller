@@ -11,6 +11,7 @@ public:
             GCodeDevice(s) {
         sentCounter = &sentQueue;
         canTimeout = false;
+        panic = false;
     }
 
     MarlinDevice() : GCodeDevice() { sentCounter = &sentQueue; }
@@ -29,10 +30,7 @@ public:
     void reset() override {
         panic = false;
         cleanupQueue();
-
         // TODO Marlin has panic at all ??
-//        char c = 0x18; // ^x, reset
-//        schedulePriorityCommand(&c, 1);
     }
 
 
@@ -58,9 +56,15 @@ public:
         relative = !relative;
     }
 
+    float getE() const { return e; }
+
+    float getTemp() const { return hotendTemp; }
+
+    float getBedTemp() const { return bedTemp; }
+
     static void sendProbe(Stream &serial);
 
-    static bool checkProbeResponse(const String s);
+    static bool checkProbeResponse(String s);
 
 protected:
     void trySendCommand() override;
@@ -70,10 +74,11 @@ protected:
 private:
     SimpleCounter<15, 128> sentQueue;
 
-    float hotendTemp, bedTemp = 0.0;
-    float e = 0;
-    int resendLine = -1;
+    float hotendTemp = 0.0, bedTemp = 0.0;
+    float e = 0.0;
     bool relative = false;
+
+    int resendLine = -1;
 
     void parseError(const char *input);
 

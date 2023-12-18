@@ -29,7 +29,8 @@ constexpr uint32_t PIN_BT_STEP  = PB15;
 constexpr uint32_t PIN_DET      = PC13;    ///< 0V=no USB on CNC, 1=CNC connected to USB.
 
 
-constexpr char AXIS[] = {'X', 'Y', 'Z'};
+constexpr char AXIS[] = {'X', 'Y', 'Z' , 'E'};
 constexpr char AXIS_WCS[] = {'x', 'y', 'z'};
+constexpr char PRINTER[] = { 'T', 'B'};
 
 #endif //CNC_3018_CONSTANTS_H
