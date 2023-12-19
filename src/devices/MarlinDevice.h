@@ -6,6 +6,7 @@
 
 class MarlinDevice : public GCodeDevice {
 public:
+    constexpr static uint32_t BUFFER_LEN = 255;
 
     MarlinDevice(WatchedSerial *s) :
             GCodeDevice(s) {
@@ -61,8 +62,6 @@ public:
     void tempChange(uint8_t temp) {
         constexpr size_t LN = 11;
         char msg[LN];
-        // "$J=G91 G20 X0.5" will move +0.5 inches (12.7mm) to X=22.7mm (WPos).
-        // Note that G91 and G20 are only applied to this jog command
         int l = snprintf(msg, LN, "%s S%d", M104_SET_EXTRUDER_TEMP, temp);
         scheduleCommand(msg, l);
         //todo must return
@@ -85,6 +84,9 @@ private:
     SimpleCounter<15, 128> sentQueue;
 
     float hotendTemp = 0.0, bedTemp = 0.0;
+    size_t hotendPower = 0;
+    size_t bedPower = 0;
+    float hotendRequestedTemp = 0.0, bedRequestedTemp = 0.0;
     float e = 0.0;
     bool relative = false;
 
@@ -94,5 +96,5 @@ private:
 
     void parseStatus(const char *v);
 
-    void parseOk(const char *v);
+    void parseOk(const char *v, size_t len);
 };

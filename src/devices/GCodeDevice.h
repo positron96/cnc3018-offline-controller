@@ -131,7 +131,10 @@ public:
     bool isLocked() { return printerSerial->isLocked(); }
 
 protected:
+    static const size_t MAX_GCODE_LINE = 96;
+
     WatchedSerial *printerSerial;
+    Counter *sentCounter;
 
     uint32_t serialRxTimeout;
     bool connected;
@@ -141,17 +144,14 @@ protected:
     bool xoffEnabled = false;
     bool txLocked = false;
 
-    static const size_t MAX_GCODE_LINE = 96;
-
     char curUnsentCmd[MAX_GCODE_LINE + 1], curUnsentPriorityCmd[MAX_GCODE_LINE + 1];
-    size_t curUnsentCmdLen, curUnsentPriorityCmdLen;
+    size_t curUnsentCmdLen;
+    size_t curUnsentPriorityCmdLen;
     const char* lastResponse;
 
     float x, y, z;
     uint32_t feed, spindleVal;
     uint32_t nextStatusRequestTime;
-
-    Counter *sentCounter;
 
     void armRxTimeout() {
         if (!canTimeout) return;
@@ -206,4 +206,3 @@ protected:
 private:
 
 };
-// todo utils for string was here
