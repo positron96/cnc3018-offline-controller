@@ -11,7 +11,7 @@
 typedef int JobStatusEvent;
 
 enum JobStatus {
-    REFRESH_SIG_0
+    REFRESH_SIG
 };
 
 typedef etl::observer<JobStatusEvent> JobObserver;
@@ -42,6 +42,7 @@ public:
 
 
     Job() {}
+
     ~Job() {
         if (gcodeFile) {
             gcodeFile.close();
@@ -67,7 +68,7 @@ public:
         running = false;
         paused = false;
         cancelled = false;
-        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0});
+        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG});
         curLineNum = 0;
         startTime = 0;
         endTime = 0;
@@ -84,27 +85,33 @@ public:
         startTime = millis();
         paused = false;
         running = true;
-        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0});
+        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG});
     }
 
     void cancel() {
         cancelled = true;
         stop();
-        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0});
+        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG});
     }
 
     bool isRunning() { return running; }
 
     bool isCancelled() { return cancelled; }
-
+    ///
+    ///  set from UI
+    ///
     void setPaused(bool v) {
         paused = v;
-        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0});
     }
 
     bool isPaused() { return paused; }
 
-    float getCompletion() { if (isValid()) return 1.0 * filePos / fileSize; else return 0; }
+    uint8_t getCompletion() {
+        if (isValid())
+            return (uint8_t) (100.0 * filePos / fileSize );
+        else
+            return 0;
+    }
 
     size_t getFilePos() { if (isValid()) return filePos; else return 0; }
 
@@ -114,19 +121,24 @@ public:
         return (bool) gcodeFile;
     }
 
-    String getFilename() { if (isValid()) return gcodeFile.name(); else return ""; }
+    String getFilename() {
+        if (isValid())
+            return gcodeFile.name();
+        else
+            return "";
+    }
 
     uint32_t getPrintDuration() { return (endTime != 0 ? endTime : millis()) - startTime; }
 
 private:
-
+    static const int MAX_LINE = 100;
     File gcodeFile;
     GCodeDevice *dev;
     uint32_t fileSize;
     uint32_t filePos;
     uint32_t startTime;
     uint32_t endTime;
-    static const int MAX_LINE = 100;
+
     char curLine[MAX_LINE + 1];
     size_t curLinePos;
 
@@ -143,7 +155,7 @@ private:
         endTime = millis();
         if (gcodeFile)
             gcodeFile.close();
-        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0});
+        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG});
     }
 
     void readNextLine();

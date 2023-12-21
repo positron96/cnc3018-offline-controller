@@ -18,7 +18,7 @@ class DRO : public Screen {
 public:
     constexpr static uint16_t REFRESH_INTL = 500;
 
-    DRO(GCodeDevice &d) : dev(d), nextRefresh{1}, cDist{1}, cFeed{0}, cMode{Mode::AXES} {}
+    DRO(GCodeDevice &d) : dev(d), nextRefresh{1}, cDist{3}, cFeed{3}, cMode{Mode::AXES} {}
 
     virtual ~DRO() {}
 

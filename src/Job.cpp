@@ -13,7 +13,7 @@ void Job::readNextLine() {
         int rd = gcodeFile.read();
         filePos++;
         if (filePos % 200 == 0)
-            notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG_0}); // every Nth byte
+            notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG}); // every Nth byte
         if (rd == '\n' || rd == '\r') {
             if (curLinePos != 0)
                 break; // if it's an empty string or LF after last CR, just continue reading
@@ -45,7 +45,7 @@ bool Job::scheduleNextCommand() {
             return false;    // don't run next time
 
         char *pos = strchr(curLine, ';'); // strip comments
-        if (pos != NULL) {
+        if (pos != nullptr) {
             *pos = 0;
             curLinePos = pos - curLine;
         }
@@ -55,26 +55,29 @@ bool Job::scheduleNextCommand() {
             if (!isspace(curLine[i]))
                 empty = false;
 
-        if (curLinePos == 0 || empty) { return true; } // can seek next
-
+        if (curLinePos == 0 || empty) {
+            return true;
+        } // can seek next
 #ifdef ADD_LINENUMBERS
-        char out[MAX_LINE+1];
+        char out[MAX_LINE + 1];
         snprintf(out, MAX_LINE, "N%d %s", ++curLineNum, curLine);
+
         uint8_t checksum = 0, count = strlen(out);
-        while (count) checksum ^= out[--count];
+        while (count)
+            checksum ^= out[--count];
+
         snprintf(curLine, MAX_LINE, "%s*%d", out, checksum);
         curLinePos = strlen(curLine);
 #endif
     }
 
     if (dev->canSchedule(curLinePos)) {
-        LOGF("  J queueing line '%s', len %d\n", curLine, curLinePos);
+        LOGF("queueing line '%s', len %d\n", curLine, curLinePos);
         bool queued = dev->scheduleCommand(curLine, curLinePos);
         assert(queued);
         curLinePos = 0;
         return true; //can try next command
     } else {
-        //LOGF("  J not queing line '%s', len %d\n", curLine, curLinePos ); // floods log
         return false; // stop trying for now
     }
 }

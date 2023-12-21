@@ -131,9 +131,8 @@ void loop() {
     //END poll buttons
 
     display.loop();
-    job.loop();
-
     if (dev != nullptr) {
+        job.loop();
         dev->loop();
     } else {
         Detector::loop();

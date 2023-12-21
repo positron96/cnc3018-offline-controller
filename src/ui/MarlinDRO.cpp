@@ -170,6 +170,17 @@ void MarlinDRO::drawAxisIcons(uint8_t sx, uint8_t sy, const uint8_t lineHeight) 
 void MarlinDRO::onButton(int bt, Display::ButtonEvent evt) {
     if (!dev.canJog()) return;
 
+    if (bt == Display::BT_CENTER && evt == Evt::HOLD) {
+        if(cMode != Mode::TEMP){
+            cMode = Mode::TEMP;
+        } else {
+            cMode = Mode::AXES;
+        }
+        buttonWasPressedWithShift = false;
+        setDirty();
+        return;
+    }
+
     if (bt == Display::BT_CENTER) {
         auto _mode = static_cast<uint8_t>(cMode);
         switch (evt) {
@@ -184,7 +195,7 @@ void MarlinDRO::onButton(int bt, Display::ButtonEvent evt) {
             default:
                 break;
         }
-        _mode = _mode % static_cast<uint8_t>(Mode::N_VALS);
+        _mode = _mode % (static_cast<uint8_t>(Mode::N_VALS) - 1);
         cMode = static_cast<Mode>(_mode);
         buttonWasPressedWithShift = false;
         setDirty();
@@ -221,10 +232,12 @@ void MarlinDRO::onButtonTemp(uint8_t bt, Evt evt) {
                 axis = 3; // E
                 dist = -dist;
                 break;
+            default: ; //noop
         }
-        if (axis != -1) {
+        if (axis != 0xFF) {
             dev.jog(axis, dist, feed);
         }
+
         int temp = (uint8_t) round(dist);
         switch (bt) {
             // ===== temperature

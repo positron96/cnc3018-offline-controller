@@ -12,4 +12,6 @@
 #define M115_GET_FIRMWARE_VER            "M115"
 #define M114_GET_CURRENT_POS             "M114"
 
+#define M154_AUTO_REPORT_POSITION        "M154"
+#define M155_AUTO_REPORT_TEMP            "M155"
 #endif // GCODE__

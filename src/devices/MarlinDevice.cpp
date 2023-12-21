@@ -50,14 +50,14 @@ void MarlinDevice::trySendCommand() {
 }
 
 bool MarlinDevice::scheduleCommand(const char *cmd, size_t len = 0) {
-    if (resendLine > 0) {
+    if (busy || resendLine > 0) {
         return false;
     }
     return GCodeDevice::scheduleCommand(cmd, len);
 }
 
 void MarlinDevice::tryParseResponse(char *resp, size_t len) {
-    LOGF("> [%s]\n", resp);
+    LOGF("tryParseResponse> [%s],%d\n", resp, len);
     if (startsWith(resp, "Error") || startsWith(resp, "!!")) {
         if (startsWith(resp, "Error")) {
             sentQueue.pop();
@@ -71,6 +71,8 @@ void MarlinDevice::tryParseResponse(char *resp, size_t len) {
         panic = true;
         notify_observers(DeviceStatusEvent{DeviceStatus::DEV_ERROR});
     } else {
+        connected = true;
+        panic = false;
         if (startsWith(resp, "ok")) {
             if (len > 2) {
                 parseOk(resp + 2, len - 2);
@@ -80,25 +82,26 @@ void MarlinDevice::tryParseResponse(char *resp, size_t len) {
             }
             sentQueue.pop();
             lastResponse = resp;
-
+            busy = false;
         }
+        else {
             // stupid C substring index
-        else if (strcspn(resp, "busy:") != len) {
-            sentQueue.pop();
-            lastResponse = resp + 5; // marlin do space after :
-            // TODO busy state
-        } else if (startsWith(resp, "Resend: ")) {
-            lastResponse = resp + 7;
-            resendLine = atoi(resp);
-            // no pop. resend
-        } else if (startsWith(resp, "DEBUG:")) {
-            lastResponse = resp;
-        } else {
-            // M114 
-            parseOk(resp, len);
+            if (strcspn(resp, "busy:") != 1) {
+                sentQueue.pop();
+                lastResponse = resp + 5; // marlin do space after :
+                busy = true;
+            } else if (startsWith(resp, "Resend: ")) {
+                lastResponse = resp + 7;
+                resendLine = atoi(resp);
+                // no pop. resend
+            } else if (startsWith(resp, "DEBUG:")) {
+                lastResponse = resp;
+            } else {
+                // M154 Snn or  M155 Snn
+                LOGF("p:  [%s]\n", resp);
+                parseOk(resp, len);
+            }
         }
-        connected = true;
-        panic = false;
         if (curUnsentPriorityCmdLen) {
             curUnsentPriorityCmdLen = 0;
         } else {
@@ -115,14 +118,12 @@ const char *MarlinDevice::getStatusStr() const {
 ///  marlin dont jog, just do G0
 /// \return
 bool MarlinDevice::canJog() {
-    // return !panic;
-    return true; // todo depend on state remove
+     return !busy && !panic;
 }
 /// ok T:201 /202 B:117 /120 @:255
 ///
 ///  "ok C: X:0.00 Y:0.00 Z:0.00 E:0.00"
-///  "X:0.00 Y:0.00 RZ:0.00 LZ:0.00 Count X:0.00 Y:0.00 RZ:41.02 LZ:41.02"
-//
+///  " X:0.00 Y:0.00 RZ:0.00 LZ:0.00 Count X:0.00 Y:0.00 RZ:41.02 LZ:41.02"
 
 /// \param input
 /// \param len
@@ -130,38 +131,42 @@ void MarlinDevice::parseOk(const char *input, size_t len) {
     char cpy[BUFFER_LEN];
     strncpy(cpy, input, MIN(len, BUFFER_LEN));
     cpy[MIN(len, BUFFER_LEN)] = 0;
-    bool nextTemp = false, nextBedTemp = false;
 
+    bool nextTemp = false,
+            nextBedTemp = false;
+    LOGF(">>> [%s] %d\n", cpy, len);
 //    char *v = cpy;
     char *fromMachine = strtok(cpy, " ");
+#define ATOF _atod
     while (fromMachine != nullptr) {
+        LOGF("[%s],", cpy);
         switch (fromMachine[0]) {
             case 'T':
-                hotendTemp = atof((fromMachine + 2));
+                hotendTemp = ATOF((fromMachine + 2));
                 nextTemp = true;
                 break;
             case 'B':
                 if (fromMachine[1] == '@') {
-                    bedPower = atoi((fromMachine + 1));
+                    bedPower = atoi((fromMachine + 3));
                 } else {
-                    bedTemp = atof((fromMachine + 2));
+                    bedTemp = ATOF((fromMachine + 2));
                     nextBedTemp = true;
                 }
                 break;
             case 'X':
-                x = atof((fromMachine + 2));
+                x = ATOF((fromMachine + 2));
                 break;
             case 'Y':
-                y = atof((fromMachine + 2));
+                y = ATOF((fromMachine + 2));
                 break;
             case 'Z':
-                z = atof((fromMachine + 2));
+                z = ATOF((fromMachine + 2));
                 break;
             case 'E':
-                e = atof((fromMachine + 2));
+                e = ATOF((fromMachine + 2));
                 break;
             case '@':
-                hotendPower = atoi(fromMachine + 1);
+                hotendPower = atoi(fromMachine + 2);
                 break;
             case 'C': // next is coords
                 if (fromMachine[1] == 'o') {
@@ -169,9 +174,9 @@ void MarlinDevice::parseOk(const char *input, size_t len) {
                 }
             case '/':
                 if (nextTemp) {
-                    hotendRequestedTemp = atof((fromMachine + 1));
+                    hotendRequestedTemp = ATOF((fromMachine + 1));
                 } else if (nextBedTemp) {
-                    bedRequestedTemp = atof((fromMachine + 1));
+                    bedRequestedTemp = ATOF((fromMachine + 1));
                 }
                 nextTemp = false;
                 nextBedTemp = false;
@@ -181,6 +186,8 @@ void MarlinDevice::parseOk(const char *input, size_t len) {
         fromMachine = strtok(nullptr, " ");
     }
     end:;// noop
+    LOGLN();
+#undef ATOF
 }
 
 void MarlinDevice::parseError(const char *input) {

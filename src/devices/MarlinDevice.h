@@ -25,18 +25,19 @@ public:
 
     void begin() override {
         GCodeDevice::begin();
-        requestStatusUpdate();
     }
 
     void reset() override {
         panic = false;
+        busy = false;
         cleanupQueue();
         // TODO Marlin has panic at all ??
     }
 
 
     void requestStatusUpdate() override {
-        if (panic) return; // todo
+        if (panic || busy)
+            return;
         schedulePriorityCommand(M114_GET_CURRENT_POS);
     }
 
@@ -88,6 +89,8 @@ private:
     size_t bedPower = 0;
     float hotendRequestedTemp = 0.0, bedRequestedTemp = 0.0;
     float e = 0.0;
+    bool busy = false;
+
     bool relative = false;
 
     int resendLine = -1;
