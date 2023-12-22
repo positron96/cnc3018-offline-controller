@@ -30,7 +30,7 @@ bool MarlinDevice::jog(uint8_t axis, float dist, int feed) {
     // adding G91_SET_RELATIVE_COORDINATES to command
     // does not work. 
     int l = snprintf(msg, LN, "G0 F%d %c", feed, AXIS[axis]);
-    snprintfloat(msg + l, LN - l, dist, 3); //todo why + l -l  ???
+    snprintfloat(msg + l, LN - l, dist, 3);
     return scheduleCommand(msg, strlen(msg));
 }
 
@@ -39,12 +39,12 @@ void MarlinDevice::trySendCommand() {
     size_t &len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
     cmd[len] = 0;
     LOGF("Try [%s]\n", cmd);
-    if (sentCounter->canPush(len)) { //todo how it work on resend
+    if (sentCounter->canPush(len)) {
         sentCounter->push(cmd, len);
         if (printerSerial->availableForWrite()) {
             printerSerial->write((const uint8_t *) cmd, len);
             printerSerial->write('\n');
-            len = 0; // todo this how it works on resend
+            len = 0;
         }
     }
 }
@@ -56,19 +56,47 @@ bool MarlinDevice::scheduleCommand(const char *cmd, size_t len = 0) {
     return GCodeDevice::scheduleCommand(cmd, len);
 }
 
+bool MarlinDevice::schedulePriorityCommand(const char *cmd, size_t len = 0) {
+    if (txLocked) return false;
+    return GCodeDevice::schedulePriorityCommand(cmd, len);
+}
+
+void MarlinDevice::begin() {
+    GCodeDevice::begin();
+    constexpr size_t LN = 11;
+    char msg[LN];
+//todo refactor
+    int l = snprintf(msg, LN, "%s S%d", M154_AUTO_REPORT_POSITION, 3);
+    schedulePriorityCommand(msg, l
+    );
+    l = snprintf(msg, LN, "%s S%d", M155_AUTO_REPORT_TEMP, 3);
+    scheduleCommand(msg, l
+    );
+}
+
+void MarlinDevice::requestStatusUpdate() {
+}
+
+void MarlinDevice::reset() {
+    panic = false;
+    busy = false;
+}
+
+void MarlinDevice::toggleRelative() {
+    relative = !relative;
+}
+
 void MarlinDevice::tryParseResponse(char *resp, size_t len) {
-    LOGF("tryParseResponse> [%s],%d\n", resp, len);
+    LOGF("> [%s],%d\n", resp, len);
     if (startsWith(resp, "Error") || startsWith(resp, "!!")) {
         if (startsWith(resp, "Error")) {
-            sentQueue.pop();
             lastResponse = resp + 5;
             parseError(lastResponse); // TODO
         } else {
-            cleanupQueue();
-            sentQueue.pop();
             lastResponse = resp + 2;
         }
         panic = true;
+        cleanupQueue();
         notify_observers(DeviceStatusEvent{DeviceStatus::DEV_ERROR});
     } else {
         connected = true;
@@ -83,8 +111,7 @@ void MarlinDevice::tryParseResponse(char *resp, size_t len) {
             sentQueue.pop();
             lastResponse = resp;
             busy = false;
-        }
-        else {
+        } else {
             // stupid C substring index
             if (strcspn(resp, "busy:") != 1) {
                 sentQueue.pop();
@@ -98,17 +125,18 @@ void MarlinDevice::tryParseResponse(char *resp, size_t len) {
                 lastResponse = resp;
             } else {
                 // M154 Snn or  M155 Snn
-                LOGF("p:  [%s]\n", resp);
                 parseOk(resp, len);
             }
         }
-        if (curUnsentPriorityCmdLen) {
-            curUnsentPriorityCmdLen = 0;
-        } else {
-            curUnsentCmdLen = 0;
-        }
         notify_observers(DeviceStatusEvent{DeviceStatus::OK});
     }
+}
+
+bool MarlinDevice::tempChange(uint8_t temp) {
+    constexpr size_t LN = 11;
+    char msg[LN];
+    int l = snprintf(msg, LN, "%s S%d", M104_SET_EXTRUDER_TEMP, temp);
+    return scheduleCommand(msg, l);
 }
 
 const char *MarlinDevice::getStatusStr() const {
@@ -118,7 +146,7 @@ const char *MarlinDevice::getStatusStr() const {
 ///  marlin dont jog, just do G0
 /// \return
 bool MarlinDevice::canJog() {
-     return !busy && !panic;
+    return !busy && !panic;
 }
 /// ok T:201 /202 B:117 /120 @:255
 ///
@@ -134,12 +162,10 @@ void MarlinDevice::parseOk(const char *input, size_t len) {
 
     bool nextTemp = false,
             nextBedTemp = false;
-    LOGF(">>> [%s] %d\n", cpy, len);
 //    char *v = cpy;
     char *fromMachine = strtok(cpy, " ");
 #define ATOF _atod
     while (fromMachine != nullptr) {
-        LOGF("[%s],", cpy);
         switch (fromMachine[0]) {
             case 'T':
                 hotendTemp = ATOF((fromMachine + 2));
@@ -186,7 +212,6 @@ void MarlinDevice::parseOk(const char *input, size_t len) {
         fromMachine = strtok(nullptr, " ");
     }
     end:;// noop
-    LOGLN();
 #undef ATOF
 }
 
@@ -199,5 +224,3 @@ void MarlinDevice::parseError(const char *input) {
 
     }
 }
-
-void MarlinDevice::parseStatus(const char *input) {}

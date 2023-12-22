@@ -15,6 +15,9 @@
 #define M115_GET_FIRMWARE_VER            "M115"
 #define M114_GET_CURRENT_POS             "M114"
 
+// need to enable M114_REALTIME in marlin ConfigAdvanced.h
+#define M114_REALTIME_VERSION            "M114 R"
+
 #define M154_AUTO_REPORT_POSITION        "M154"
 #define M155_AUTO_REPORT_TEMP            "M155"
 #endif // GCODE__

@@ -8,6 +8,10 @@ class MarlinDevice : public GCodeDevice {
 public:
     constexpr static uint32_t BUFFER_LEN = 255;
 
+    static void sendProbe(Stream &serial);
+
+    static bool checkProbeResponse(String s);
+
     MarlinDevice(WatchedSerial *s) :
             GCodeDevice(s) {
         sentCounter = &sentQueue;
@@ -23,58 +27,29 @@ public:
 
     bool canJog() override;
 
-    void begin() override {
-        GCodeDevice::begin();
-    }
+    void begin() override;
 
-    void reset() override {
-        panic = false;
-        busy = false;
-        cleanupQueue();
-        // TODO Marlin has panic at all ??
-    }
+    void reset() override;
 
+    void requestStatusUpdate() override;
 
-    void requestStatusUpdate() override {
-        if (panic || busy)
-            return;
-        schedulePriorityCommand(M114_GET_CURRENT_POS);
-    }
-
-    bool schedulePriorityCommand(const char *cmd, size_t len = 0) override {
-        if (txLocked) return false;
-        return GCodeDevice::schedulePriorityCommand(cmd, len);
-    }
+    bool schedulePriorityCommand(const char *cmd, size_t len) override;
 
     bool scheduleCommand(const char *cmd, size_t len) override;
 
     const char *getStatusStr() const override;
 
-    bool isRelative() const {
-        return relative;
-    }
+    void toggleRelative();
 
-    void toggleRelative() {
-        relative = !relative;
-    }
+    bool tempChange(uint8_t temp);
+
+    bool isRelative() const { return relative; }
 
     float getE() const { return e; }
-
-    void tempChange(uint8_t temp) {
-        constexpr size_t LN = 11;
-        char msg[LN];
-        int l = snprintf(msg, LN, "%s S%d", M104_SET_EXTRUDER_TEMP, temp);
-        scheduleCommand(msg, l);
-        //todo must return
-    }
 
     float getTemp() const { return hotendTemp; }
 
     float getBedTemp() const { return bedTemp; }
-
-    static void sendProbe(Stream &serial);
-
-    static bool checkProbeResponse(String s);
 
 protected:
     void trySendCommand() override;
@@ -87,8 +62,9 @@ private:
     float hotendTemp = 0.0, bedTemp = 0.0;
     size_t hotendPower = 0;
     size_t bedPower = 0;
-    float hotendRequestedTemp = 0.0, bedRequestedTemp = 0.0;
-    float e = 0.0;
+    float hotendRequestedTemp = 0.0,
+            bedRequestedTemp = 0.0,
+            e = 0.0;
     bool busy = false;
 
     bool relative = false;
@@ -96,8 +72,6 @@ private:
     int resendLine = -1;
 
     void parseError(const char *input);
-
-    void parseStatus(const char *v);
 
     void parseOk(const char *v, size_t len);
 };
