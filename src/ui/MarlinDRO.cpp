@@ -31,6 +31,12 @@ void MarlinDRO::begin() {
     menuItems.push_back(MenuItem::simpleItem(6, "Goto XY=0", [this](MenuItem &) {
         dev.scheduleCommand("G0 X0Y0", 7);
     }));
+    menuItems.push_back(MenuItem::simpleItem(7, "FULL STOP", [this](MenuItem &) {
+        dev.scheduleCommand(M0_STOP_UNCONDITIONAL, 3);
+    }));
+    menuItems.push_back(MenuItem::simpleItem(8, "CONTINUE", [this](MenuItem &) {
+        dev.scheduleCommand(M108_CONTINUE, 4);
+    }));
 }
 
 void MarlinDRO::drawContents() {
