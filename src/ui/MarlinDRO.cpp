@@ -95,14 +95,14 @@ void MarlinDRO::drawContents() {
             buffer[7] = '/';
             Display::u8g2.drawStr(0, sy, buffer);
             snprintf(buffer, 5, "%3d", expectedBedTemp);
-            Display::u8g2.drawStr(lineWidth * 7 + 6, sy, buffer);
+            Display::u8g2.drawStr(lineWidth * 8 + 5 , sy, buffer);
 
             buffer[0] = PRINTER[0]; // T
             snprintfloat(buffer + 1, 8, dev.getTemp(), 1, 6);
             buffer[7] = '/';
             Display::u8g2.drawStr(0, sy + lineHeight, buffer);
             snprintf(buffer, 5, "%3d", expectedTemp);
-            Display::u8g2.drawStr(lineWidth * 8, sy + lineHeight, buffer);
+            Display::u8g2.drawStr(lineWidth * 8 + 5, sy + lineHeight, buffer);
 
             drawAxis(AXIS[3], dev.getE(), 0, sy + lineHeight * 2);
             sx_start_right += 14; //padding for spindle/feed values
@@ -175,6 +175,7 @@ void MarlinDRO::onButton(int bt, Display::ButtonEvent evt) {
                 cMode = Mode::TEMP;
             else
                 cMode = Mode::AXES;
+            buttonWasPressedWithShift = false;
         } else if (evt == Evt::UP) {
             if (buttonWasPressedWithShift) {
                 auto _mode = static_cast<uint8_t>(cMode);
@@ -182,15 +183,14 @@ void MarlinDRO::onButton(int bt, Display::ButtonEvent evt) {
                 _mode = _mode % (static_cast<uint8_t>(Mode::N_VALS) - 1);
                 cMode = static_cast<Mode>(_mode);
             }
+            buttonWasPressedWithShift = false;
+        } else if (evt == Evt::DOWN) {
+            buttonWasPressedWithShift = true;
         }
-        buttonWasPressedWithShift = false;
         setDirty();
         return;
     }
 // ===== not BT_CENTER
-    if (evt == Evt::DOWN)
-        buttonWasPressedWithShift = true;
-
     switch (cMode) {
         case Mode::AXES :
             onButtonAxes(bt, evt);

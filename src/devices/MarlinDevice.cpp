@@ -39,13 +39,10 @@ void MarlinDevice::trySendCommand() {
     size_t &len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
     cmd[len] = 0;
     LOGF("Try [%s]\n", cmd);
-    if (sentCounter->canPush(len)) {
-        sentCounter->push(cmd, len);
-        if (printerSerial->availableForWrite()) {
-            printerSerial->write((const uint8_t *) cmd, len);
-            printerSerial->write('\n');
-            len = 0;
-        }
+    if (printerSerial->availableForWrite()) {
+        printerSerial->write((const uint8_t *) cmd, len);
+        printerSerial->write('\n');
+        len = 0;
     }
 }
 
@@ -66,12 +63,10 @@ void MarlinDevice::begin() {
     constexpr size_t LN = 11;
     char msg[LN];
 //todo refactor
-    int l = snprintf(msg, LN, "%s S%d", M154_AUTO_REPORT_POSITION, 3);
-    schedulePriorityCommand(msg, l
-    );
-    l = snprintf(msg, LN, "%s S%d", M155_AUTO_REPORT_TEMP, 3);
-    scheduleCommand(msg, l
-    );
+    int l = snprintf(msg, LN, "%s S%d", M154_AUTO_REPORT_POSITION, 1);
+    schedulePriorityCommand(msg, l);
+    l = snprintf(msg, LN, "%s S%d", M155_AUTO_REPORT_TEMP, 1);
+    scheduleCommand(msg, l);
 }
 
 void MarlinDevice::requestStatusUpdate() {
@@ -96,7 +91,6 @@ void MarlinDevice::tryParseResponse(char *resp, size_t len) {
             lastResponse = resp + 2;
         }
         panic = true;
-        cleanupQueue();
         notify_observers(DeviceStatusEvent{DeviceStatus::DEV_ERROR});
     } else {
         connected = true;
@@ -108,13 +102,10 @@ void MarlinDevice::tryParseResponse(char *resp, size_t len) {
             if (resendLine > 0) { // was resend before
                 resendLine = -1;
             }
-            sentQueue.pop();
             lastResponse = resp;
             busy = false;
         } else {
-            // stupid C substring index
-            if (strcspn(resp, "busy:") != 1) {
-                sentQueue.pop();
+            if (strstr(resp, "busy:") != nullptr) {
                 lastResponse = resp + 5; // marlin do space after :
                 busy = true;
             } else if (startsWith(resp, "Resend: ")) {
