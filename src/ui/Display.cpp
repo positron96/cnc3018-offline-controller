@@ -29,7 +29,6 @@ void Display::setDevice(GCodeDevice *de) {
     dev = de;
 }
 
-
 void Display::loop() {
     if (cScreen != nullptr)
         cScreen->loop();
@@ -37,10 +36,8 @@ void Display::loop() {
 }
 
 void Display::ensureSelMenuVisible() {
-
     if (selMenuItem >= cScreen->firstDisplayedMenuItem + VISIBLE_MENUS)
         cScreen->firstDisplayedMenuItem = selMenuItem - VISIBLE_MENUS + 1;
-
     if (selMenuItem < cScreen->firstDisplayedMenuItem) {
         cScreen->firstDisplayedMenuItem = selMenuItem;
     }
@@ -51,7 +48,6 @@ void Display::processInput() {
 }
 
 void Display::processButtons() {
-
     decltype(buttStates) changed = buttStates ^ prevStates;
 
     if (cScreen == nullptr) return;
@@ -64,7 +60,8 @@ void Display::processButtons() {
                 setDirty();
             } else {
                 evt = down ? ButtonEvent::DOWN : ButtonEvent::UP;
-                if (down) menuShownWhenDown = menuShown; // don't propagate events to screen if the click was in the menu
+                if (down) menuShownWhenDown = menuShown;
+                // don't propagate events to screen if the click was in the menu
                 if (menuShown) {
                     processMenuButton(i, evt);
                 } else if (!menuShownWhenDown) {
@@ -86,7 +83,6 @@ void Display::processButtons() {
         }
     }
     prevStates = buttStates;
-
 }
 
 void Display::processMenuButton(uint8_t bt, ButtonEvent evt) {
@@ -138,9 +134,9 @@ void Display::drawStatusBar() {
     if (dev == nullptr)
         return;
 
-    u8g2.setDrawColor(1);
     u8g2.setFont(u8g2_font_nokiafc22_tr);
-
+    // allow 2 lines in status bar
+    constexpr int fH = 8; // 8x8
     int x = 2, y = -1;
 
     if (!dev->isConnected()) {
@@ -150,16 +146,23 @@ void Display::drawStatusBar() {
     } else {
         u8g2.drawXBM(x, 0, connected_width, connected_height, (const uint8_t *) connected_bits);
     }
-    u8g2.drawStr(12, y, dev->getStatusStr());
+    memcpy(str, dev->getStatusStr(), 12); // TODO ??
+    str[12] = 0;
+    u8g2.drawStr(12, y + fH, str);
     //job status
     Job &job = Job::getJob();
+    LOGF("valid: %d\n", job.isValid());
     if (job.isValid()) {
-        float p = job.getCompletion() * 100;
-        snprintf(str, LEN, " %d%%", (int) p);
+        uint8_t p = job.getCompletion();
+        LOGF("compl:  %d\n", p);
+        snprintf(str, 9, " + %d%%", p);
         if (job.isPaused())
-            str[0] = 'p';
-        int w = u8g2.getStrWidth(str);
-        u8g2.drawStr(u8g2.getWidth() - w - 4, y, str);
+            str[0] = 'P';
+        else
+            str[0] = 'R';
+        str[9] = 0;
+        u8g2.setDrawColor(1); //TODO ??
+        u8g2.drawStr(48, y, str);
     }
 }
 
@@ -193,10 +196,8 @@ void Display::drawMenu() {
             u8g2.drawBox(x, y + i * lh, w, lh);
         }
         MenuItem &item = cScreen->menuItems[idx];
-        //uint16_t c = item.glyph;
         if (item.font != nullptr) u8g2.setFont(item.font);
         u8g2.setDrawColor(2);
-        //u8g2.drawGlyph(x+2, y+i*lh-1, c);
         u8g2.drawStr(x + 2, y + i * lh - 1, item.text.c_str());
     }
 

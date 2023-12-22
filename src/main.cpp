@@ -88,8 +88,6 @@ DetectorScreen<Detector> detUI;
 
 void setup() {
     SerialUSB.begin(115200);
-    //SerialCNC.begin(115200);
-
     _u8g2.begin();
     _u8g2.setFontPosTop();
     _u8g2.setFontMode(1);
@@ -126,7 +124,7 @@ void loop() {
             bitWrite(display.buttStates, i, (digitalRead(buttPins[i]) == 0 ? 1 : 0));
         }
         display.processInput();
-        nextRead = millis() + 10;
+        nextRead = millis() + 20;
     }
     //END poll buttons
 

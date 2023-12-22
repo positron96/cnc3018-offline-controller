@@ -37,9 +37,6 @@ void MarlinDRO::drawContents() {
     const uint8_t LEN = 20;
     char str[LEN];
     U8G2 &u8g2 = Display::u8g2;
-
-    // todo Refactor this peace  todo
-
     u8g2.setFont(u8g2_font_7x13B_tr);
     const uint8_t lineWidth = u8g2.getMaxCharWidth();
     const uint8_t lineHeight = u8g2.getMaxCharHeight();
@@ -81,12 +78,10 @@ void MarlinDRO::drawContents() {
             default :
                 break;
         }
-
     }
     switch (cMode) {
         case Mode::TEMP : {
-            static const int LEN = 12;
-            static char buffer[LEN];
+            char buffer[12];
             /// === draw Extrude & temps panel ==
             // ugly because sprintf work no as expected
             buffer[0] = PRINTER[1]; // B
@@ -94,14 +89,14 @@ void MarlinDRO::drawContents() {
             buffer[7] = '/';
             Display::u8g2.drawStr(0, sy, buffer);
             snprintf(buffer, 5, "%3d", expectedBedTemp);
-            Display::u8g2.drawStr(lineWidth * 7 + 5, sy, buffer);
+            Display::u8g2.drawStr(lineWidth * 7 + 6, sy, buffer);
 
             buffer[0] = PRINTER[0]; // T
             snprintfloat(buffer + 1, 8, dev.getTemp(), 1, 6);
             buffer[7] = '/';
             Display::u8g2.drawStr(0, sy + lineHeight, buffer);
             snprintf(buffer, 5, "%3d", expectedTemp);
-            Display::u8g2.drawStr(lineWidth * 7 + 5, sy + lineHeight, buffer);
+            Display::u8g2.drawStr(lineWidth * 8, sy + lineHeight, buffer);
 
             drawAxis(AXIS[3], dev.getE(), 0, sy + lineHeight * 2);
             sx_start_right += 14; //padding for spindle/feed values
@@ -125,7 +120,6 @@ void MarlinDRO::drawContents() {
                      spindle_width, spindle_height, (uint8_t *) spindle_bits);
     }
     sy -= 1;
-
     /// distance  ======
     sx_start_right += 10;
     sy += 2;
@@ -166,41 +160,28 @@ void MarlinDRO::drawAxisIcons(uint8_t sx, uint8_t sy, const uint8_t lineHeight) 
                  arrows_zud_height, (uint8_t *) arrows_zud_bits);
 }
 
-
 void MarlinDRO::onButton(int bt, Display::ButtonEvent evt) {
     if (!dev.canJog()) return;
 
-    if (bt == Display::BT_CENTER && evt == Evt::HOLD) {
-        if(cMode != Mode::TEMP){
-            cMode = Mode::TEMP;
-        } else {
-            cMode = Mode::AXES;
-        }
-        buttonWasPressedWithShift = false;
-        setDirty();
-        return;
-    }
-
     if (bt == Display::BT_CENTER) {
-        auto _mode = static_cast<uint8_t>(cMode);
-        switch (evt) {
-            case Evt::DOWN:
+        if (evt == Evt::HOLD) {
+            if (cMode != Mode::TEMP)
+                cMode = Mode::TEMP;
+            else
+                cMode = Mode::AXES;
+        } else if (evt == Evt::UP) {
+            if (buttonWasPressedWithShift) {
+                auto _mode = static_cast<uint8_t>(cMode);
                 _mode++;
-                break;
-            case Evt::UP:
-                if (buttonWasPressedWithShift) {
-                    _mode--;
-                }
-                break;
-            default:
-                break;
+                _mode = _mode % (static_cast<uint8_t>(Mode::N_VALS) - 1);
+                cMode = static_cast<Mode>(_mode);
+            }
         }
-        _mode = _mode % (static_cast<uint8_t>(Mode::N_VALS) - 1);
-        cMode = static_cast<Mode>(_mode);
         buttonWasPressedWithShift = false;
         setDirty();
         return;
     }
+// ===== not BT_CENTER
     if (evt == Evt::DOWN)
         buttonWasPressedWithShift = true;
 
@@ -232,7 +213,7 @@ void MarlinDRO::onButtonTemp(uint8_t bt, Evt evt) {
                 axis = 3; // E
                 dist = -dist;
                 break;
-            default: ; //noop
+            default:; //noop
         }
         if (axis != 0xFF) {
             dev.jog(axis, dist, feed);
@@ -240,7 +221,7 @@ void MarlinDRO::onButtonTemp(uint8_t bt, Evt evt) {
 
         int temp = (uint8_t) round(dist);
         switch (bt) {
-            // ===== temperature
+            // ======== temperature ========
             case Display::BT_UP:
                 expectedTemp += temp;
                 if (expectedTemp > MAX_TEMP) {
@@ -265,6 +246,7 @@ void MarlinDRO::onButtonTemp(uint8_t bt, Evt evt) {
                     expectedBedTemp = 0;
                 }
                 break;
+            default:;
         }
         dev.tempChange(expectedTemp);
         setDirty();
@@ -278,5 +260,3 @@ void MarlinDRO::drawAxis(char axis, float value, int x, int y) {
     snprintfloat(buffer + 1, LEN - 1, value, 2, 7);
     Display::u8g2.drawStr(x, y, buffer);
 }
-
-
