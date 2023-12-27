@@ -7,6 +7,7 @@
 class MarlinDevice : public GCodeDevice {
 public:
     constexpr static uint32_t BUFFER_LEN = 255;
+    constexpr static uint32_t SHORT_BUFFER_LEN = 100;
 
     static void sendProbe(Stream &serial);
 

@@ -1,9 +1,11 @@
 #include "constants.h"
 #include "MarlinDevice.h"
+#include "Job.h"
 #include "printfloat.h"
 #include "util.h"
 #include "debug.h"
 
+extern Job job;
 
 void MarlinDevice::sendProbe(Stream &serial) {
     serial.print("\n");
@@ -104,13 +106,21 @@ void MarlinDevice::tryParseResponse(char *resp, size_t len) {
             }
             lastResponse = resp;
             busy = false;
+            LOGLN("reset busy");
         } else {
             if (strstr(resp, "busy:") != nullptr) {
                 lastResponse = resp + 5; // marlin do space after :
                 busy = true;
+                LOGLN("SET busy");
+            }
+            if (startsWith(resp, "echo:")) {
+                // echo: busy must be before this
+                lastResponse = resp + 5;
             } else if (startsWith(resp, "Resend: ")) {
+                // MAY hae "Resend:Error
                 lastResponse = resp + 7;
                 resendLine = atoi(resp);
+                job.tryResendLine((unsigned) resendLine);
                 // no pop. resend
             } else if (startsWith(resp, "DEBUG:")) {
                 lastResponse = resp;
@@ -207,10 +217,10 @@ void MarlinDevice::parseOk(const char *input, size_t len) {
 }
 
 void MarlinDevice::parseError(const char *input) {
-    char cpy[100]; // TODO inst lenth
-    strncpy(cpy, input, 100);
-    if (strncmp(cpy, "Last Line", 100) != -1) {
-        int lastLine = atoi((cpy + 10));
+    char cpy[SHORT_BUFFER_LEN]; // TODO inst lenth
+    strncpy(cpy, input, SHORT_BUFFER_LEN);
+    if (strstr(cpy, "Last Line") != nullptr) {
+        int lastResponse = atoi((cpy + 10));
     } else if (startsWith(cpy, "")) {
 
     }

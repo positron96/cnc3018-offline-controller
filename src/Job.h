@@ -4,6 +4,7 @@
 #include <SD.h>
 #include <etl/observer.h>
 #include "debug.h"
+#include <math.h>
 
 #include "devices/GCodeDevice.h"
 
@@ -36,9 +37,10 @@ typedef etl::observer<JobStatusEvent> JobObserver;
  *    
  * ```
  */
+
+// TODO it is FSM. refactor it to FSM !!!
 class Job : public DeviceObserver, public etl::observable<JobObserver, 3> {
 public:
-    static Job &getJob();
 
 
     Job() {}
@@ -46,8 +48,8 @@ public:
     ~Job() {
         if (gcodeFile) {
             gcodeFile.close();
-            clear_observers();
         }
+        clear_observers();
     }
 
     void loop();
@@ -56,62 +58,26 @@ public:
         dev = de;
     }
 
-    void setFile(const char *file) {
-        if (gcodeFile) {
-            gcodeFile.close();
-        }
-        gcodeFile = SD.open(file);
-        if (gcodeFile) {
-            fileSize = gcodeFile.size();
-        }
-        filePos = 0;
-        running = false;
-        paused = false;
-        cancelled = false;
-        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG});
-        curLineNum = 0;
-        startTime = 0;
-        endTime = 0;
-    }
+    void setFile(const char *file);
 
-    void notification(const DeviceStatusEvent &e) override {
-        if (e.statusField == GCodeDevice::DeviceStatus::DEV_ERROR && isValid()) {
-            LOGLN("Device error, canceling job");
-            cancel();
-        }
-    }
+    void notification(const DeviceStatusEvent &e) override;
 
-    void start() {
-        startTime = millis();
-        paused = false;
-        running = true;
-        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG});
-    }
+    void start();
 
-    void cancel() {
-        cancelled = true;
-        stop();
-        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG});
-    }
+    void cancel();
 
     bool isRunning() { return running; }
 
     bool isCancelled() { return cancelled; }
+
     ///
     ///  set from UI
     ///
-    void setPaused(bool v) {
-        paused = v;
-    }
+    void setPaused(bool v) { paused = v; }
 
     bool isPaused() { return paused; }
 
-    uint8_t getCompletion() {
-        if (isValid())
-            return (uint8_t) (100.0 * filePos / fileSize );
-        else
-            return 0;
-    }
+    uint8_t getCompletion();
 
     size_t getFilePos() { if (isValid()) return filePos; else return 0; }
 
@@ -121,17 +87,20 @@ public:
         return (bool) gcodeFile;
     }
 
-    String getFilename() {
-        if (isValid())
-            return gcodeFile.name();
-        else
-            return "";
-    }
 
-    uint32_t getPrintDuration() { return (endTime != 0 ? endTime : millis()) - startTime; }
+    String getFilename();
+
+    uint32_t getPrintDuration();
+
+    void tryResendLine(size_t index);
 
 private:
-    static const int MAX_LINE = 100;
+    static constexpr size_t MAX_LINE_LEN = 100;
+    struct Line {
+        size_t num;
+        char cmd[MAX_LINE_LEN + 1];
+    };
+    static const size_t MAX_BUF = 30;
     File gcodeFile;
     GCodeDevice *dev;
     uint32_t fileSize;
@@ -139,28 +108,26 @@ private:
     uint32_t startTime;
     uint32_t endTime;
 
-    char curLine[MAX_LINE + 1];
+    char curLine[MAX_LINE_LEN + 1];
     size_t curLinePos;
-
     size_t curLineNum;
 
-    //float percentage = 0;
     bool running;
     bool cancelled;
     bool paused;
 
-    void stop() {
-        paused = false;
-        running = false;
-        endTime = millis();
-        if (gcodeFile)
-            gcodeFile.close();
-        notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG});
-    }
+    int needResend = -1;
+    uint8_t resendTried = 0;
+    Line lineBuffer[30];
+    int currentBufferPosition = -1;
+
+    void stop();
 
     void readNextLine();
 
     bool scheduleNextCommand();
 
-    static Job job;
+    void resendLine();
+
+    bool queueLine(size_t curLinePos, const char * cmd);
 };

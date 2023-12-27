@@ -10,6 +10,8 @@ constexpr int VISIBLE_MENUS = 5;
 
 Display *Display::inst = nullptr;
 
+extern Job job; // TODO refactor
+
 uint16_t Display::buttStates;
 
 Display *Display::getDisplay() { return inst; }
@@ -146,22 +148,19 @@ void Display::drawStatusBar() {
     } else {
         u8g2.drawXBM(x, 0, connected_width, connected_height, (const uint8_t *) connected_bits);
     }
-    memcpy(str, dev->getStatusStr(), 12); // TODO ??
-    str[12] = 0;
-    u8g2.drawStr(12, y + fH, str);
+    memcpy(str, dev->getStatusStr(), LEN);
+    str[LEN] = 0;
+    u8g2.drawStr(LEN, y + fH, str);
     //job status
-    Job &job = Job::getJob();
-    LOGF("valid: %d\n", job.isValid());
     if (job.isValid()) {
         uint8_t p = job.getCompletion();
-        LOGF("compl:  %d\n", p);
-        snprintf(str, 9, " + %d%%", p);
+        snprintf(str, 9, "% 2d%%", p);
         if (job.isPaused())
             str[0] = 'P';
         else
             str[0] = 'R';
         str[9] = 0;
-        u8g2.setDrawColor(1); //TODO ??
+        u8g2.setDrawColor(1);
         u8g2.drawStr(48, y, str);
     }
 }
@@ -207,9 +206,8 @@ void Display::drawMenu() {
     u8g2.setDrawColor(1);
     u8g2.drawFrame(xx, y, 5, h);
     if (len > VISIBLE_MENUS) {
-        const int hh = (h - 2) * VISIBLE_MENUS / len;
-        const int sy = (h - hh) * cScreen->firstDisplayedMenuItem / (len - VISIBLE_MENUS);
+        const uint hh = (h - 2) * VISIBLE_MENUS / len;
+        const uint sy = (h - hh) * cScreen->firstDisplayedMenuItem / (len - VISIBLE_MENUS);
         u8g2.drawBox(xx + 1, y + 1 + sy, 3, hh);
     }
-
 }

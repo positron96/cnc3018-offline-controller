@@ -9,6 +9,7 @@
 #include "FileChooser.h"
 
 extern FileChooser fileChooser;
+extern Job job;
 
 constexpr int LINE_HEIGHT = 11;
 
@@ -24,12 +25,10 @@ public:
 
     void begin() override {
         menuItems.push_back(MenuItem::simpleItem(0, "Open", [](MenuItem &) {
-            Job &job = Job::getJob();
             if (job.isRunning()) return;
             Display::getDisplay()->setScreen(&fileChooser); // this will reset the card
         }));
         menuItems.push_back(MenuItem::simpleItem(1, "Pause job", [this](MenuItem &m) {
-            Job &job = Job::getJob();
             if (!job.isRunning())
                 return;
             job.setPaused(!job.isPaused());
