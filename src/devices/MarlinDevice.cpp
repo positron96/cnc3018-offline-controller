@@ -1,3 +1,4 @@
+#include <vector>
 #include "constants.h"
 #include "MarlinDevice.h"
 #include "Job.h"
@@ -7,7 +8,7 @@
 
 extern Job job;
 
-void MarlinDevice::sendProbe(Stream &serial) {
+void MarlinDevice::sendProbe(Stream& serial) {
     serial.print("\n");
     serial.print(M115_GET_FIRMWARE_VER);
     serial.print("\n");
@@ -37,25 +38,25 @@ bool MarlinDevice::jog(uint8_t axis, float dist, int feed) {
 }
 
 void MarlinDevice::trySendCommand() {
-    char *cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
-    size_t &len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
+    char* cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
+    size_t& len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
     cmd[len] = 0;
     LOGF("Try [%s]\n", cmd);
     if (printerSerial->availableForWrite()) {
-        printerSerial->write((const uint8_t *) cmd, len);
+        printerSerial->write((const uint8_t*) cmd, len);
         printerSerial->write('\n');
         len = 0;
     }
 }
 
-bool MarlinDevice::scheduleCommand(const char *cmd, size_t len = 0) {
+bool MarlinDevice::scheduleCommand(const char* cmd, size_t len = 0) {
     if (busy || resendLine > 0) {
         return false;
     }
     return GCodeDevice::scheduleCommand(cmd, len);
 }
 
-bool MarlinDevice::schedulePriorityCommand(const char *cmd, size_t len = 0) {
+bool MarlinDevice::schedulePriorityCommand(const char* cmd, size_t len = 0) {
     if (txLocked) return false;
     return GCodeDevice::schedulePriorityCommand(cmd, len);
 }
@@ -83,7 +84,7 @@ void MarlinDevice::toggleRelative() {
     relative = !relative;
 }
 
-void MarlinDevice::tryParseResponse(char *resp, size_t len) {
+void MarlinDevice::tryParseResponse(char* resp, size_t len) {
     LOGF("> [%s],%d\n", resp, len);
     if (startsWith(resp, "Error") || startsWith(resp, "!!")) {
         if (startsWith(resp, "Error")) {
@@ -140,7 +141,7 @@ bool MarlinDevice::tempChange(uint8_t temp) {
     return scheduleCommand(msg, l);
 }
 
-const char *MarlinDevice::getStatusStr() const {
+const char* MarlinDevice::getStatusStr() const {
     return lastResponse; //todo
 }
 
@@ -156,7 +157,7 @@ bool MarlinDevice::canJog() {
 
 /// \param input
 /// \param len
-void MarlinDevice::parseOk(const char *input, size_t len) {
+void MarlinDevice::parseOk(const char* input, size_t len) {
     char cpy[BUFFER_LEN];
     strncpy(cpy, input, MIN(len, BUFFER_LEN));
     cpy[MIN(len, BUFFER_LEN)] = 0;
@@ -164,7 +165,7 @@ void MarlinDevice::parseOk(const char *input, size_t len) {
     bool nextTemp = false,
             nextBedTemp = false;
 //    char *v = cpy;
-    char *fromMachine = strtok(cpy, " ");
+    char* fromMachine = strtok(cpy, " ");
 #define ATOF _atod
     while (fromMachine != nullptr) {
         switch (fromMachine[0]) {
@@ -216,7 +217,7 @@ void MarlinDevice::parseOk(const char *input, size_t len) {
 #undef ATOF
 }
 
-void MarlinDevice::parseError(const char *input) {
+void MarlinDevice::parseError(const char* input) {
     char cpy[SHORT_BUFFER_LEN]; // TODO inst lenth
     strncpy(cpy, input, SHORT_BUFFER_LEN);
     if (strstr(cpy, "Last Line") != nullptr) {
@@ -224,4 +225,8 @@ void MarlinDevice::parseError(const char *input) {
     } else if (startsWith(cpy, "")) {
 
     }
+}
+
+const etl::ivector<u_int16_t>& MarlinDevice::getSpindleValues() const {
+    return MarlinDevice::SPINDLE_VALS;
 }

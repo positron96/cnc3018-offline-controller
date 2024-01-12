@@ -1,9 +1,9 @@
+#include <vector>
 #include "DRO.h"
 #include "devices/GCodeDevice.h"
 
 constexpr int DRO::JOG_FEEDS[];
 constexpr float DRO::JOG_DISTS[];
-constexpr int DRO::SPINDLE_VALS[];
 
 #include "../assets/arrows_lr.XBM"
 #include "../assets/arrows_ud.XBM"
@@ -135,6 +135,8 @@ void DRO::onButtonShift(int bt, Evt evt) {
     if (!(evt == Evt::DOWN || evt == Evt::HOLD))
         return;
 
+    unsigned int n_spindle_val = dev.getSpindleValues().size() - 1;
+
     switch (bt) {
         case Display::BT_R:
             if (evt == Evt::HOLD) cDist = N_JOG_DISTS - 1;
@@ -148,15 +150,15 @@ void DRO::onButtonShift(int bt, Evt evt) {
         case Display::BT_ZUP: {
             if (bt == Display::BT_ZUP) {
                 if (evt == Evt::HOLD)
-                    cSpindleVal = N_SPINDLE_VALS - 1;
-                else if (cSpindleVal < N_SPINDLE_VALS - 1)
+                    cSpindleVal = n_spindle_val;
+                else if (cSpindleVal < n_spindle_val)
                     cSpindleVal++;
             }
             if (bt == Display::BT_ZDOWN) {
                 if (evt == Evt::HOLD) cSpindleVal = 0;
                 else if (cSpindleVal > 0) cSpindleVal--;
             }
-            int v = SPINDLE_VALS[cSpindleVal];
+            int v = dev.getSpindleValues().at(cSpindleVal) ;
             if (v != 0) {
                 char t[15];
                 snprintf(t, 15, "M3 S%d", v);

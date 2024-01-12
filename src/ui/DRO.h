@@ -7,6 +7,7 @@
 #include "Screen.h"
 #include "devices/GCodeDevice.h"
 #include "FileChooser.h"
+#include <vector>
 
 extern FileChooser fileChooser;
 extern Job job;
@@ -19,7 +20,9 @@ class DRO : public Screen {
 public:
     constexpr static uint16_t REFRESH_INTL = 500;
 
-    DRO(GCodeDevice &d) : dev(d), nextRefresh{1}, cDist{3}, cFeed{3}, cMode{Mode::AXES} {}
+    DRO(GCodeDevice &d)
+            : dev(d), nextRefresh{1}, cDist{3}, cFeed{3}, cMode{Mode::AXES} {
+    }
 
     virtual ~DRO() {}
 
@@ -53,7 +56,7 @@ public:
 protected:
     enum class Mode : uint8_t {
         // 0    1      2
-        AXES, SPINDLE, TEMP , N_VALS
+        AXES, SPINDLE, TEMP, N_VALS
     };
     GCodeDevice &dev;
 
@@ -64,9 +67,8 @@ protected:
     constexpr static int JOG_FEEDS[] = {50, 100, 500, 1000, 2000};
     constexpr static size_t N_JOG_FEEDS = sizeof(JOG_FEEDS) / sizeof(JOG_FEEDS[0]);
     size_t cFeed;
-    constexpr static int SPINDLE_VALS[] = { 0, 1, 64, 128, 255};
-    constexpr static size_t N_SPINDLE_VALS = sizeof(SPINDLE_VALS) / sizeof(SPINDLE_VALS[0]);
     size_t cSpindleVal;
+    std::vector<int> *devSpindleValues; // TODO how to do it?
 
     Mode cMode;
     bool buttonWasPressedWithShift;

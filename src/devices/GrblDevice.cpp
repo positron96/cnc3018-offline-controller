@@ -244,3 +244,7 @@ const char *GrblDevice::getStatusStr() const {
             return "?";
     }
 }
+
+const etl::ivector<u_int16_t> &GrblDevice::getSpindleValues() const {
+    return GrblDevice::SPINDLE_VALS;
+}

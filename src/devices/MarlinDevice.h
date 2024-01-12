@@ -1,5 +1,6 @@
 #pragma once
 
+#include <etl/vector.h>
 #include "GCodeDevice.h"
 #include "gcode/gcode.h"
 
@@ -8,6 +9,7 @@ class MarlinDevice : public GCodeDevice {
 public:
     constexpr static uint32_t BUFFER_LEN = 255;
     constexpr static uint32_t SHORT_BUFFER_LEN = 100;
+    const etl::vector<u_int16_t, sizeof(u_int16_t) * 5> SPINDLE_VALS{0, 1, 64, 128, 255};
 
     static void sendProbe(Stream &serial);
 
@@ -23,6 +25,8 @@ public:
     MarlinDevice() : GCodeDevice() { sentCounter = &sentQueue; }
 
     virtual ~MarlinDevice() {}
+
+    const etl::ivector<u_int16_t> &getSpindleValues() const override;
 
     bool jog(uint8_t axis, float dist, int feed) override;
 

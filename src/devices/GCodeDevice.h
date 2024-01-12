@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <etl/vector.h>
 #include <etl/observer.h>
 #include "WatchedSerial.h"
 #include "CommandQueue.h"
@@ -21,6 +22,7 @@ using DeviceObserver = etl::observer<const DeviceStatusEvent &>;
 
 class GCodeDevice : public etl::observable<DeviceObserver, MAX_DEVICE_OBSERVERS> {
 public:
+
     enum DeviceStatus {
         OK = 0,
         DEV_ERROR,
@@ -61,6 +63,8 @@ public:
     virtual void receiveResponses();
 
     virtual bool canJog() { return true; }
+
+    virtual const etl::ivector<u_int16_t> &getSpindleValues() const = 0;
 
     float getX() const { return x; }
 

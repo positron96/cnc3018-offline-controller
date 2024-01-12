@@ -1,10 +1,11 @@
 #pragma once
 
 #include "GCodeDevice.h"
-
+#include <etl/vector.h>
 
 class GrblDevice : public GCodeDevice {
 public:
+    const etl::vector<u_int16_t, sizeof(u_int16_t) * 5> SPINDLE_VALS{0, 1, 10, 100, 1000};
 
     enum class Status {
         Idle, Run, Hold, Jog, Alarm, Door, Check, Home, Sleep
@@ -58,6 +59,8 @@ public:
             return GCodeDevice::schedulePriorityCommand(cmd, len);
         }
     }
+
+    const etl::ivector<u_int16_t> &getSpindleValues() const override;
 
     /// WPos = MPos - WCO
     float getXOfs() const { return ofsX; }
