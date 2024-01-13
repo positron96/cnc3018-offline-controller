@@ -28,46 +28,45 @@ U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI _u8g2(
 #include "Job.h"
 
 constexpr uint32_t buttPins[N_BUTT] = {
-PIN_BT_ZDOWN,
-PIN_BT_ZUP,
+        PIN_BT_ZDOWN,
+        PIN_BT_ZUP,
 
-PIN_BT_R,
-PIN_BT_L,
-PIN_BT_CENTER,
-PIN_BT_UP,
-PIN_BT_DOWN,
+        PIN_BT_R,
+        PIN_BT_L,
+        PIN_BT_CENTER,
+        PIN_BT_UP,
+        PIN_BT_DOWN,
 
-PIN_BT_STEP
+        PIN_BT_STEP
 };
 
-U8G2 &Display::u8g2 = _u8g2;
+U8G2& Display::u8g2 = _u8g2;
 WatchedSerial serialCNC{Serial1, PIN_DET};
 
 
 uint8_t devBuf[MAX(sizeof(GrblDevice), sizeof(MarlinDevice))];
 uint8_t droBuf[MAX(sizeof(GrblDRO), sizeof(MarlinDRO))];
 
-Display display;
-
-
-GCodeDevice *dev;
 Job job;
-DRO *dro;
+Display display{job};
+
+GCodeDevice* dev;
+DRO* dro;
 
 FileChooser fileChooser;
 
-void createGrbl(int i, WatchedSerial *s) {
+void createGrbl(int i, WatchedSerial* s) {
     if (dev != nullptr) return;
     delay(500);
     switch (i) {
         case 0: {
-            GrblDevice *device = new(devBuf) GrblDevice(s);
+            GrblDevice* device = new(devBuf) GrblDevice(s, &job);
             dro = new(droBuf) GrblDRO(*device);
             dev = device;
         }
             break;
         default: {
-            MarlinDevice *device = new(devBuf) MarlinDevice(s);
+            MarlinDevice* device = new(devBuf) MarlinDevice(s, &job);
             dro = new(droBuf) MarlinDRO(*device);
             dev = device;
         }
@@ -97,7 +96,7 @@ void setup() {
 
     display.setScreen(&detUI);
 
-    fileChooser.setCallback([&](bool res, const char *path) {
+    fileChooser.setCallback([&](bool res, const char* path) {
         if (res) {
             LOGF("Starting job %s\n", path);
             job.setFile(path);
@@ -135,7 +134,7 @@ void loop() {
     } else {
         Detector::loop();
     }
-    
+
 #ifdef LOG_DEBUG
     //send all data from pc to device
    if(SerialUSB.available()) {

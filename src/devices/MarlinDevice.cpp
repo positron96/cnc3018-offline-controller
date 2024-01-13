@@ -6,8 +6,6 @@
 #include "util.h"
 #include "debug.h"
 
-extern Job job;
-
 void MarlinDevice::sendProbe(Stream& serial) {
     serial.print("\n");
     serial.print(M115_GET_FIRMWARE_VER);
@@ -121,7 +119,7 @@ void MarlinDevice::tryParseResponse(char* resp, size_t len) {
                 // MAY hae "Resend:Error
                 lastResponse = resp + 7;
                 resendLine = atoi(resp);
-                job.tryResendLine((unsigned) resendLine);
+                job->tryResendLine((unsigned) resendLine);
                 // no pop. resend
             } else if (startsWith(resp, "DEBUG:")) {
                 lastResponse = resp;
@@ -218,12 +216,10 @@ void MarlinDevice::parseOk(const char* input, size_t len) {
 }
 
 void MarlinDevice::parseError(const char* input) {
-    char cpy[SHORT_BUFFER_LEN]; // TODO inst lenth
+    char cpy[SHORT_BUFFER_LEN];
     strncpy(cpy, input, SHORT_BUFFER_LEN);
     if (strstr(cpy, "Last Line") != nullptr) {
         int lastResponse = atoi((cpy + 10));
-    } else if (startsWith(cpy, "")) {
-
     }
 }
 

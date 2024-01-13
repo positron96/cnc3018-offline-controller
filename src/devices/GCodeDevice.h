@@ -5,6 +5,8 @@
 #include <etl/observer.h>
 #include "WatchedSerial.h"
 #include "CommandQueue.h"
+
+class Job;
 #include "util.h"
 
 #include "debug.h"
@@ -18,9 +20,9 @@ struct DeviceStatusEvent {
     int statusField;
 };
 
-using DeviceObserver = etl::observer<const DeviceStatusEvent &>;
+using DeviceObserver = etl::observer<const DeviceStatusEvent&>;
 
-class GCodeDevice : public etl::observable<DeviceObserver, MAX_DEVICE_OBSERVERS> {
+class GCodeDevice: public etl::observable<DeviceObserver, MAX_DEVICE_OBSERVERS> {
 public:
 
     enum DeviceStatus {
@@ -31,8 +33,8 @@ public:
         UNLOCKED = 10
     };
 
-    GCodeDevice(WatchedSerial *s) :
-            printerSerial(s), connected(false) {}
+    GCodeDevice(WatchedSerial* s, Job* job_) :
+            printerSerial(s),job(job_), connected(false)  {}
 
     GCodeDevice() : printerSerial(nullptr), connected(false) {}
 
@@ -40,9 +42,9 @@ public:
 
     virtual void begin();
 
-    virtual bool scheduleCommand(const char *cmd, size_t len = 0);
+    virtual bool scheduleCommand(const char* cmd, size_t len = 0);
 
-    virtual bool schedulePriorityCommand(const char *cmd, size_t len = 0);
+    virtual bool schedulePriorityCommand(const char* cmd, size_t len = 0);
 
     virtual bool canSchedule(size_t len);
 
@@ -52,7 +54,7 @@ public:
 
     virtual void requestStatusUpdate() = 0;
 
-    virtual const char *getStatusStr() const = 0;
+    virtual const char* getStatusStr() const = 0;
 
     void enableStatusUpdates(bool v = true);
 
@@ -64,7 +66,7 @@ public:
 
     virtual bool canJog() { return true; }
 
-    virtual const etl::ivector<u_int16_t> &getSpindleValues() const = 0;
+    virtual const etl::ivector<u_int16_t>& getSpindleValues() const = 0;
 
     float getX() const { return x; }
 
@@ -80,15 +82,16 @@ public:
 
     bool isInPanic() const { return panic; }
 
-    const String &getLastResponse() const { return lastResponse; }
+    const String& getLastResponse() const { return lastResponse; }
 
     bool isLocked() { return printerSerial->isLocked(); }
 
 protected:
     static const size_t MAX_GCODE_LINE = 96;
 
-    WatchedSerial *printerSerial;
-    Counter *sentCounter;
+    WatchedSerial* printerSerial;
+    Counter* sentCounter;
+    Job* job;
 
     uint32_t serialRxTimeout;
     bool connected;
@@ -101,7 +104,7 @@ protected:
     char curUnsentCmd[MAX_GCODE_LINE + 1], curUnsentPriorityCmd[MAX_GCODE_LINE + 1];
     size_t curUnsentCmdLen;
     size_t curUnsentPriorityCmdLen;
-    const char *lastResponse;
+    const char* lastResponse;
 
     float x, y, z;
     uint32_t feed, spindleVal;
@@ -121,7 +124,7 @@ protected:
 
     virtual void trySendCommand() = 0;
 
-    virtual void tryParseResponse(char *cmd, size_t len) = 0;
+    virtual void tryParseResponse(char* cmd, size_t len) = 0;
 
     void readLockedStatus();
 };

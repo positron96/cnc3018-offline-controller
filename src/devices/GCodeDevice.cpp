@@ -1,10 +1,10 @@
+#include "constants.h"
 #include "GCodeDevice.h"
 
-#define XOFF  0x13
-#define XON   0x11
+
 
 // utils for string was here
-bool GCodeDevice::scheduleCommand(const char *cmd, size_t len) {
+bool GCodeDevice::scheduleCommand(const char* cmd, size_t len) {
     if (panic)
         return false;
     if (len == 0)
@@ -18,7 +18,7 @@ bool GCodeDevice::scheduleCommand(const char *cmd, size_t len) {
     return true;
 };
 
-bool GCodeDevice::schedulePriorityCommand(const char *cmd, size_t len) {
+bool GCodeDevice::schedulePriorityCommand(const char* cmd, size_t len) {
     if (len == 0)
         len = strlen(cmd);
     if (len == 0)

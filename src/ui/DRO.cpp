@@ -17,7 +17,7 @@ constexpr float DRO::JOG_DISTS[];
 void DRO::drawContents() {
     U8G2 &u8g2 = Display::u8g2;
 
-    const int LEN = 20;
+    constexpr char LEN = 20;
     char str[LEN];
     int sx = 2;
     int sy = Display::STATUS_BAR_HEIGHT + 3, sx2 = 72;
@@ -135,7 +135,7 @@ void DRO::onButtonShift(int bt, Evt evt) {
     if (!(evt == Evt::DOWN || evt == Evt::HOLD))
         return;
 
-    unsigned int n_spindle_val = dev.getSpindleValues().size() - 1;
+    size_t n_spindle_val = dev.getSpindleValues().size() - 1;
 
     switch (bt) {
         case Display::BT_R:
@@ -158,10 +158,10 @@ void DRO::onButtonShift(int bt, Evt evt) {
                 if (evt == Evt::HOLD) cSpindleVal = 0;
                 else if (cSpindleVal > 0) cSpindleVal--;
             }
-            int v = dev.getSpindleValues().at(cSpindleVal) ;
-            if (v != 0) {
+            uint16_t speed = dev.getSpindleValues().at(cSpindleVal);
+            if (speed != 0) {
                 char t[15];
-                snprintf(t, 15, "M3 S%d", v);
+                snprintf(t, 15, "M3 S%d", speed);
                 dev.scheduleCommand(t);
             } else {
                 dev.scheduleCommand("M5");

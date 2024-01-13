@@ -1,8 +1,10 @@
-#include "constants.h"
-#include "GrblDevice.h"
 #include "printfloat.h"
+#include "constants.h"
 
-void GrblDevice::sendProbe(Stream &serial) {
+#include "GrblDevice.h"
+#include "Job.h"
+
+void GrblDevice::sendProbe(Stream& serial) {
     serial.print("\n$I\n");
 }
 
@@ -27,7 +29,7 @@ bool GrblDevice::canJog() {
     return status == Status::Idle || status == Status::Jog;
 }
 
-bool GrblDevice::isCmdRealtime(const char *data, size_t len) {
+bool GrblDevice::isCmdRealtime(const char* data, size_t len) {
     if (len != 1)
         return false;
 
@@ -63,12 +65,12 @@ void GrblDevice::trySendCommand() {
     }
 #endif // ADD_LINECOMMENTS
 
-    char *cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
-    size_t &len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
+    char* cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
+    size_t& len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
     cmd[len] = 0;
     if (sentCounter->canPush(len)) { //todo how it work on resend
         sentCounter->push(cmd, len);
-        printerSerial->write((const uint8_t *) cmd, len);
+        printerSerial->write((const uint8_t*) cmd, len);
         printerSerial->write('\n');
         LOGF("<  (f%3d,%3d) '%s'\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, len);
         len = 0;
@@ -79,7 +81,7 @@ void GrblDevice::trySendCommand() {
 
 }
 
-void GrblDevice::tryParseResponse(char *resp, size_t len) {
+void GrblDevice::tryParseResponse(char* resp, size_t len) {
     if (startsWith(resp, "ok")) {
         sentQueue.pop();
         connected = true;
@@ -111,14 +113,14 @@ void GrblDevice::tryParseResponse(char *resp, size_t len) {
     LOGF("> (f%3d,%3d) '%s'\n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(), resp);
 }
 
-void mystrcpy(char *dst, const char *start, const char *end) {
+void mystrcpy(char* dst, const char* start, const char* end) {
     while (start != end) {
         *(dst++) = *(start++);
     }
     *dst = 0;
 }
 
-void GrblDevice::parseStatus(char *v) {
+void GrblDevice::parseStatus(char* v) {
     //<Idle|MPos:9.800,0.000,0.000|FS:0,0|WCO:0.000,0.000,0.000>
     //                                        override values in percent of programmed values for
     //                                    v-- feed, rapids, and spindle speed
@@ -130,7 +132,7 @@ void GrblDevice::parseStatus(char *v) {
     v = cpy;
 
     // idle/jogging
-    char *fromGrbl = strtok(v, "|");
+    char* fromGrbl = strtok(v, "|");
     if (fromGrbl == nullptr) return;
     setStatus(fromGrbl);
 
@@ -138,7 +140,7 @@ void GrblDevice::parseStatus(char *v) {
     fromGrbl = strtok(nullptr, "|");
     if (fromGrbl == nullptr) return;
     // ===========++++
-    char *st, *fi;
+    char* st, * fi;
     st = fromGrbl + 5;
     fi = strchr(st, ',');
     if (fi == nullptr)
@@ -203,7 +205,7 @@ void GrblDevice::parseStatus(char *v) {
 }
 
 
-bool GrblDevice::setStatus(const char *pch) {
+bool GrblDevice::setStatus(const char* pch) {
     if (startsWith(pch, "Hold")) status = Status::Hold;
     else if (startsWith(pch, "Door")) status = Status::Door;
     else if (strcmp(pch, "Idle") == 0) status = Status::Idle;
@@ -220,7 +222,7 @@ bool GrblDevice::setStatus(const char *pch) {
     return true;
 }
 
-const char *GrblDevice::getStatusStr() const {
+const char* GrblDevice::getStatusStr() const {
     switch (status) {
         case Status::Idle:
             return "Idle";
@@ -245,6 +247,6 @@ const char *GrblDevice::getStatusStr() const {
     }
 }
 
-const etl::ivector<u_int16_t> &GrblDevice::getSpindleValues() const {
+const etl::ivector<u_int16_t>& GrblDevice::getSpindleValues() const {
     return GrblDevice::SPINDLE_VALS;
 }

@@ -1,22 +1,23 @@
 #pragma once
 
 #include <etl/vector.h>
+#include "Job.h"
 #include "GCodeDevice.h"
 #include "gcode/gcode.h"
 
 
-class MarlinDevice : public GCodeDevice {
+class MarlinDevice: public GCodeDevice {
 public:
     constexpr static uint32_t BUFFER_LEN = 255;
     constexpr static uint32_t SHORT_BUFFER_LEN = 100;
     const etl::vector<u_int16_t, sizeof(u_int16_t) * 5> SPINDLE_VALS{0, 1, 64, 128, 255};
 
-    static void sendProbe(Stream &serial);
+    static void sendProbe(Stream& serial);
 
     static bool checkProbeResponse(String s);
 
-    MarlinDevice(WatchedSerial *s) :
-            GCodeDevice(s) {
+    MarlinDevice(WatchedSerial* s, Job* job) :
+            GCodeDevice(s, job) {
         sentCounter = &sentQueue;
         canTimeout = false;
         panic = false;
@@ -26,7 +27,7 @@ public:
 
     virtual ~MarlinDevice() {}
 
-    const etl::ivector<u_int16_t> &getSpindleValues() const override;
+    const etl::ivector<u_int16_t>& getSpindleValues() const override;
 
     bool jog(uint8_t axis, float dist, int feed) override;
 
@@ -38,11 +39,11 @@ public:
 
     void requestStatusUpdate() override;
 
-    bool schedulePriorityCommand(const char *cmd, size_t len) override;
+    bool schedulePriorityCommand(const char* cmd, size_t len) override;
 
-    bool scheduleCommand(const char *cmd, size_t len) override;
+    bool scheduleCommand(const char* cmd, size_t len) override;
 
-    const char *getStatusStr() const override;
+    const char* getStatusStr() const override;
 
     void toggleRelative();
 
@@ -59,10 +60,11 @@ public:
 protected:
     void trySendCommand() override;
 
-    void tryParseResponse(char *cmd, size_t len) override;
+    void tryParseResponse(char* cmd, size_t len) override;
 
 private:
     SimpleCounter<15, 128> sentQueue;
+    Job* job;
 
     float hotendTemp = 0.0, bedTemp = 0.0;
     size_t hotendPower = 0;
@@ -76,7 +78,7 @@ private:
 
     int resendLine = -1;
 
-    void parseError(const char *input);
+    void parseError(const char* input);
 
-    void parseOk(const char *v, size_t len);
+    void parseOk(const char* v, size_t len);
 };

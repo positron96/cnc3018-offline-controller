@@ -1,6 +1,5 @@
 #include "Job.h"
 
-extern uint8_t cmdBuf;
 
 /// file can be shorter then Marlin buffer.
 // it dump it all and close

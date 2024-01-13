@@ -3,9 +3,10 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <etl/observer.h>
-#include "debug.h"
 #include <math.h>
 
+#include "debug.h"
+class Job;
 #include "devices/GCodeDevice.h"
 
 
@@ -54,13 +55,13 @@ public:
 
     void loop();
 
-    void setDevice(GCodeDevice *de) {
+    void setDevice(GCodeDevice* de) {
         dev = de;
     }
 
-    void setFile(const char *file);
+    void setFile(const char* file);
 
-    void notification(const DeviceStatusEvent &e) override;
+    void notification(const DeviceStatusEvent& e) override;
 
     void start();
 
@@ -102,7 +103,7 @@ private:
     };
     static const size_t MAX_BUF = 30;
     File gcodeFile;
-    GCodeDevice *dev;
+    GCodeDevice* dev;
     uint32_t fileSize;
     uint32_t filePos;
     uint32_t startTime;
@@ -129,5 +130,5 @@ private:
 
     void resendLine();
 
-    bool queueLine(size_t curLinePos, const char * cmd);
+    bool queueLine(size_t curLinePos, const char* cmd);
 };

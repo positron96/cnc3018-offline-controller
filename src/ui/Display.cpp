@@ -1,7 +1,5 @@
 #include "Display.h"
-#include "Job.h"
 #include <Arduino.h>
-
 #include "Screen.h"
 
 #include "../devices/GrblDevice.h"
@@ -9,8 +7,6 @@
 constexpr int VISIBLE_MENUS = 5;
 
 Display *Display::inst = nullptr;
-
-extern Job job; // TODO refactor
 
 uint16_t Display::buttStates;
 
@@ -103,7 +99,7 @@ void Display::processMenuButton(uint8_t bt, ButtonEvent evt) {
         }
         if (bt == BT_CENTER) {
             MenuItem &item = cScreen->menuItems[selMenuItem];
-            if (!item.togglalbe) { item.on = !item.on; }
+            if (!item.togglable) { item.on = !item.on; }
             item.cmd(item);
             menuShown = false;
             setDirty();
@@ -130,7 +126,7 @@ void Display::draw() {
 #include "../assets/connected.XBM"
 
 void Display::drawStatusBar() {
-    constexpr int LEN = 25;
+    constexpr int LEN = 26;
     char str[LEN];
 
     if (dev == nullptr)
@@ -149,7 +145,7 @@ void Display::drawStatusBar() {
         u8g2.drawXBM(x, 0, connected_width, connected_height, (const uint8_t *) connected_bits);
     }
     memcpy(str, dev->getStatusStr(), LEN);
-    str[LEN] = 0;
+    str[LEN-1] = 0;
     u8g2.drawStr(LEN, y + fH, str);
     //job status
     if (job.isValid()) {

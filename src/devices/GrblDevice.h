@@ -11,8 +11,8 @@ public:
         Idle, Run, Hold, Jog, Alarm, Door, Check, Home, Sleep
     };
 
-    GrblDevice(WatchedSerial *s) :
-            GCodeDevice(s) {
+    GrblDevice(WatchedSerial *s, Job* job) :
+            GCodeDevice(s,job) {
         sentCounter = &sentQueue;
         canTimeout = false;
     };

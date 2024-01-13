@@ -17,13 +17,13 @@ class Screen;
 struct MenuItem {
     int16_t id;
     String text;
-    bool togglalbe;
+    bool togglable;
     bool on;
-    uint8_t *font;
-    using ItemFunc = std::function<void(MenuItem &)>;
+    uint8_t* font;
+    using ItemFunc = std::function<void(MenuItem&)>;
     ItemFunc cmd;
 
-    static MenuItem simpleItem(int16_t id, const char *text, ItemFunc func) {
+    static MenuItem simpleItem(int16_t id, const char* text, ItemFunc func) {
         return MenuItem{id, text, false, false, nullptr, func};
     }
 };
@@ -34,12 +34,12 @@ public:
     static constexpr int STATUS_BAR_HEIGHT = 16;
     static constexpr int HOLD_COUNT = 30; // x10 = ms
 
-    static U8G2 &u8g2;
+    static U8G2& u8g2;
 
     enum {
         BT_ZDOWN = 0,  //
         BT_ZUP,        //
-//                            +----------------------------------------------------+
+        //                    +----------------------------------------------------+
         BT_R,          //     |  Z_UP   +--------------+         BT_UP             |
         BT_L,          //     |         |              |                           |
         BT_CENTER,     //     |         |              |   BT_L  BT_CENTER   BT_R  |
@@ -56,7 +56,7 @@ public:
         UP, DOWN, HOLD
     };
 
-    Display() : dirty{true}, selMenuItem{0}, menuShown{false} {
+    Display(Job& job) : job(job), dirty{true}, selMenuItem{0}, menuShown{false} {
         assert(inst == nullptr);
         inst = this;
     }
@@ -65,7 +65,7 @@ public:
 
     void setDirty(bool fdirty = true) { dirty = fdirty; }
 
-    void notification(const DeviceStatusEvent &e) override {
+    void notification(const DeviceStatusEvent& e) override {
         setDirty();
     }
 
@@ -79,18 +79,19 @@ public:
 
     void draw();
 
-    void setScreen(Screen *screen);
+    void setScreen(Screen* screen);
 
-    void setDevice(GCodeDevice *dev);
+    void setDevice(GCodeDevice* dev);
 
-    static Display *getDisplay();
+    static Display* getDisplay();
 
     void processInput();
 
 private:
-    static Display *inst;
-    Screen *cScreen;
-    GCodeDevice *dev;
+    static Display* inst;
+    Screen* cScreen;
+    GCodeDevice* dev;
+    Job& job;
 
     bool dirty;
     size_t selMenuItem = 0;
