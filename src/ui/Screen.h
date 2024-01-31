@@ -23,7 +23,7 @@ public:
 
     virtual void begin() { setDirty(true); }
 
-    virtual void loop() {}
+    virtual void step() {}
 
 protected:
 

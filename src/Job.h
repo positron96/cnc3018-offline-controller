@@ -1,134 +1,182 @@
 #pragma once
 
-#include <Arduino.h>
-#include <SD.h>
-#include <etl/observer.h>
-#include <math.h>
-
+#include "JobFsm.h"
 #include "debug.h"
-class Job;
-#include "devices/GCodeDevice.h"
-
-
-typedef int JobStatusEvent;
-
-enum JobStatus {
-    REFRESH_SIG
-};
 
 typedef etl::observer<JobStatusEvent> JobObserver;
 
+class StopState : public etl::fsm_state<JobFsm, StopState, StateId::INVALID, SetFileMessage, CompleteMessage> {
+public:
+    etl::fsm_state_id_t on_enter_state() {
+        get_fsm_context().closeFile();
+        return STATE_ID;
+    }
 
-/**
- * State diagram:
- * ```
- * non valid   <-------------------+
- *    |                            |
- *    | (.setFile)                 |
- *    v                            |
- *   valid ------------------------+
- *    |                            | 
- *    | (.start)                   | (.cancel)
- *    v                            | or EOF
- *   [ valid&running        ]----->^<----+
- *    |                     ^            |
- *    | (.pause)            | (.resume)  |
- *    v                     |            |
- *   [valid&running&paused]-+------------+
- *    
- * ```
- */
+    etl::fsm_state_id_t on_event(const SetFileMessage& event) {
+        get_fsm_context().setFile(event.fileName);
+        return StateId::READY;
+    }
 
-// TODO it is FSM. refactor it to FSM !!!
-class Job : public DeviceObserver, public etl::observable<JobObserver, 3> {
+    etl::fsm_state_id_t on_event(const CompleteMessage& event) {
+        get_fsm_context().closeFile();
+        return StateId::INVALID;
+    }
+
+    etl::fsm_state_id_t on_event_unknown(const etl::imessage& msg) {
+        LOGF("error state: %d", msg.get_message_id());
+        return STATE_ID;
+    }
+};
+
+class ReadyState
+        : public etl::fsm_state<JobFsm, ReadyState, StateId::READY, StartMessage, PauseMessage, CompleteMessage, ResendMessage> {
+public:
+    etl::fsm_state_id_t on_enter_state() {
+        //TODO
+        return STATE_ID;
+    }
+
+    etl::fsm_state_id_t on_event(const StartMessage& event) {
+        get_fsm_context().startTime = millis();
+        return StateId::READY;
+    }
+
+    etl::fsm_state_id_t on_event(const PauseMessage& event) {
+        return StateId::PAUSED;
+    }
+
+    etl::fsm_state_id_t on_event(const ResendMessage& event) {
+        // todo
+        return StateId::READY;
+    }
+
+    etl::fsm_state_id_t on_event(const CompleteMessage& event) {
+        // todo ?? may be different state??
+        return StateId::INVALID;
+    }
+
+    etl::fsm_state_id_t on_event_unknown(const etl::imessage& msg) {
+        LOGF("error state: %d", msg.get_message_id());
+        return STATE_ID;
+    }
+};
+
+class PauseState : public etl::fsm_state<JobFsm, PauseState, StateId::PAUSED, ResumeMessage, CompleteMessage> {
+public:
+    etl::fsm_state_id_t on_event(const ResumeMessage& event) {
+        return StateId::READY;
+    }
+
+    etl::fsm_state_id_t on_event(const CompleteMessage& event) {
+        // todo ?? may be different state??
+        return StateId::INVALID;
+    }
+
+    etl::fsm_state_id_t on_event_unknown(const etl::imessage& msg) {
+        LOGF("error state: %d", msg.get_message_id());
+        return STATE_ID;
+    }
+};
+
+class WaitState
+        : public etl::fsm_state<JobFsm, WaitState, StateId::WAIT_RESP, SendMessage, AckMessage, PauseMessage, CompleteMessage> {
+public:
+    etl::fsm_state_id_t on_event(const SendMessage& event) {
+        // todo
+        return StateId::WAIT_RESP;
+    }
+
+    etl::fsm_state_id_t on_event(const AckMessage& event) {
+        // todo
+        return StateId::READY;
+    }
+
+    etl::fsm_state_id_t on_event(const PauseMessage& event) {
+        // todo
+        return StateId::PAUSED;
+    }
+
+    etl::fsm_state_id_t on_event(const CompleteMessage& event) {
+        // todo ?? may be different state??
+        return StateId::INVALID;
+    }
+
+    etl::fsm_state_id_t on_event_unknown(const etl::imessage& msg) {
+        LOGF("error state: %d", msg.get_message_id());
+        return STATE_ID;
+    }
+};
+
+///
+/// Represents gcode program read from SD card.
+/// Shim class abstracting FSM as method calls.
+///
+class Job :  public etl::observable<JobObserver, 3> {
+    JobFsm* fsm;
 public:
 
+    Job() {
+        fsm = new JobFsm();
 
-    Job() {}
+        StopState stopState;
+        ReadyState readyState;
+        PauseState pauseState;
+        WaitState waitState;
+        etl::ifsm_state* stateList[StateId::NUMBER_OF_STATES] = {&stopState, &readyState, &waitState, &pauseState};
 
-    ~Job() {
-        if (gcodeFile) {
-            gcodeFile.close();
+        fsm->set_states(stateList, etl::size(stateList));
+    }
+
+    void inline setDevice(GCodeDevice* dev_) {
+        fsm->dev = dev_;
+    }
+
+    void inline setFile(const char* file) {
+        fsm->setFile(file);
+    }
+
+    void start() {
+        fsm->receive(StartMessage{});
+    }
+
+    void inline setPaused(bool v) { fsm->receive(PauseMessage{}); }
+
+    bool inline isRunning() {
+        unsigned char i = fsm->get_state_id();
+        return i == StateId::READY || i == StateId::WAIT_RESP;
+    }
+
+    bool inline isValid() {
+        return (bool) fsm->gcodeFile;
+    }
+
+    uint8_t getCompletion() {
+        if (isValid())
+            return round((100.0 * fsm->filePos) / (fsm->fileSize > 0 ? fsm->fileSize : 1));
+        else
+            return 0;
+    }
+
+    void step() {
+        switch (fsm->get_state_id()) {
+            case StateId::READY:
+                fsm->scheduleNextCommand();
+                notify_observers(JobStatusEvent{JobStatus::REFRESH_SIG});
+                break;
+            case StateId::WAIT_RESP:
+
+                break;
+            case StateId::PAUSED:
+            default:
+                return;
         }
-        clear_observers();
     }
 
-    void loop();
-
-    void setDevice(GCodeDevice* de) {
-        dev = de;
+    void notification(const DeviceStatusEvent& e) {
+        //todo
+        if (e.statusField == GCodeDevice::DeviceStatus::DEV_ERROR && isValid()) {
+            fsm->receive(CompleteMessage());
+        }
     }
 
-    void setFile(const char* file);
-
-    void notification(const DeviceStatusEvent& e) override;
-
-    void start();
-
-    void cancel();
-
-    bool isRunning() { return running; }
-
-    bool isCancelled() { return cancelled; }
-
-    ///
-    ///  set from UI
-    ///
-    void setPaused(bool v) { paused = v; }
-
-    bool isPaused() { return paused; }
-
-    uint8_t getCompletion();
-
-    size_t getFilePos() { if (isValid()) return filePos; else return 0; }
-
-    size_t getFileSize() { if (isValid()) return fileSize; else return 0; }
-
-    bool isValid() {
-        return (bool) gcodeFile;
-    }
-
-
-    String getFilename();
-
-    uint32_t getPrintDuration();
-
-    void tryResendLine(size_t index);
-
-private:
-    static constexpr size_t MAX_LINE_LEN = 100;
-    struct Line {
-        size_t num;
-        char cmd[MAX_LINE_LEN + 1];
-    };
-    static const size_t MAX_BUF = 30;
-    File gcodeFile;
-    GCodeDevice* dev;
-    uint32_t fileSize;
-    uint32_t filePos;
-    uint32_t startTime;
-    uint32_t endTime;
-
-    char curLine[MAX_LINE_LEN + 1];
-    size_t curLinePos;
-    size_t curLineNum;
-
-    bool running;
-    bool cancelled;
-    bool paused;
-
-    int needResend = -1;
-    uint8_t resendTried = 0;
-    Line lineBuffer[30];
-    int currentBufferPosition = -1;
-
-    void stop();
-
-    void readNextLine();
-
-    bool scheduleNextCommand();
-
-    void resendLine();
-
-    bool queueLine(size_t curLinePos, const char* cmd);
 };

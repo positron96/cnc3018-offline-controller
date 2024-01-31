@@ -1,10 +1,12 @@
 #include <vector>
 #include "constants.h"
 #include "MarlinDevice.h"
+
 #include "Job.h"
 #include "printfloat.h"
 #include "util.h"
 #include "debug.h"
+
 
 void MarlinDevice::sendProbe(Stream& serial) {
     serial.print("\n");
@@ -18,12 +20,22 @@ void MarlinDevice::sendProbe(Stream& serial) {
 //   This helps for debugging a previous stepper function bug.
 // todo for position
 bool MarlinDevice::checkProbeResponse(const String v) {
+    // TODO  check: is v copied each invocation.
     if (v.indexOf("Marlin") != -1) {
         LOGLN(">> Detected Marlin device <<");
         return true;
     }
     return false;
 }
+
+
+MarlinDevice::MarlinDevice(WatchedSerial* s, Job* job) : GCodeDevice(s, job) {
+    canTimeout = false;
+    panic = false;
+    // todo it must be gone in merge with queue branch
+    initQueue = new etl::deque<Mstring, 5>();
+}
+
 
 bool MarlinDevice::jog(uint8_t axis, float dist, int feed) {
     constexpr size_t LN = 25;
@@ -61,13 +73,20 @@ bool MarlinDevice::schedulePriorityCommand(const char* cmd, size_t len = 0) {
 
 void MarlinDevice::begin() {
     GCodeDevice::begin();
-    constexpr size_t LN = 11;
-    char msg[LN];
-//todo refactor
-    int l = snprintf(msg, LN, "%s S%d", M154_AUTO_REPORT_POSITION, 1);
-    schedulePriorityCommand(msg, l);
-    l = snprintf(msg, LN, "%s S%d", M155_AUTO_REPORT_TEMP, 1);
-    scheduleCommand(msg, l);
+    {
+        Mstring pString;
+        pString.append(M154_AUTO_REPORT_POSITION);
+        pString.append(" ");
+        pString.append("S1");
+        initQueue->push_back(pString);
+    }
+    {
+        Mstring pString;
+        pString.append(M155_AUTO_REPORT_TEMP);
+        pString.append(" ");
+        pString.append("S1");
+        initQueue->push_back(pString);
+    }
 }
 
 void MarlinDevice::requestStatusUpdate() {
@@ -119,7 +138,7 @@ void MarlinDevice::tryParseResponse(char* resp, size_t len) {
                 // MAY hae "Resend:Error
                 lastResponse = resp + 7;
                 resendLine = atoi(resp);
-                job->tryResendLine((unsigned) resendLine);
+//                job->tryResendLine((unsigned) resendLine);
                 // no pop. resend
             } else if (startsWith(resp, "DEBUG:")) {
                 lastResponse = resp;
@@ -225,4 +244,20 @@ void MarlinDevice::parseError(const char* input) {
 
 const etl::ivector<u_int16_t>& MarlinDevice::getSpindleValues() const {
     return MarlinDevice::SPINDLE_VALS;
+}
+
+bool MarlinDevice::scheduleNextFromQueue() {
+    if (initQueue->available()) {
+        Mstring& cmd = initQueue->front();
+        return scheduleCommand(cmd);
+    }
+    return false;
+}
+
+bool MarlinDevice::scheduleCommand(const Mstring& cmd) {
+    return scheduleCommand(cmd.c_str(), cmd.length());
+}
+
+void MarlinDevice::confirmNextFromQueue() {
+    initQueue->pop_front();
 }

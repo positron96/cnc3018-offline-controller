@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "Screen.h"
 
-#include "../devices/GrblDevice.h"
+#include "devices/GrblDevice.h"
 
 constexpr int VISIBLE_MENUS = 5;
 
@@ -23,13 +23,13 @@ void Display::setScreen(Screen *screen) {
     dirty = true;
 }
 
-void Display::setDevice(GCodeDevice *de) {
-    dev = de;
+void Display::setDevice(GCodeDevice *dev_) {
+    dev = dev_;
 }
 
-void Display::loop() {
+void Display::step() {
     if (cScreen != nullptr)
-        cScreen->loop();
+        cScreen->step();
     draw();
 }
 
@@ -151,10 +151,10 @@ void Display::drawStatusBar() {
     if (job.isValid()) {
         uint8_t p = job.getCompletion();
         snprintf(str, 9, "% 2d%%", p);
-        if (job.isPaused())
-            str[0] = 'P';
-        else
+        if (job.isRunning())
             str[0] = 'R';
+        else
+            str[0] = 'P';
         str[9] = 0;
         u8g2.setDrawColor(1);
         u8g2.drawStr(48, y, str);

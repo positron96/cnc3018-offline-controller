@@ -15,7 +15,7 @@ public:
     void begin() override {
     };
 
-    void loop() override {
+    void step() override {
         if (nextRefresh != 0 && millis() > nextRefresh) {
             nextRefresh = millis() + REFRESH_INTL;
             setDirty();
@@ -25,8 +25,6 @@ public:
     void enableRefresh(bool r) { nextRefresh = r ? millis() : 0; }
 
     bool isRefreshEnabled() { return nextRefresh != 0; }
-
-private:
 
 protected:
     uint32_t nextRefresh;

@@ -1,12 +1,16 @@
 #pragma once
 
-#include <etl/vector.h>
+#include <etl/deque.h>
+
+#include "etl/string.h"
+
 #include "Job.h"
 #include "GCodeDevice.h"
 #include "gcode/gcode.h"
 
+typedef etl::string<24> Mstring;
 
-class MarlinDevice: public GCodeDevice {
+class MarlinDevice : public GCodeDevice {
 public:
     constexpr static uint32_t BUFFER_LEN = 255;
     constexpr static uint32_t SHORT_BUFFER_LEN = 100;
@@ -16,16 +20,15 @@ public:
 
     static bool checkProbeResponse(String s);
 
-    MarlinDevice(WatchedSerial* s, Job* job) :
-            GCodeDevice(s, job) {
-        sentCounter = &sentQueue;
-        canTimeout = false;
-        panic = false;
+     //// CONSTRUCTORS
+    MarlinDevice(WatchedSerial* s, Job* job);
+
+    MarlinDevice() : GCodeDevice() {
     }
 
-    MarlinDevice() : GCodeDevice() { sentCounter = &sentQueue; }
-
-    virtual ~MarlinDevice() {}
+    virtual ~MarlinDevice() {
+        delete initQueue;
+    }
 
     const etl::ivector<u_int16_t>& getSpindleValues() const override;
 
@@ -42,6 +45,12 @@ public:
     bool schedulePriorityCommand(const char* cmd, size_t len) override;
 
     bool scheduleCommand(const char* cmd, size_t len) override;
+
+    bool scheduleCommand(const Mstring& cmd);
+
+    bool scheduleNextFromQueue();
+
+    void confirmNextFromQueue();
 
     const char* getStatusStr() const override;
 
@@ -63,8 +72,8 @@ protected:
     void tryParseResponse(char* cmd, size_t len) override;
 
 private:
-    SimpleCounter<15, 128> sentQueue;
     Job* job;
+    etl::deque<Mstring, 5>* initQueue;
 
     float hotendTemp = 0.0, bedTemp = 0.0;
     size_t hotendPower = 0;

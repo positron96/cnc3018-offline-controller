@@ -32,17 +32,18 @@ public:
             Display::getDisplay()->setScreen(&fileChooser); // this will reset the card
         }));
         menuItems.push_back(MenuItem::simpleItem(1, "Pause job", [this](MenuItem &m) {
-            if (!job.isRunning())
-                return;
-            job.setPaused(!job.isPaused());
-            m.text = job.isPaused()
-                     ? "Resume job"
-                     : "Pause job";
+            if (job.isRunning()) {
+                job.setPaused(true);
+                m.text = "Resume job";
+            } else {
+                job.setPaused(false);
+                m.text = "Pause job";
+            }
             setDirty(true);
         }));
     };
 
-    void loop() override {
+    void step() override {
         if (nextRefresh != 0 && millis() > nextRefresh) {
             nextRefresh = millis() + REFRESH_INTL;
             dev.requestStatusUpdate();
