@@ -36,14 +36,16 @@ bool MarlinDevice::jog(uint8_t axis, float dist, int feed) {
 }
 
 void MarlinDevice::trySendCommand() {
-    char* cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
-    size_t& len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
-    cmd[len] = 0;
-    LOGF("Try [%s]\n", cmd);
+    LOGLN("Try send");
     if (printerSerial->availableForWrite()) {
-        printerSerial->write((const uint8_t*) cmd, len);
+        String& front = outQueue.front();
+        const char* cmd = front.c_str();
+        auto size = (size_t) front.length();
+        LOGF("[%s]\n", cmd);
+        printerSerial->write((const unsigned char*) cmd, size);
         printerSerial->write('\n');
-        len = 0;
+        //delete
+        outQueue.pop_front();
     }
 }
 
@@ -51,21 +53,25 @@ bool MarlinDevice::scheduleCommand(const char* cmd, size_t len = 0) {
     if (busy || resendLine > 0) {
         return false;
     }
-    return GCodeDevice::scheduleCommand(cmd, len);
+    if (!outQueue.full()) {
+        outQueue.push_back(String(cmd));
+        return true;
+    }
+    return false;
 }
 
 bool MarlinDevice::schedulePriorityCommand(const char* cmd, size_t len = 0) {
     if (txLocked) return false;
-    return GCodeDevice::schedulePriorityCommand(cmd, len);
+    // same as schedule. no except
+    return scheduleCommand(cmd, len);
 }
 
 void MarlinDevice::begin() {
     GCodeDevice::begin();
     constexpr size_t LN = 11;
     char msg[LN];
-//todo refactor
     int l = snprintf(msg, LN, "%s S%d", M154_AUTO_REPORT_POSITION, 1);
-    schedulePriorityCommand(msg, l);
+    scheduleCommand(msg, l);
     l = snprintf(msg, LN, "%s S%d", M155_AUTO_REPORT_TEMP, 1);
     scheduleCommand(msg, l);
 }
@@ -92,6 +98,7 @@ void MarlinDevice::tryParseResponse(char* resp, size_t len) {
             lastResponse = resp + 2;
         }
         panic = true;
+        outQueue.clear();
         notify_observers(DeviceStatusEvent{DeviceStatus::DEV_ERROR});
     } else {
         connected = true;

@@ -1,12 +1,13 @@
 #pragma once
 
-#include <etl/vector.h>
 #include "Job.h"
 #include "GCodeDevice.h"
 #include "gcode/gcode.h"
+#include "etl/deque.h"
+#include <string>
 
 
-class MarlinDevice: public GCodeDevice {
+class MarlinDevice : public GCodeDevice {
 public:
     constexpr static uint32_t BUFFER_LEN = 255;
     constexpr static uint32_t SHORT_BUFFER_LEN = 100;
@@ -18,12 +19,11 @@ public:
 
     MarlinDevice(WatchedSerial* s, Job* job) :
             GCodeDevice(s, job) {
-        sentCounter = &sentQueue;
         canTimeout = false;
         panic = false;
     }
 
-    MarlinDevice() : GCodeDevice() { sentCounter = &sentQueue; }
+    MarlinDevice() : GCodeDevice() {}
 
     virtual ~MarlinDevice() {}
 
@@ -63,8 +63,8 @@ protected:
     void tryParseResponse(char* cmd, size_t len) override;
 
 private:
-    SimpleCounter<15, 128> sentQueue;
     Job* job;
+    etl::deque<String, 10> outQueue;
 
     float hotendTemp = 0.0, bedTemp = 0.0;
     size_t hotendPower = 0;
