@@ -21,7 +21,7 @@ constexpr uint32_t PIN_LCD_DC = PB1;
 constexpr uint32_t PIN_LCD_CLK = PA0;
 constexpr uint32_t PIN_LCD_MOSI = PA1;
 
-U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI _u8g2(U8G2_R0, PIN_LCD_CLK, PIN_LCD_MOSI, 
+U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI _u8g2(U8G2_R0, PIN_LCD_CLK, PIN_LCD_MOSI,
     PIN_LCD_CS, PIN_LCD_DC, PIN_LCD_RST);
 U8G2 &Display::u8g2 = _u8g2;
 
@@ -36,7 +36,7 @@ constexpr uint32_t PIN_BT_DOWN  = PB14;
 constexpr uint32_t PIN_BT_STEP  = PB15;
 
 constexpr uint32_t buttPins[N_BUTT] = {
-    PIN_BT_ZDOWN, PIN_BT_ZUP, PIN_BT_R, PIN_BT_L, 
+    PIN_BT_ZDOWN, PIN_BT_ZUP, PIN_BT_R, PIN_BT_L,
     PIN_BT_CENTER, PIN_BT_UP, PIN_BT_DOWN, PIN_BT_STEP
 };
 
@@ -61,7 +61,7 @@ GrblDevice* createGrbl(WatchedSerial *s) {
     dev->begin();
     dev->add_observer(*Display::getDisplay());
     dev->add_observer(*job);
-    
+
     dro.begin();
     dro.enableRefresh();
     display.setScreen(&dro);
@@ -83,13 +83,13 @@ void setup() {
 
     display.begin();
 
-    display.setScreen(&detUI); 
+    display.setScreen(&detUI);
     //display.setScreen(&fileChooser);
-    
+
     fileChooser.setCallback( [&](bool res, String path){
         if(res) {
             LOGF("Starting job %s\n", path.c_str() );
-            job->setFile(path);            
+            job->setFile(path);
             job->start();
         } else {
             // cancel
@@ -102,8 +102,8 @@ void setup() {
 
     job = &Job::getJob();
     job->add_observer( display );
-    
-    
+
+
     for(auto pin: buttPins) {
         pinMode(pin, INPUT_PULLUP);
     }
@@ -117,7 +117,7 @@ void setup() {
         file.close();
     }
     cDir.close();
-    
+
 }
 
 void loop() {
@@ -130,7 +130,7 @@ void loop() {
         }
         display.processInput();
         nextRead = millis() + 10;
-    }    
+    }
 
     display.loop();
 
@@ -146,4 +146,3 @@ void loop() {
     }
 
 }
-

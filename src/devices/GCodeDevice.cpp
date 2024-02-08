@@ -6,7 +6,7 @@
 #define XOFF  0x13
 #define XON   0x11
 
-// const uint32_t DeviceDetector::serialBauds[] = { 115200, 250000, 57600 }; 
+// const uint32_t DeviceDetector::serialBauds[] = { 115200, 250000, 57600 };
 
 // uint32_t DeviceDetector::serialBaud = 0;
 
@@ -14,7 +14,7 @@
 //     serialBaud = speed;
 //     for(uint8_t retry=0; retry<2; retry++) {
 //         GD_DEBUGF("attempt %d, speed %d, type %d\n", retry, speed, type);
-        
+
 //         printerSerial.end();
 //         printerSerial.begin(speed);
 //         while(printerSerial.available()) printerSerial.read();
@@ -33,7 +33,7 @@
 // int DeviceDetector::nextDetectPrinterAttempt(HardwareSerial &printerSerial) {
 //     static uint8_t cSpeed;
 //     static uint8_t cType;
- 
+
 //     uint32_t speed = serialBauds[cSpeed];
 //     int t = detectPrinterAttempt(printerSerial, speed, cType);
 //     if(t!=-1) return t;
@@ -46,7 +46,7 @@
 //             cType=0;
 //         }
 //     }
-        
+
 // }
 
 // int DeviceDetector::detectPrinter(HardwareSerial &printerSerial) {
@@ -57,11 +57,11 @@
 //                 if(t!=-1) return t;
 //             }
 //         }
-//     }     
+//     }
 // }
 
 // void DeviceDetector::loop() {
-    
+
 // }
 
 // int DeviceDetector::getDetectResult() {
@@ -115,10 +115,10 @@ void GCodeDevice::setDevice(GCodeDevice *dev) {
 
 void GCodeDevice::sendCommands() {
 
-    if(panic) {  
+    if(panic) {
         // drain queue
         curUnsentCmdLen = 0;
-        return; 
+        return;
     }
     //bool loadedNewCmd=false;
 
@@ -156,7 +156,7 @@ void GCodeDevice::sendCommands() {
     //         }
     //     #else
     //         curUnsentCmdLen = xMessageBufferReceive(buf1, curUnsentCmd, MAX_GCODE_LINE, 0);
-    //         curUnsentCmd[curUnsentCmdLen] = 0; 
+    //         curUnsentCmd[curUnsentCmdLen] = 0;
     //     #endif
     //     //loadedNewCmd = true;
     // }
@@ -180,9 +180,9 @@ void GCodeDevice::receiveResponses() {
         switch(ch) {
             case '\n':
             case '\r': break;
-            case XOFF: if(xoffEnabled) { xoff=true; break; }
-            case XON: if(xoffEnabled) {xoff=false; break; }
-            default: if(respLen<MAX_LINE) resp[respLen++] = ch;
+            case XOFF: if(xoffEnabled) { xoff=true; } break;
+            case XON: if(xoffEnabled) { xoff=false; } break;
+            default: if(respLen<MAX_LINE) resp[respLen++] = ch; break;
         }
         if(ch=='\n') {
             resp[respLen]=0;
@@ -191,9 +191,5 @@ void GCodeDevice::receiveResponses() {
             respLen = 0;
         }
     }
-    
+
 }
-
-
-
-

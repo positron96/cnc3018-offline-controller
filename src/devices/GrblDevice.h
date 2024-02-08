@@ -10,10 +10,10 @@ public:
         Idle, Run, Hold, Jog, Alarm, Door, Check, Home, Sleep
     };
 
-    GrblDevice(WatchedSerial * s): 
+    GrblDevice(WatchedSerial * s):
         GCodeDevice(s)
-    { 
-        sentCounter = &sentQueue; 
+    {
+        sentCounter = &sentQueue;
         canTimeout = false;
     };
     GrblDevice() : GCodeDevice() { sentCounter = &sentQueue; }
@@ -37,22 +37,17 @@ public:
         schedulePriorityCommand(&c, 1);
     }
 
-    void loop() override {
-        readLockedStatus();
-        GCodeDevice::loop();
-    }
-
-    void requestStatusUpdate() override {   
+    void requestStatusUpdate() override {
         if(panic) return; // grbl does not respond in panic anyway
         char c = '?';
-        schedulePriorityCommand(&c, 1);  
+        schedulePriorityCommand(&c, 1);
     }
 
     bool schedulePriorityCommand( const char* cmd, size_t len=0) override {
         if(txLocked) return false;
         if(len==0) len = strlen(cmd);
         if(isCmdRealtime(cmd, len) ) {
-            printerSerial->write((const uint8_t*)cmd, len);  
+            printerSerial->write((const uint8_t*)cmd, len);
             GD_DEBUGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd[0] );
             return true;
         }
@@ -60,7 +55,7 @@ public:
     }
 
     /// WPos = MPos - WCO
-    float getXOfs() { return ofsX; } 
+    float getXOfs() { return ofsX; }
     float getYOfs() { return ofsY; }
     float getZOfs() { return ofsZ; }
     uint32_t getSpindleVal() { return spindleVal; }
@@ -76,11 +71,11 @@ protected:
     void trySendCommand() override;
 
     void tryParseResponse( char* cmd, size_t len ) override;
-    
+
 private:
-    
+
     SimpleCounter<15,128> sentQueue;
-    
+
     String lastResponse;
 
     Status status;
