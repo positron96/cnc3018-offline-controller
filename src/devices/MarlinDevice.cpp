@@ -1,10 +1,12 @@
 #include <vector>
 #include "constants.h"
 #include "MarlinDevice.h"
+
 #include "Job.h"
 #include "printfloat.h"
 #include "util.h"
 #include "debug.h"
+
 
 void MarlinDevice::sendProbe(Stream& serial) {
     serial.print("\n");
@@ -18,11 +20,18 @@ void MarlinDevice::sendProbe(Stream& serial) {
 //   This helps for debugging a previous stepper function bug.
 // todo for position
 bool MarlinDevice::checkProbeResponse(const String v) {
+    // TODO  check: is v copied each invocation.
     if (v.indexOf("Marlin") != -1) {
         LOGLN(">> Detected Marlin device <<");
         return true;
     }
     return false;
+}
+
+
+MarlinDevice::MarlinDevice(WatchedSerial* s, Job* job) : GCodeDevice(s, job) {
+    canTimeout = false;
+    panic = false;
 }
 
 bool MarlinDevice::jog(uint8_t axis, float dist, int feed) {
@@ -126,7 +135,7 @@ void MarlinDevice::tryParseResponse(char* resp, size_t len) {
                 // MAY hae "Resend:Error
                 lastResponse = resp + 7;
                 resendLine = atoi(resp);
-                job->tryResendLine((unsigned) resendLine);
+//                job->tryResendLine((unsigned) resendLine);
                 // no pop. resend
             } else if (startsWith(resp, "DEBUG:")) {
                 lastResponse = resp;

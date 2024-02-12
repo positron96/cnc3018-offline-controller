@@ -24,14 +24,16 @@ using DeviceObserver = etl::observer<const DeviceStatusEvent&>;
 
 class GCodeDevice: public etl::observable<DeviceObserver, MAX_DEVICE_OBSERVERS> {
 public:
-
-    enum DeviceStatus {
-        OK = 0,
-        DEV_ERROR,
-        ALARM,
-        MSG,
-        UNLOCKED = 10
+    struct DeviceStatus {
+        enum {
+            OK = 0,
+            DEV_ERROR,
+            ALARM,
+            MSG,
+            UNLOCKED = 10
+        };
     };
+
 
     GCodeDevice(WatchedSerial* s, Job* job_) :
             printerSerial(s),job(job_), connected(false)  {}
@@ -104,7 +106,7 @@ protected:
     char curUnsentCmd[MAX_GCODE_LINE + 1], curUnsentPriorityCmd[MAX_GCODE_LINE + 1];
     size_t curUnsentCmdLen;
     size_t curUnsentPriorityCmdLen;
-    const char* lastResponse;
+    const char* lastResponse = nullptr;
 
     float x, y, z;
     uint32_t feed, spindleVal;

@@ -17,13 +17,12 @@ public:
 
     static bool checkProbeResponse(String s);
 
-    MarlinDevice(WatchedSerial* s, Job* job) :
-            GCodeDevice(s, job) {
-        canTimeout = false;
-        panic = false;
-    }
 
-    MarlinDevice() : GCodeDevice() {}
+    //// CONSTRUCTORS
+    MarlinDevice(WatchedSerial* s, Job* job);
+
+    MarlinDevice() : GCodeDevice() {
+    }
 
     virtual ~MarlinDevice() {}
 

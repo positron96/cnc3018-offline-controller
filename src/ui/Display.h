@@ -39,13 +39,13 @@ public:
     enum {
         BT_ZDOWN = 0,  //
         BT_ZUP,        //
-        //                    +----------------------------------------------------+
-        BT_R,          //     |  Z_UP   +--------------+         BT_UP             |
-        BT_L,          //     |         |              |                           |
-        BT_CENTER,     //     |         |              |   BT_L  BT_CENTER   BT_R  |
-        BT_UP,         //     |         |              |                           |
-        BT_DOWN,       //     |  Z_DOWN +--------------+         BT_DOWN  BT_STEP  |
-        BT_STEP,       //     +----------------------------------------------------+
+        //                    +--------------------------------------------------------+
+        BT_R,          //     |  [Z_UP] +--------------+          [BT_UP]              |
+        BT_L,          //     |         |              |                               |
+        BT_CENTER,     //     |         |              |  [BT_L] [BT_CENTER]  [BT_R]   |
+        BT_UP,         //     |         |              |                               |
+        BT_DOWN,       //     | [Z_DOWN]+--------------+          [BT_DOWN]  [BT_STEP] |
+        BT_STEP,       //     +--------------------------------------------------------+
         //
         N_BUTTONS
     };
@@ -70,12 +70,15 @@ public:
     }
 
     void notification(const JobStatusEvent e) override {
+        // TODO use events to update screen
         setDirty();
     }
 
     void begin() { dirty = true; }
-
-    void loop();
+    ///
+    /// call in each main loop step
+    ///
+    void step();
 
     void draw();
 

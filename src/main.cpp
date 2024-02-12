@@ -76,7 +76,6 @@ void createGrbl(int i, WatchedSerial* s) {
     job.setDevice(dev);
     dev->begin();
     dev->add_observer(*Display::getDisplay());
-    dev->add_observer(job);
     dro->begin();
     dro->enableRefresh();
     LOGLN("Created");
@@ -127,9 +126,9 @@ void loop() {
     }
     //END poll buttons
 
-    display.loop();
+    display.step();
     if (dev != nullptr) {
-        job.loop();
+        job.step();
         dev->loop();
     } else {
         Detector::loop();
