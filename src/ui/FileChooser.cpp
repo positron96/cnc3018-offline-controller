@@ -9,8 +9,7 @@ void FileChooser::begin() {
 }
 
 void FileChooser::onShow() {
-    haveCard = SD.begin(PIN_CD); //todo can be done better.
-    // on show show, on begin init
+    haveCard = SD.begin(PIN_CD);
     if (!haveCard) {
         LOGF("SD failed\n");
         return;

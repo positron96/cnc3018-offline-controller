@@ -56,7 +56,7 @@ void MarlinDRO::drawContents() {
     uint8_t sx = startLeftPanel,
             sx_start_right = startRightPanel;
     uint8_t sy = Display::STATUS_BAR_HEIGHT; // bar Height 0 - 15.
-    if (dev.canJog()) {
+    if (dev.canJog() && !job.isRunning()) {
         /// =============== draw control bar =============
         u8g2.setDrawColor(1);
         uint8_t lineY = sy - 2;

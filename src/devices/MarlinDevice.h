@@ -62,7 +62,6 @@ protected:
     void tryParseResponse(char* cmd, size_t len) override;
 
 private:
-    Job* job;
     etl::deque<String, 10> outQueue;
 
     float hotendTemp = 0.0, bedTemp = 0.0;
@@ -71,7 +70,6 @@ private:
     float hotendRequestedTemp = 0.0,
             bedRequestedTemp = 0.0,
             e = 0.0;
-    bool busy = false;
 
     bool relative = false;
 

@@ -1,11 +1,10 @@
 #include "constants.h"
 #include "GCodeDevice.h"
 
-
-
 // utils for string was here
+
 bool GCodeDevice::scheduleCommand(const char* cmd, size_t len) {
-    if (panic)
+    if (lastStatus >= DeviceStatus::ALARM)
         return false;
     if (len == 0)
         len = strlen(cmd);
@@ -13,6 +12,7 @@ bool GCodeDevice::scheduleCommand(const char* cmd, size_t len) {
         return false;
     if (curUnsentCmdLen != 0)
         return false;
+    LOGF("< '%s' \n",cmd);
     memcpy(curUnsentCmd, cmd, len);
     curUnsentCmdLen = len;
     return true;
@@ -31,17 +31,17 @@ bool GCodeDevice::schedulePriorityCommand(const char* cmd, size_t len) {
     return true;
 }
 
-bool GCodeDevice::canSchedule(size_t len) {
-    if (panic)
-        return false;
-    if (len == 0)
-        return false;
-    return curUnsentCmdLen == 0;
-}
-
-void GCodeDevice::loop() {
+void GCodeDevice::step() {
     readLockedStatus();
-    sendCommands();
+    if(lastStatus == DeviceStatus::ALARM){
+        cleanupQueue();
+    } else if (
+            (!xoffEnabled || !xoff)
+            && !txLocked ) {
+        // no check for queued commands.
+        // do it inside trySend
+        trySendCommand();
+    }
     receiveResponses();
     checkTimeout();
 
@@ -49,21 +49,6 @@ void GCodeDevice::loop() {
         requestStatusUpdate();
         nextStatusRequestTime = millis() + STATUS_REQUEST_INTERVAL;
     }
-}
-
-void GCodeDevice::sendCommands() {
-    if (panic) {
-        // drain queue
-        curUnsentCmdLen = 0;
-        return;
-    }
-    if (xoffEnabled && xoff)
-        return;
-    if (txLocked)
-        return;
-    if (curUnsentCmdLen == 0 && curUnsentPriorityCmdLen == 0)
-        return;
-    trySendCommand();
 }
 
 void GCodeDevice::begin() {
@@ -76,12 +61,11 @@ void GCodeDevice::begin() {
 void GCodeDevice::readLockedStatus() {
     bool t = printerSerial->isLocked(true);
     if (t != txLocked)
-        notify_observers(DeviceStatusEvent{DeviceStatus::UNLOCKED});
+        notify_observers(DeviceStatusEvent{});
     txLocked = t;
 }
 
 void GCodeDevice::cleanupQueue() {
-    sentCounter->clear();
     curUnsentCmdLen = 0;
     curUnsentPriorityCmdLen = 0;
 }
@@ -93,7 +77,7 @@ void GCodeDevice::checkTimeout() {
         connected = false;
         cleanupQueue();
         disarmRxTimeout();
-        notify_observers(DeviceStatusEvent{DeviceStatus::DEV_ERROR});
+        notify_observers(DeviceStatusEvent{});
     }
 }
 
@@ -108,8 +92,8 @@ void GCodeDevice::armRxTimeout() {
 };
 
 void GCodeDevice::disarmRxTimeout() {
-    if (!canTimeout) return;
-
+    if (!canTimeout)
+        return;
     serialRxTimeout = 0;
 };
 
@@ -117,7 +101,8 @@ void GCodeDevice::updateRxTimeout(bool waitingMore) {
     if (isRxTimeoutEnabled()) {
         if (!waitingMore)
             disarmRxTimeout();
-        else armRxTimeout();
+        else
+            armRxTimeout();
     }
 }
 

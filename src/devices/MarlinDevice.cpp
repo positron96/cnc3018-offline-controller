@@ -31,7 +31,8 @@ bool MarlinDevice::checkProbeResponse(const String v) {
 
 MarlinDevice::MarlinDevice(WatchedSerial* s, Job* job) : GCodeDevice(s, job) {
     canTimeout = false;
-    panic = false;
+    useLineNumber = true;
+    lastResponse = nullptr;
 }
 
 bool MarlinDevice::jog(uint8_t axis, float dist, int feed) {
@@ -45,8 +46,10 @@ bool MarlinDevice::jog(uint8_t axis, float dist, int feed) {
 }
 
 void MarlinDevice::trySendCommand() {
-    LOGLN("Try send");
-    if (printerSerial->availableForWrite()) {
+    if (lastStatus == DeviceStatus::WAIT) {
+        return;
+    }
+    if (printerSerial->availableForWrite() && !outQueue.empty()) {
         String& front = outQueue.front();
         const char* cmd = front.c_str();
         auto size = (size_t) front.length();
@@ -55,11 +58,13 @@ void MarlinDevice::trySendCommand() {
         printerSerial->write('\n');
         //delete
         outQueue.pop_front();
+        lastResponse = nullptr;
+        lastStatus = DeviceStatus::WAIT;
     }
 }
 
 bool MarlinDevice::scheduleCommand(const char* cmd, size_t len = 0) {
-    if (busy || resendLine > 0) {
+    if (resendLine > 0) {
         return false;
     }
     if (!outQueue.full()) {
@@ -70,8 +75,8 @@ bool MarlinDevice::scheduleCommand(const char* cmd, size_t len = 0) {
 }
 
 bool MarlinDevice::schedulePriorityCommand(const char* cmd, size_t len = 0) {
-    if (txLocked) return false;
-    // same as schedule. no except
+    if (txLocked)
+        return false;
     return scheduleCommand(cmd, len);
 }
 
@@ -83,20 +88,20 @@ void MarlinDevice::begin() {
     scheduleCommand(msg, l);
     l = snprintf(msg, LN, "%s S%d", M155_AUTO_REPORT_TEMP, 1);
     scheduleCommand(msg, l);
+    scheduleCommand(RESET_LINE_NUMBER);
 }
 
 void MarlinDevice::requestStatusUpdate() {
 }
 
 void MarlinDevice::reset() {
-    panic = false;
-    busy = false;
+    lastStatus = DeviceStatus::OK;
 }
 
 void MarlinDevice::toggleRelative() {
     relative = !relative;
 }
-
+// TODO optimize all this silly ifs
 void MarlinDevice::tryParseResponse(char* resp, size_t len) {
     LOGF("> [%s],%d\n", resp, len);
     if (startsWith(resp, "Error") || startsWith(resp, "!!")) {
@@ -106,12 +111,10 @@ void MarlinDevice::tryParseResponse(char* resp, size_t len) {
         } else {
             lastResponse = resp + 2;
         }
-        panic = true;
+        lastStatus = DeviceStatus::DEV_ERROR;
         outQueue.clear();
-        notify_observers(DeviceStatusEvent{DeviceStatus::DEV_ERROR});
     } else {
         connected = true;
-        panic = false;
         if (startsWith(resp, "ok")) {
             if (len > 2) {
                 parseOk(resp + 2, len - 2);
@@ -120,12 +123,11 @@ void MarlinDevice::tryParseResponse(char* resp, size_t len) {
                 resendLine = -1;
             }
             lastResponse = resp;
-            busy = false;
-            LOGLN("reset busy");
+            lastStatus = DeviceStatus::OK;
         } else {
             if (strstr(resp, "busy:") != nullptr) {
                 lastResponse = resp + 5; // marlin do space after :
-                busy = true;
+                lastStatus = DeviceStatus::BUSY;
                 LOGLN("SET busy");
             }
             if (startsWith(resp, "echo:")) {
@@ -135,16 +137,19 @@ void MarlinDevice::tryParseResponse(char* resp, size_t len) {
                 // MAY hae "Resend:Error
                 lastResponse = resp + 7;
                 resendLine = atoi(resp);
-//                job->tryResendLine((unsigned) resendLine);
+                lastStatus = DeviceStatus::RESEND;
                 // no pop. resend
-            } else if (startsWith(resp, "DEBUG:")) {
-                lastResponse = resp;
             } else {
-                // M154 Snn or  M155 Snn
-                parseOk(resp, len);
+                if (startsWith(resp, "DEBUG:")) {
+                    lastResponse = resp;
+                } else {
+                    // M154 Snn or  M155 Snn
+                    parseOk(resp, len);
+                }
+                lastStatus = DeviceStatus::OK;
             }
         }
-        notify_observers(DeviceStatusEvent{DeviceStatus::OK});
+        notify_observers(DeviceStatusEvent{});
     }
 }
 
@@ -156,13 +161,13 @@ bool MarlinDevice::tempChange(uint8_t temp) {
 }
 
 const char* MarlinDevice::getStatusStr() const {
-    return lastResponse; //todo
+    return ""/*lastResponse*/; //todo
 }
 
 ///  marlin dont jog, just do G0
 /// \return
 bool MarlinDevice::canJog() {
-    return !busy && !panic;
+    return lastStatus == DeviceStatus::OK;
 }
 /// ok T:201 /202 B:117 /120 @:255
 ///
@@ -235,7 +240,7 @@ void MarlinDevice::parseError(const char* input) {
     char cpy[SHORT_BUFFER_LEN];
     strncpy(cpy, input, SHORT_BUFFER_LEN);
     if (strstr(cpy, "Last Line") != nullptr) {
-        int lastResponse = atoi((cpy + 10));
+//        int lastResponse = atoi((cpy + 10));
     }
 }
 

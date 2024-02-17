@@ -12,6 +12,8 @@
 #define M105_GET_EXTRUDER_TEMP           "M105"
 #define M108_CONTINUE                    "M108"
 #define M109_SET_EXTRUDER_TEMP_WAIT      "M109"
+#define M110_SET_LINE_NUMBER             "M110"
+#define RESET_LINE_NUMBER                "M110 N0"
 #define M115_GET_FIRMWARE_VER            "M115"
 #define M114_GET_CURRENT_POS             "M114"
 

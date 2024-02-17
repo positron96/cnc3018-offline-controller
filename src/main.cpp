@@ -95,7 +95,7 @@ void setup() {
 
     display.setScreen(&detUI);
 
-    fileChooser.setCallback([&](bool res, const char* path) {
+    fileChooser.setCallback([](bool res, const char* path) {
         if (res) {
             LOGF("Starting job %s\n", path);
             job.setFile(path);
@@ -129,7 +129,7 @@ void loop() {
     display.step();
     if (dev != nullptr) {
         job.step();
-        dev->loop();
+        dev->step();
     } else {
         Detector::loop();
     }

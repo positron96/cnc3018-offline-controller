@@ -26,7 +26,7 @@ bool GrblDevice::jog(uint8_t axis, float dist, int feed) {
 }
 
 bool GrblDevice::canJog() {
-    return status == Status::Idle || status == Status::Jog;
+    return status == GrblStatus::Idle || status == GrblStatus::Jog;
 }
 
 bool GrblDevice::isCmdRealtime(const char* data, size_t len) {
@@ -52,65 +52,49 @@ bool GrblDevice::isCmdRealtime(const char* data, size_t len) {
 }
 
 void GrblDevice::trySendCommand() {
-
-#ifdef ADD_LINECOMMENTS
-    if (isCmdRealtime(curUnsentPriorityCmd, curUnsentPriorityCmdLen)) {
-        printerSerial->write((const uint8_t *) curUnsentPriorityCmd, curUnsentPriorityCmdLen);
-
-        LOGF("<  (f%3d,%3d) '%c' RT\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(),
-                  curUnsentPriorityCmd[0]);
-
-        curUnsentPriorityCmdLen = 0;
-        return;
-    }
-#endif // ADD_LINECOMMENTS
-
-    char* cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
+    LOGLN("Try send");
     size_t& len = curUnsentPriorityCmdLen != 0 ? curUnsentPriorityCmdLen : curUnsentCmdLen;
+    if (len == 0)
+        return;
+    char* cmd = curUnsentPriorityCmdLen != 0 ? &curUnsentPriorityCmd[0] : &curUnsentCmd[0];
     cmd[len] = 0;
-    if (sentCounter->canPush(len)) { //todo how it work on resend
-        sentCounter->push(cmd, len);
+    if (printerSerial->availableForWrite()) {
+        LOGLN("> send");
         printerSerial->write((const uint8_t*) cmd, len);
         printerSerial->write('\n');
-        LOGF("<  (f%3d,%3d) '%s'\n", sentCounter->getFreeLines(), sentCounter->getFreeBytes(), cmd, len);
         len = 0;
-    } else {
-        LOGF("<  (f%3d,%3d) NO SPACE: '%s'(len %d)\n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(), cmd, len);
-        LOGF(".");
     }
-
 }
 
 void GrblDevice::tryParseResponse(char* resp, size_t len) {
     if (startsWith(resp, "ok")) {
-        sentQueue.pop();
         connected = true;
-        panic = false;
         lastResponse = resp;
-        notify_observers(DeviceStatusEvent{DeviceStatus::OK});
+        lastStatus = DeviceStatus::OK;
     } else if (startsWith(resp, "<")) {
         parseStatus(resp + 1);
-        panic = false;
+        lastStatus = DeviceStatus::OK;
     } else if (startsWith(resp, "error")) {
-        sentQueue.pop();
         LOGF("ERR '%s'\n", resp);
-        notify_observers(DeviceStatusEvent{DeviceStatus::DEV_ERROR});
+        lastStatus = DeviceStatus::DEV_ERROR;
+        notify_observers(DeviceStatusEvent{});
         lastResponse = resp;
     } else if (startsWith(resp, "ALARM:")) {
-        panic = true;
         LOGF("ALARM '%s'\n", resp);
         lastResponse = resp;
         // no mor status updates will come in, so update status.
-        status = Status::Alarm;
-        notify_observers(DeviceStatusEvent{DeviceStatus::ALARM});
+        status = GrblStatus::Alarm;
+        lastStatus = DeviceStatus::ALARM;
     } else if (startsWith(resp, "[MSG:")) {
         LOGF("Msg '%s'\n", resp);
         resp[len - 1] = 0; // strip last ']'
         lastResponse = resp + 5;
         // this is the first message after reset
-        notify_observers(DeviceStatusEvent{DeviceStatus::MSG});
+        lastStatus = DeviceStatus::MSG;
+
     }
-    LOGF("> (f%3d,%3d) '%s'\n", sentQueue.getFreeLines(), sentQueue.getFreeBytes(), resp);
+    LOGF("> '%s'\n",  resp);
+    notify_observers(DeviceStatusEvent{});
 }
 
 void mystrcpy(char* dst, const char* start, const char* end) {
@@ -159,7 +143,7 @@ void GrblDevice::parseStatus(char* v) {
     z = _atod(st);
 
     mpos = startsWith(fromGrbl, "MPos");
-    LOGF("Parsed Pos: %f %f %f\n", x, y, z);
+    // LOGF("Parsed Pos: %f %f %f\n", x, y, z);
     //    +--  feed
     //    v   v-- spindle v-- feed
     // FS:500,8000     or F:500
@@ -190,7 +174,7 @@ void GrblDevice::parseStatus(char* v) {
             ofsY = _atod(buf);
             st = fi + 1;
             ofsZ = _atod(st);
-            LOGF("Parsed WCO: %f %f %f\n", ofsX, ofsY, ofsZ);
+           // LOGF("Parsed WCO: %f %f %f\n", ofsX, ofsY, ofsZ);
         }
         fromGrbl = strtok(nullptr, "|");
     }
@@ -201,46 +185,42 @@ void GrblDevice::parseStatus(char* v) {
         z -= ofsZ;
     }
 
-    notify_observers(DeviceStatusEvent{DeviceStatus::OK});
+    notify_observers(DeviceStatusEvent{});
 }
 
 
-bool GrblDevice::setStatus(const char* pch) {
-    if (startsWith(pch, "Hold")) status = Status::Hold;
-    else if (startsWith(pch, "Door")) status = Status::Door;
-    else if (strcmp(pch, "Idle") == 0) status = Status::Idle;
-    else if (strcmp(pch, "Run") == 0) status = Status::Run;
-    else if (strcmp(pch, "Jog") == 0) status = Status::Jog;
-    else if (strcmp(pch, "Alarm") == 0) status = Status::Alarm;
-    else if (strcmp(pch, "Check") == 0) status = Status::Check;
-    else if (strcmp(pch, "Home") == 0) status = Status::Home;
-    else if (strcmp(pch, "Sleep") == 0) status = Status::Sleep;
-    else {
-        return false;
-    }
-    LOGF("Parsed Status: %d\n", status);
-    return true;
+void GrblDevice::setStatus(const char* pch) {
+    if (startsWith(pch, "Hold")) status = GrblStatus::Hold;
+    else if (startsWith(pch, "Door")) status = GrblStatus::Door;
+    else if (strcmp(pch, "Idle") == 0) status = GrblStatus::Idle;
+    else if (strcmp(pch, "Run") == 0) status = GrblStatus::Run;
+    else if (strcmp(pch, "Jog") == 0) status = GrblStatus::Jog;
+    else if (strcmp(pch, "Alarm") == 0) status = GrblStatus::Alarm;
+    else if (strcmp(pch, "Check") == 0) status = GrblStatus::Check;
+    else if (strcmp(pch, "Home") == 0) status = GrblStatus::Home;
+    else if (strcmp(pch, "Sleep") == 0) status = GrblStatus::Sleep;
+    LOGF("Parsed GrblStatus: %d\n", status);
 }
 
 const char* GrblDevice::getStatusStr() const {
     switch (status) {
-        case Status::Idle:
+        case GrblStatus::Idle:
             return "Idle";
-        case Status::Run:
+        case GrblStatus::Run:
             return "Run";
-        case Status::Jog:
+        case GrblStatus::Jog:
             return "Jog";
-        case Status::Alarm:
+        case GrblStatus::Alarm:
             return "Alarm";
-        case Status::Hold:
+        case GrblStatus::Hold:
             return "Hold";
-        case Status::Door:
+        case GrblStatus::Door:
             return "Door";
-        case Status::Check:
+        case GrblStatus::Check:
             return "Check";
-        case Status::Home:
+        case GrblStatus::Home:
             return "Home";
-        case Status::Sleep:
+        case GrblStatus::Sleep:
             return "Sleep";
         default:
             return "?";

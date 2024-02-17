@@ -69,7 +69,7 @@ protected:
     constexpr static size_t N_JOG_FEEDS = sizeof(JOG_FEEDS) / sizeof(JOG_FEEDS[0]);
     size_t cFeed;
     size_t cSpindleVal;
-    std::vector<int> *devSpindleValues; // TODO how to do it?
+    std::vector<int>* devSpindleValues;
 
     Mode cMode;
     bool buttonWasPressedWithShift;

@@ -1,25 +1,20 @@
-//
-// Created by lima on 2/1/24.
-//
-
 #ifndef CNC_3018_JOBFSM_H
 #define CNC_3018_JOBFSM_H
-
 
 #include <SD.h>
 
 #include "etl/fsm.h"
 #include "etl/message.h"
-#include "etl/unordered_map.h"
+#include "etl/array.h"
 
 #include <string>
 
 const etl::message_router_id_t JOB_BUS_NUMBER = 1;
 
-
 struct StateId {
     enum {
-        INVALID,
+        INIT,
+        FINISH,
         READY,
         WAIT_RESP,
         PAUSED,
@@ -43,7 +38,6 @@ struct EventId {
 struct SetFileMessage : public etl::message<EventId::FILE> {
     const char* fileName;
 };
-
 struct CompleteMessage : public etl::message<EventId::COMPLETE> {
 };
 struct StartMessage : public etl::message<EventId::START> {
@@ -53,17 +47,14 @@ struct PauseMessage : public etl::message<EventId::PAUSE> {
 struct ResumeMessage : public etl::message<EventId::RESUME> {
 };
 struct SendMessage : public etl::message<EventId::SEND> {
-    String cmd;
+    std::string& cmd;
+    SendMessage(std::string& s): cmd(s) {};
 };
-
 struct AckMessage : public etl::message<EventId::ACK> {
 };
-
 struct ResendMessage : public etl::message<EventId::RESEND> {
     uint32_t numer;
 };
-
-
 
 #include <Arduino.h>
 #include <SD.h>
@@ -76,7 +67,6 @@ class Job;
 
 #include "devices/GCodeDevice.h"
 
-
 typedef int JobStatusEvent;
 
 enum JobStatus {
@@ -86,11 +76,10 @@ enum JobStatus {
 class JobFsm : public etl::fsm {
 
 public:
-
     JobFsm() : etl::fsm(JOB_BUS_NUMBER) {}
 
     ~JobFsm() {
-        this->JobFsm::closeFile();
+        closeFile();
     }
 
     static constexpr size_t MAX_LINE_LEN = 100;
@@ -103,18 +92,16 @@ public:
     uint32_t filePos;
     uint32_t startTime;
     uint32_t endTime;
+    // add LineNumber and CRC to command
+    bool addLineN = false;
 
     char curLine[MAX_LINE_LEN + 1];
     size_t curLinePos;
     size_t curLineNum;
 
-    etl::unordered_map<int,std::string,MAX_BUF> buffer;
+    etl::array<std::string, MAX_BUF> buffer;
 
-    void stop();
-
-    bool scheduleNextCommand();
-
-    void resendLine(size_t lineNumber);
+    bool readCommandsToBuffer();
 
     void setFile(const char* file);
 
