@@ -8,6 +8,7 @@ extern FileChooser fileChooser;
         menuItems.push_back( MenuItem::simpleItem(0, "Open", [](MenuItem&) {  
             Job &job = Job::getJob();
             if(job.isRunning() ) return;
+            fileChooser.begin();
             Display::getDisplay()->setScreen(&fileChooser); // this will reset the card
         }) );
         menuItems.push_back( MenuItem::simpleItem(1, "Pause job", [this](MenuItem& m){   
