@@ -6,6 +6,7 @@
     constexpr size_t FileChooser::VISIBLE_FILES;
 
     void FileChooser::begin() {
+        trail.clear();
         //const char* t = cDir.name();
         //FC_DEBUGF("loadDirContents: cdir is %s\n", t);
         //menuItems.push_back("xClose");
