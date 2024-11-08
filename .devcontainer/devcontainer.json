@@ -5,9 +5,10 @@
 		"vscode": {
 			"settings": {},
 			"extensions": [
-				"platformio.platformio-ide",
-				"mhutchie.git-graph"
-			]
+                "platformio.platformio-ide",
+                "mhutchie.git-graph",
+                "ms-vscode.cpptools"
+            ]
 		}
 	},
     "postCreateCommand": "pio pkg install"
