@@ -5,43 +5,57 @@ extern FileChooser fileChooser;
 
     void GrblDRO::begin() {
         DRO::begin();
-        menuItems.push_back( MenuItem::simpleItem(0, "Open", [](MenuItem&) {  
+        menuItems.push_back( MenuItem::simpleItem(0, "Files", [](MenuItem&) {
             Job &job = Job::getJob();
             if(job.isRunning() ) return;
             fileChooser.begin();
             Display::getDisplay()->setScreen(&fileChooser); // this will reset the card
         }) );
-        menuItems.push_back( MenuItem::simpleItem(1, "Pause job", [this](MenuItem& m){   
+        menuItems.push_back( MenuItem::simpleItem(1, "Machine/Work", [this](MenuItem&){
+            useWCS=!useWCS;
+            //GCodeDevice::getDevice()->scheduleCommand(useWCS ? "G54" : "G53");
+        }) );
+        menuItems.push_back( MenuItem::simpleItem(2, "Pause job", [this](MenuItem& m){
             Job &job = Job::getJob();
             if(!job.isRunning() ) return;
             job.setPaused(!job.isPaused());
             m.text = job.isPaused() ? "Resume job":"Pause job";
             setDirty(true);
         }) );
-        menuItems.push_back( MenuItem::simpleItem(2, "Reset (Ctrl-X)", [](MenuItem&){  GCodeDevice::getDevice()->reset(); }) );
-        // menuItems.push_back( MenuItem::simpleItem(3, "Update", [this](MenuItem& m){  
+        menuItems.push_back( MenuItem::simpleItem(3, "Reset (Ctrl-X)", [](MenuItem&){
+            GCodeDevice::getDevice()->reset();
+        }) );
+        // menuItems.push_back( MenuItem::simpleItem(4, "Update", [this](MenuItem& m){
         //     enableRefresh(!isRefreshEnabled() );
         //     m.text = this->isRefreshEnabled() ? "Don't update" : "Update";
         //     setDirty(true);
         // }) );
-
-        menuItems.push_back( MenuItem::simpleItem(4, "Home ($H)", [](MenuItem&){  
-            GCodeDevice::getDevice()->schedulePriorityCommand("$H"); 
+        menuItems.push_back( MenuItem::simpleItem(5, "Home ($H)", [](MenuItem&){
+            GCodeDevice::getDevice()->schedulePriorityCommand("$H");
         }) );
-        menuItems.push_back( MenuItem::simpleItem(5, "Unlock ($X)", [](MenuItem&){  
-            GCodeDevice::getDevice()->schedulePriorityCommand("$X"); 
+        menuItems.push_back( MenuItem::simpleItem(6, "Unlock ($X)", [](MenuItem&){
+            GCodeDevice::getDevice()->schedulePriorityCommand("$X");
         }) );
-        menuItems.push_back( MenuItem::simpleItem(6, "Set XYZ to 0", [](MenuItem&){  
-            GCodeDevice::getDevice()->scheduleCommand("G10 L20 P1 X0Y0Z0"); 
+        menuItems.push_back( MenuItem::simpleItem(7, "Zero XY", [](MenuItem&){
+            GCodeDevice::getDevice()->scheduleCommand("G10 L20 P1 X0Y0");
         }) );
-        menuItems.push_back( MenuItem::simpleItem(6, "Goto XY=0", [](MenuItem&){  
-            GCodeDevice::getDevice()->scheduleCommand("G0 X0Y0"); 
+        menuItems.push_back( MenuItem::simpleItem(8, "Zero XYZ", [](MenuItem&){
+            GCodeDevice::getDevice()->scheduleCommand("G10 L20 P1 X0Y0Z0");
         }) );
-        menuItems.push_back( MenuItem::simpleItem(6, "Machine/Work", [this](MenuItem&){ 
-            useWCS=!useWCS; 
-            //GCodeDevice::getDevice()->scheduleCommand(useWCS ? "G54" : "G53"); 
+        menuItems.push_back( MenuItem::simpleItem(9, "Goto XY=0", [](MenuItem&){
+            GCodeDevice::getDevice()->scheduleCommand("G0 X0Y0");
         }) );
-
+        // menuItems.push_back( MenuItem::simpleItem(11, "Goto Z Probe", [](MenuItem&){
+        //     GCodeDevice::getDevice()->scheduleCommand("G21 G91 G38.2Z-30F100");
+        // }) );
+        // menuItems.push_back( MenuItem::simpleItem(12, "Set Z Probe(after Goto)", [](MenuItem&){
+        //     // char probe_offset_value[25];
+        //     // uint16_t probeSize100 = zProbeSizeScreen.getProbeSize100();
+        //     // uint16_t integerPart = probeSize100 / 100;
+        //     // uint16_t decimalPart = probeSize100 % 100;
+        //     // snprintf(probe_offset_value, sizeof(probe_offset_value), "G92Z%02u.%02u G91G0Z5", integerPart, decimalPart);
+        //     GCodeDevice::getDevice()->scheduleCommand("G92Z19.19");
+        // }) );
     };
 
 #include "../assets/arrows_lr.XBM"

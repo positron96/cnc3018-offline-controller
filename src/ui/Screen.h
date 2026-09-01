@@ -34,7 +34,7 @@ protected:
 
     using Evt = Display::ButtonEvent;
 
-    etl::vector<MenuItem, 10> menuItems;
+    etl::vector<MenuItem, 20> menuItems;
 
     virtual void drawContents() = 0;
 

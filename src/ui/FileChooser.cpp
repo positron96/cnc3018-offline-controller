@@ -44,7 +44,7 @@
         files.clear();
         cDir.rewindDirectory();
         int i=0;
-        while ( file = cDir.openNextFile() ) {
+        while ( (file = cDir.openNextFile()) ) {
             if(i>=startingIndex && i<startingIndex+(int)MAX_FILES) {
                 String name = file.name();
                 S_DEBUGF("loadDirContents: file %s\n", name.c_str() );
@@ -127,6 +127,8 @@
                     setDirty();
                 }
                 break;
+            case Display::BT_R:
+            case Display::BT_STEP:
             case Display::BT_L: {
                 String newPath = cDir.name();
 
@@ -145,7 +147,6 @@
                 }
                 break;
             }
-            case Display::BT_R:
             case Display::BT_CENTER: {
                 String file = files[selLine];
                 S_DEBUGF("FileChooser::onButtonPressed(BT1): cDir='%s'  file='%s'\n", cDir.name(), file.c_str() );
