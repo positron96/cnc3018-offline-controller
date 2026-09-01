@@ -64,6 +64,7 @@ bool Job::scheduleNextCommand(GCodeDevice *dev) {
         J_DEBUGF("  J queueing line '%s', len %d\n", curLine, curLinePos );
 
         bool queued = dev->scheduleCommand(curLine, curLinePos);
+        (void)queued;
         assert(queued);
 
         curLinePos = 0;

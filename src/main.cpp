@@ -112,7 +112,7 @@ void setup() {
 
     File cDir = SD.open("/");
     File file;
-    while ( file = cDir.openNextFile() ) {
+    while ( (file = cDir.openNextFile()) ) {
         LOGF("file %s\n", file.name() );
         file.close();
     }

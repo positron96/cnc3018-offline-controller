@@ -106,9 +106,15 @@ uint16_t Display::buttStates;
     void Display::draw() {
         if(!dirty) return;
         u8g2.clearBuffer();
-        if(cScreen!=nullptr) cScreen->drawContents();
-        drawStatusBar();
-        if(menuShown) drawMenu();
+
+        if(menuShown) {
+            drawMenu();
+        }
+        else {
+            if(cScreen != nullptr)
+                cScreen->drawContents();
+            drawStatusBar();
+        }
 
         //char str[15]; sprintf(str, "%lu", millis() ); u8g2.drawStr(20,20, str);
         //char str[15]; sprintf(str, "%4d %4d", potVal[0], potVal[1] ); u8g2.drawStr(5,110, str);
@@ -137,7 +143,8 @@ uint16_t Display::buttStates;
 
         //snprintf(str, 25, "DET:%c", digitalRead(PIN_DET)==0 ? '0' : '1' );
         if(dev==nullptr || !dev->isConnected()) {
-            u8g2.drawGlyph(x, y, 'X' );
+            u8g2.drawStr(x, y, "CNC not connected");
+            // u8g2.drawGlyph(x, y, 'X' );
         } else if(dev->isLocked() ) {
             u8g2.drawXBM(x,0, locked_width, locked_height, (const uint8_t*)locked_bits);
         } else {
@@ -173,13 +180,13 @@ uint16_t Display::buttStates;
 
         size_t onscreenLen = len - cScreen->firstDisplayedMenuItem;
         if (onscreenLen>VISIBLE_MENUS) onscreenLen=VISIBLE_MENUS;
-        const int w = 80, x=20, lh=8, h=onscreenLen*lh;
-        int y = 6;
+        const int w = 125, x = 2, lh = 8, h = onscreenLen*lh;
+        int y = 6, offset = 6;
         
         u8g2.setDrawColor(0);
-        u8g2.drawBox(x,y, w, lh+h+4);
+        u8g2.drawBox(x,y, w, lh+h+offset);
         u8g2.setDrawColor(1);
-        u8g2.drawFrame(x,y, w, lh+h+4);
+        u8g2.drawFrame(x,y, w, lh+h+offset);
 
         char str[20];
         snprintf(str, 20, "Menu [%d/%d]", selMenuItem+1, len);
