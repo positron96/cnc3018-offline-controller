@@ -221,4 +221,7 @@ uint16_t Display::buttStates;
 
     }
     
-
+    void Display::showMenu() {
+        menuShown = true;
+        dirty = true;
+    }
