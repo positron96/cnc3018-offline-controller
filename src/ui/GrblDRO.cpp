@@ -45,17 +45,6 @@ extern FileChooser fileChooser;
         menuItems.push_back( MenuItem::simpleItem(9, "Goto XY=0", [](MenuItem&){
             GCodeDevice::getDevice()->scheduleCommand("G0 X0Y0");
         }) );
-        // menuItems.push_back( MenuItem::simpleItem(11, "Goto Z Probe", [](MenuItem&){
-        //     GCodeDevice::getDevice()->scheduleCommand("G21 G91 G38.2Z-30F100");
-        // }) );
-        // menuItems.push_back( MenuItem::simpleItem(12, "Set Z Probe(after Goto)", [](MenuItem&){
-        //     // char probe_offset_value[25];
-        //     // uint16_t probeSize100 = zProbeSizeScreen.getProbeSize100();
-        //     // uint16_t integerPart = probeSize100 / 100;
-        //     // uint16_t decimalPart = probeSize100 % 100;
-        //     // snprintf(probe_offset_value, sizeof(probe_offset_value), "G92Z%02u.%02u G91G0Z5", integerPart, decimalPart);
-        //     GCodeDevice::getDevice()->scheduleCommand("G92Z19.19");
-        // }) );
     };
 
 #include "../assets/arrows_lr.XBM"

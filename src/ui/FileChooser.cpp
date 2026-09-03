@@ -110,6 +110,10 @@
                 onShow();
                 setDirty();
             }
+            if(bt == Display::BT_STEP) {
+                if(returnCallback)
+                    returnCallback(false, "");
+            }
             return;
         }
         switch(bt) {
