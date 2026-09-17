@@ -80,6 +80,8 @@ public:
 
     void processInput();
 
+    void showMenu();
+
 private:
 
     static Display *inst;
